@@ -8,6 +8,7 @@ public class TargetLockOn : MonoBehaviour
     [Header("References")]
     [SerializeField] Camera mainCamera;
     [SerializeField] Transform lockOnPivot;              // child of player, has the Aim Constraint
+    [SerializeField] Transform freeCamRoot;   // PlayerCameraRoot (the free camera's target)
     [SerializeField] CinemachineTargetGroup targetGroup;
     [SerializeField] Animator cameraStateAnimator;       // the CameraStateAnimator object
     [SerializeField] string lockOnBool = "LockOn";
@@ -56,6 +57,14 @@ public class TargetLockOn : MonoBehaviour
                 if (p.nameHash == lockOnHash) hasParam = true;
             if (!hasParam) Warn("Animator has no parameter named '" + lockOnBool + "'");
         }
+    }
+
+    void LateUpdate()
+    {
+        // not locked: keep the pivot's yaw identical to the free camera's yaw,
+        // so LockOnCam always sits right where the free camera is
+        if (!IsLocked && freeCamRoot != null)
+            lockOnPivot.rotation = Quaternion.Euler(0f, freeCamRoot.eulerAngles.y, 0f);
     }
 
     void OnEnable()
@@ -169,7 +178,6 @@ public class TargetLockOn : MonoBehaviour
         if (targetGroup.Targets.Count > 1)
             targetGroup.RemoveMember(targetGroup.Targets[1].Object);
         aim.constraintActive = false;
-        lockOnPivot.localRotation = Quaternion.identity;
 
         cameraStateAnimator.SetBool(lockOnHash, false);
         Log("  - Animator bool '" + lockOnBool + "' set to FALSE");
