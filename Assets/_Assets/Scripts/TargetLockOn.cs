@@ -25,6 +25,10 @@ public class TargetLockOn : MonoBehaviour
     [Header("Debug")]
     [SerializeField] bool debugLogs = true;
 
+    [Header("Indicator")]
+    [SerializeField] RectTransform indicator;          // the LockOnIndicator image
+    [SerializeField] Vector3 indicatorOffset = new Vector3(0f, 1f, 0f); // chest height above enemy pivot
+
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
 
@@ -37,6 +41,7 @@ public class TargetLockOn : MonoBehaviour
 
     void Awake()
     {
+        if (indicator != null) indicator.gameObject.SetActive(false);
         Log("STEP 0: Awake, checking references");
         if (mainCamera == null) Warn("mainCamera is NOT assigned");
         if (lockOnPivot == null) Warn("lockOnPivot is NOT assigned");
@@ -61,10 +66,20 @@ public class TargetLockOn : MonoBehaviour
 
     void LateUpdate()
     {
-        // not locked: keep the pivot's yaw identical to the free camera's yaw,
-        // so LockOnCam always sits right where the free camera is
         if (!IsLocked && freeCamRoot != null)
-            lockOnPivot.rotation = Quaternion.Euler(0f, freeCamRoot.eulerAngles.y, 0f);
+        lockOnPivot.rotation = Quaternion.Euler(0f, freeCamRoot.eulerAngles.y, 0f);
+
+        if (IsLocked && indicator != null)
+        {
+            Vector3 screen = mainCamera.WorldToScreenPoint(CurrentTarget.position + indicatorOffset);
+
+            // hide when the target is behind the camera
+            bool visible = screen.z > 0f;
+            if (indicator.gameObject.activeSelf != visible)
+                indicator.gameObject.SetActive(visible);
+
+            if (visible) indicator.position = screen;
+        }
     }
 
     void OnEnable()
@@ -155,6 +170,7 @@ public class TargetLockOn : MonoBehaviour
 
     void Lock(Transform target)
     {
+        if (indicator != null) indicator.gameObject.SetActive(true);
         Log("STEP 5: LOCKING onto '" + target.name + "'");
         CurrentTarget = target;
         hiddenTimer = 0f;
@@ -173,6 +189,7 @@ public class TargetLockOn : MonoBehaviour
 
     public void Unlock()
     {
+        if (indicator != null) indicator.gameObject.SetActive(false);
         Log("UNLOCK: releasing target");
         CurrentTarget = null;
         if (targetGroup.Targets.Count > 1)
