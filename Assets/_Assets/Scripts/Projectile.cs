@@ -25,7 +25,7 @@ public class Projectile : MonoBehaviour
 
     void OnHit(RaycastHit hit)
     {
-        //Debug.Log("[Projectile] hit " + hit.collider.name);
+        // Debug.Log("[Projectile] hit " + hit.collider.name);
         // TODO: apply damage here, e.g. hit.collider.GetComponentInParent<IDamageable>()?.TakeDamage(...)
         // TODO: spawn hit effect at hit.point
         Destroy(gameObject);
