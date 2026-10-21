@@ -32,6 +32,10 @@ public class TargetLockOn : MonoBehaviour
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
 
+    public Vector3 AimPoint => CurrentTarget != null
+    ? CurrentTarget.position + indicatorOffset   // same chest-height offset as the dot
+    : Vector3.zero;
+
     AimConstraint aim;
     int lockOnHash;
     float hiddenTimer;
