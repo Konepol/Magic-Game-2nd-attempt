@@ -12,7 +12,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
     [RequireComponent(typeof(PlayerInput))]
 #endif
-    public class ThirdPersonController : MonoBehaviour
+    public class PlayerThirdPersonController : MonoBehaviour
     {
         [Header("Player")]
         [Tooltip("Move speed of the character in m/s")]
@@ -55,6 +55,8 @@ namespace StarterAssets
 
         [Tooltip("The radius of the grounded check. Should match the radius of the CharacterController")]
         public float GroundedRadius = 0.28f;
+
+        [HideInInspector] public bool IsFlying;
 
         [Tooltip("What layers the character uses as ground")]
         public LayerMask GroundLayers;
@@ -158,6 +160,8 @@ namespace StarterAssets
         private void Update()
         {
             _hasAnimator = TryGetComponent(out _animator);
+
+            if (IsFlying) return;   // BroomFlight controls movement
 
             JumpAndGravity();
             GroundedCheck();
