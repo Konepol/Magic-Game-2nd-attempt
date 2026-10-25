@@ -77,6 +77,10 @@ namespace StarterAssets
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
 
+        [HideInInspector] public Vector3 CarryVelocity;   // momentum handed over from the broom
+        [Tooltip("Higher = the carried momentum fades faster")]
+        public float CarryDamping = 3f;
+
         [Header("Lock On")]
         public TargetLockOn LockOn;
 
@@ -90,6 +94,7 @@ namespace StarterAssets
         private float _targetRotation = 0.0f;
         private float _rotationVelocity;
         private float _verticalVelocity;
+        public float VerticalVelocity => _verticalVelocity;
         private float _terminalVelocity = 53.0f;
 
         // timeout deltatime
@@ -286,6 +291,14 @@ namespace StarterAssets
 
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
+            // fade the carried momentum (faster on the ground so you don't slide forever)
+            float damping = Grounded ? CarryDamping * 2f : CarryDamping;
+            CarryVelocity = Vector3.Lerp(CarryVelocity, Vector3.zero, 1f - Mathf.Exp(-damping * Time.deltaTime));
+
+            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
+                            new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime +
+                            CarryVelocity * Time.deltaTime);      // <- added
+
             // move the player
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
                              new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
@@ -406,6 +419,16 @@ namespace StarterAssets
             {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
+        }
+
+        public void ResetMotion()
+        {
+            CarryVelocity = Vector3.zero;
+            _verticalVelocity = 0f;      // clears stored fall speed
+            _speed = 0f;                 // clears stored ground speed
+            _animationBlend = 0f;
+            _fallTimeoutDelta = FallTimeout;
+            _jumpTimeoutDelta = JumpTimeout;
         }
     }
 }

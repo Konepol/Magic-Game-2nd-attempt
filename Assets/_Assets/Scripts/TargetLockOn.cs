@@ -29,6 +29,7 @@ public class TargetLockOn : MonoBehaviour
     [SerializeField] float maxAngle = 35f;
     [SerializeField] float breakDistance = 25f;
     [SerializeField] float loseSightTime = 2f;
+    bool hadLock;
 
     [Header("Debug")]
     [SerializeField] bool debugLogs = true;
@@ -149,6 +150,7 @@ public class TargetLockOn : MonoBehaviour
 
         cameraStateAnimator.SetBool(camBoolHash, true);
         SetIndicatorState(true);
+        hadLock = true;
     }
 
     public void Unlock()
@@ -159,6 +161,7 @@ public class TargetLockOn : MonoBehaviour
 
         cameraStateAnimator.SetBool(camBoolHash, false);
         SetIndicatorState(false);
+        hadLock = false;
     }
 
     void SetIndicatorState(bool locked)
@@ -169,7 +172,11 @@ public class TargetLockOn : MonoBehaviour
 
     void Update()
     {
-        if (!IsLocked) return;
+        if (!IsLocked)
+        {
+            if (hadLock) { Log("AUTO-UNLOCK: target destroyed"); Unlock(); }
+            return;
+        }
 
         if (!CurrentTarget.gameObject.activeInHierarchy) { Log("AUTO-UNLOCK: target gone"); Unlock(); return; }
 

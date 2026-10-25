@@ -56,6 +56,14 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] CanvasGroup staminaGroup;           // optional, fades the bar when full and grounded
     [SerializeField] Color fullColor = new Color(0.3f, 0.9f, 1f);
     [SerializeField] Color lowColor = new Color(1f, 0.35f, 0.25f);
+    
+    [Header("Mount In Air (carry fall speed)")]
+    [SerializeField] float fallBrakeTime = 0.7f;     // no input: seconds to stop the fall (higher = falls longer before hovering)
+    [SerializeField] float redirectRate = 60f;       // direction key: fall speed converted into movement per second
+
+    [Header("Dismount")]
+    [SerializeField, Range(0f, 1f)] float dismountCarry = 0.5f;   // fraction of the glide speed handed over
+    [SerializeField] float maxCarrySpeed = 10f;
 
     [Header("Debug")]
     [SerializeField] bool debugLogs = true;
@@ -117,10 +125,15 @@ public class BroomFlight : MonoBehaviour
     void Mount()
     {
         Log("MOUNT");
+        // carry the fall speed into the broom (ignore the small constant push-down the controller keeps while grounded)
+        float carried = tpc.Grounded ? 0f : Mathf.Min(0f, tpc.VerticalVelocity);
+        tpc.ResetMotion();
+        horizontalVelocity = Vector3.zero;
+        verticalVelocity = carried;
+        Log("Mounted with carried fall speed " + carried.ToString("F1"));
         IsFlying = true;
         tpc.IsFlying = true;
         horizontalVelocity = Vector3.zero;
-        verticalVelocity = 0f;
         boostFactor = 1f;
         lastGroundY = transform.position.y;
         UpdateGroundY();
@@ -132,12 +145,23 @@ public class BroomFlight : MonoBehaviour
     void Dismount()
     {
         Log("DISMOUNT");
+        horizontalVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        boostFactor = 1f;
+        Vector3 carry = Vector3.ClampMagnitude(horizontalVelocity * dismountCarry, maxCarrySpeed);
+
+        horizontalVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        boostFactor = 1f;
+        tpc.ResetMotion();               // this clears CarryVelocity, so it must come first
+        tpc.CarryVelocity = carry;       // horizontal only
         IsFlying = false;
         tpc.IsFlying = false;
         input.jump = false;
         if (broomModel != null) broomModel.SetActive(false);
         SetAnimator(false);
         transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        
     }
 
     void SetAnimator(bool flying)
@@ -164,6 +188,14 @@ public class BroomFlight : MonoBehaviour
         Vector3 wish = camForward * move.y + camRight * move.x;
         bool hasInput = move.sqrMagnitude > 0.01f;
 
+        // direction key while falling: convert fall speed into movement along the input direction
+        if (hasInput && verticalVelocity < 0f)
+        {
+            float amount = Mathf.Min(redirectRate * Time.deltaTime, -verticalVelocity);
+            verticalVelocity += amount;
+            horizontalVelocity += wish.normalized * amount;
+        }
+
         // boost only counts while moving, and ramps smoothly
         bool canBoost = stamina > 0f && !exhausted;
         bool boosting = input.sprint && hasInput && canBoost;
@@ -184,7 +216,11 @@ public class BroomFlight : MonoBehaviour
 
         // ---------- vertical: Space up, Ctrl down ----------
         float vInput = (ascendAction.action.IsPressed() ? 1f : 0f)
-                     - (descendAction.action.IsPressed() ? 1f : 0f);
+             - (descendAction.action.IsPressed() ? 1f : 0f);
+
+        // Space while falling: cancel the fall completely
+        if (vInput > 0f && verticalVelocity < 0f)
+            verticalVelocity = 0f;
 
         if (Mathf.Abs(vInput) > 0.01f)
         {
@@ -193,7 +229,9 @@ public class BroomFlight : MonoBehaviour
         }
         else
         {
-            float vDecel = verticalSpeed / Mathf.Max(verticalCoastTime, 0.01f);
+            // falling brakes over fallBrakeTime, rising uses the normal short coast
+            float coast = verticalVelocity < 0f ? fallBrakeTime : verticalCoastTime;
+            float vDecel = Mathf.Abs(verticalVelocity) / Mathf.Max(coast, 0.01f);
             verticalVelocity = Mathf.MoveTowards(verticalVelocity, 0f, vDecel * Time.deltaTime);
         }
 

@@ -6,6 +6,8 @@ public class Projectile : MonoBehaviour
     [SerializeField] float lifetime = 4f;
     [SerializeField] float radius = 0.1f;
     [SerializeField] LayerMask hitMask = ~0;   // exclude the Player layer here
+    [SerializeField] float damage = 10f;
+    [SerializeField] string damageTag = "Enemy";    // only damages this tag (use "Player" for enemy bullets)   
 
     void Start() => Destroy(gameObject, lifetime);
 
@@ -25,8 +27,10 @@ public class Projectile : MonoBehaviour
 
     void OnHit(RaycastHit hit)
     {
-        // Debug.Log("[Projectile] hit " + hit.collider.name);
-        // TODO: apply damage here, e.g. hit.collider.GetComponentInParent<IDamageable>()?.TakeDamage(...)
+        var target = hit.collider.GetComponentInParent<IDamageable>();
+        if (target != null && hit.collider.CompareTag(damageTag))
+            target.TakeDamage(damage, hit.point);
+
         // TODO: spawn hit effect at hit.point
         Destroy(gameObject);
     }
