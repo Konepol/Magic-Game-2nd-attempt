@@ -1,25 +1,31 @@
 using UnityEngine;
 
-public class EnemyMeleeTest : MonoBehaviour
+public class EnemyMeleeZone : MonoBehaviour
 {
-    [SerializeField] float range = 2f;
+    [SerializeField] string targetTag = "Player";
     [SerializeField] float damage = 10f;
     [SerializeField] float interval = 1f;
-    float next;
-    Health player;
+    [SerializeField] bool debugLogs = true;
 
-    void Start()
+    float nextHitTime;
+
+    void OnTriggerStay(Collider other)
     {
-        var p = GameObject.FindGameObjectWithTag("Player");
-        if (p != null) player = p.GetComponent<Health>();
-    }
+        // cheapest checks first: runs every physics step while the player is inside
+        if (Time.time < nextHitTime) return;
+        if (!other.CompareTag(targetTag)) return;
 
-    void Update()
-    {
-        if (player == null || player.IsDead || Time.time < next) return;
-        if ((player.transform.position - transform.position).sqrMagnitude > range * range) return;
+        var health = other.GetComponentInParent<Health>();
+        if (health == null)
+        {
+            if (debugLogs) Debug.LogWarning("[Melee] '" + other.name + "' has the tag but no Health", this);
+            nextHitTime = Time.time + interval;   // avoid spamming the warning
+            return;
+        }
+        if (health.IsDead) return;
 
-        next = Time.time + interval;
-        player.TakeDamage(damage, player.transform.position);
+        nextHitTime = Time.time + interval;
+        if (debugLogs) Debug.Log("[Melee] Hit " + other.name + " for " + damage, this);
+        health.TakeDamage(damage, other.transform.position);
     }
 }
