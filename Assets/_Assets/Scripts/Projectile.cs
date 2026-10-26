@@ -9,6 +9,8 @@ public class Projectile : MonoBehaviour
     [SerializeField] float damage = 10f;
     [SerializeField] string damageTag = "Enemy";    // only damages this tag (use "Player" for enemy bullets)   
 
+    public float Speed => speed;
+
     void Start() => Destroy(gameObject, lifetime);
 
     void Update()
