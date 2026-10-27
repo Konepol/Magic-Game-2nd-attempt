@@ -1,0 +1,136 @@
+using System;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+// Spell resource, separate from the broom's flight stamina.
+// Regenerates slowly after a delay, or much faster while the charge key is held.
+public class Mana : MonoBehaviour
+{
+    [SerializeField] float maxMana = 100f;
+    [SerializeField] float regenPerSecond = 6f;
+    [SerializeField] float regenDelay = 1.5f;          // seconds after spending before normal regen starts
+
+    [Header("Charging (hold to regain faster)")]
+    [SerializeField] InputAction chargeAction = new InputAction("ChargeMana", InputActionType.Button, "<Keyboard>/r");
+    [SerializeField] float chargeRegenPerSecond = 35f; // replaces normal regen while charging, starts instantly
+    [SerializeField] float interruptLockout = 1f;      // getting hit stops the charge and blocks it for this long
+    [SerializeField] Color chargeColor = new Color(0.4f, 0.8f, 1f, 1f);
+
+    public float Current { get; private set; }
+    public float Max => maxMana;
+    public bool IsCharging { get; private set; }
+
+    public string ChargeKeyLabel =>
+        chargeAction.bindings.Count > 0 ? chargeAction.bindings[0].ToDisplayString() : "R";
+
+    public event Action<float, float> Changed;        // current, max
+    public event Action Insufficient;                  // a cast was refused for lack of mana
+
+    Health health;
+    float lastSpendTime = -999f;
+    float lockoutUntil;
+    LineRenderer ring;
+    Material ringMat;
+
+    void Awake()
+    {
+        Current = maxMana;
+        health = GetComponent<Health>();
+    }
+
+    void OnEnable()
+    {
+        chargeAction.Enable();
+        if (health != null) health.Damaged += OnDamaged;
+    }
+
+    void OnDisable()
+    {
+        chargeAction.Disable();
+        if (health != null) health.Damaged -= OnDamaged;
+        IsCharging = false;
+        if (ring != null) ring.enabled = false;
+    }
+
+    void Start() => Changed?.Invoke(Current, maxMana);
+
+    void OnDestroy()
+    {
+        if (ringMat != null) Destroy(ringMat);
+    }
+
+    public bool CanAfford(float cost) => Current >= cost - 0.001f;
+
+    public bool Spend(float cost)
+    {
+        if (cost <= 0f) return true;
+        if (!CanAfford(cost)) return false;
+        Current = Mathf.Max(0f, Current - cost);
+        lastSpendTime = Time.time;
+        Changed?.Invoke(Current, maxMana);
+        return true;
+    }
+
+    public void Restore(float amount)
+    {
+        Current = Mathf.Min(maxMana, Current + amount);
+        Changed?.Invoke(Current, maxMana);
+    }
+
+    public void NotifyInsufficient() => Insufficient?.Invoke();
+
+    void OnDamaged(float amount)
+    {
+        if (!IsCharging) return;
+        IsCharging = false;
+        lockoutUntil = Time.time + interruptLockout;
+    }
+
+    void Update()
+    {
+        if (health != null && health.IsDead)
+        {
+            IsCharging = false;
+            UpdateRing();
+            return;
+        }
+
+        bool wasCharging = IsCharging;
+        IsCharging = chargeAction.IsPressed() && Current < maxMana && Time.time >= lockoutUntil;
+        if (IsCharging && !wasCharging) SpellFX.Play(Sfx.Charge, transform.position);
+
+        float rate = 0f;
+        if (IsCharging) rate = chargeRegenPerSecond;
+        else if (Time.time - lastSpendTime >= regenDelay) rate = regenPerSecond;
+
+        if (rate > 0f && Current < maxMana)
+        {
+            Current = Mathf.Min(maxMana, Current + rate * Time.deltaTime);
+            Changed?.Invoke(Current, maxMana);
+        }
+
+        UpdateRing();
+    }
+
+    // a ring that pulls inward around the feet while charging
+    void UpdateRing()
+    {
+        if (!IsCharging)
+        {
+            if (ring != null) ring.enabled = false;
+            return;
+        }
+
+        if (ring == null)
+        {
+            ringMat = SpellVisuals.Make(chargeColor, true);
+            ring = SpellVisuals.CreateRing(null, ringMat, 0.1f);
+        }
+
+        float t = Mathf.Repeat(Time.time * 1.4f, 1f);
+        Color c = chargeColor; c.a = 1f - t;
+        SpellVisuals.SetColor(ringMat, c);
+        ring.enabled = true;
+        SpellVisuals.SetRing(ring, transform.position + Vector3.up * 0.05f, Mathf.Lerp(1.8f, 0.4f, t));
+    }
+}

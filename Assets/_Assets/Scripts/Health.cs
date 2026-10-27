@@ -21,6 +21,10 @@ public class Health : MonoBehaviour, IDamageable
 
     public event Action<float, float> Changed;        // current, max
     public event Action<float> Damaged;               // amount
+    public event Action Died;
+
+    // fires for every Health in the scene (health, amount, hit point), used by floating damage numbers
+    public static event Action<Health, float, Vector3> AnyDamaged;
 
     float invulnerableUntil;
 
@@ -35,9 +39,19 @@ public class Health : MonoBehaviour, IDamageable
         invulnerableUntil = Time.time + invulnerableTime;
         Current = Mathf.Max(0f, Current - amount);
         Damaged?.Invoke(amount);
+        AnyDamaged?.Invoke(this, amount, hitPoint);
         Changed?.Invoke(Current, maxHealth);
 
         if (Current <= 0f) Die();
+    }
+
+    // lets code that spawns a Health at runtime (barriers) set it up
+    public void Configure(float max, bool destroyWhenDead, float delay)
+    {
+        maxHealth = max;
+        destroyOnDeath = destroyWhenDead;
+        destroyDelay = delay;
+        Current = max;
     }
 
     public void Heal(float amount)
@@ -51,6 +65,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         IsDead = true;
         onDeath?.Invoke();
+        Died?.Invoke();
         if (destroyOnDeath) Destroy(gameObject, destroyDelay);
     }
 }

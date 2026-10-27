@@ -50,6 +50,7 @@ public class EnemyFlyingShooter : MonoBehaviour
     [SerializeField] float fireRate = 1.2f;            // shots per second
     [SerializeField] float aimSpreadDegrees = 2f;   // random error added when the aim locks
     [SerializeField] float damage = 8f;
+    [SerializeField] bool beamBreaksBarriers = false;   // on: the beam instantly destroys a barrier it hits instead of damaging it
     [SerializeField] float beamRadius = 0.15f;         // thickness of the hit check, a bit forgiving
     [SerializeField] float beamDuration = 0.12f;       // how long the beam flash stays visible
     [SerializeField] float beamWidth = 0.25f;
@@ -90,6 +91,9 @@ public class EnemyFlyingShooter : MonoBehaviour
     Vector3 beamOrigin;
     Vector3 beamEnd;
     float nextStrafeFlip;
+    StatusEffects status;
+    Health targetHealth;
+    bool targetDead;
 
     void Awake()
     {
@@ -119,13 +123,26 @@ public class EnemyFlyingShooter : MonoBehaviour
     void OnDamaged(float amount)
     {
         if (target == null) FindTarget();
+        if (target != null && !targetDead) state = State.Chase;
+    }
+
+    // called by the wave spawner so new enemies come straight for the player
+    public void Alert()
+    {
+        if (target == null) FindTarget();
         if (target != null) state = State.Chase;
     }
 
     void FindTarget()
     {
         var go = GameObject.FindGameObjectWithTag(targetTag);
-        if (go != null) target = go.transform;
+        if (go != null)
+        {
+            target = go.transform;
+            var cc = go.GetComponentInParent<CharacterController>();
+            var mine = GetComponent<Collider>();
+            if (cc != null && mine != null) Physics.IgnoreCollision(mine, cc);   // no shoving the player's controller
+        }
 
     }
 
@@ -137,6 +154,27 @@ public class EnemyFlyingShooter : MonoBehaviour
 
         float dt = Time.deltaTime;
 
+        if (targetHealth == null) targetHealth = target.GetComponentInParent<Health>();
+        targetDead = targetHealth != null && targetHealth.IsDead;
+        if (targetDead)
+        {
+            if (winding) CancelWindup();
+            state = State.Idle;
+        }
+
+        if (status == null) status = GetComponent<StatusEffects>();
+
+        // stunned: stops moving and drops any shot in progress
+        if (status != null && status.IsStunned)
+        {
+            if (winding) CancelWindup();
+            velocity = Vector3.MoveTowards(velocity, Vector3.zero, acceleration * 3f * dt);
+            velocity.y = VerticalVelocity();
+            transform.position += velocity * dt;
+            ClampAboveGround();
+            return;
+        }
+
         UpdateState();
 
         // walks while idle, takes off when it aggros and lands again when it loses interest
@@ -144,6 +182,7 @@ public class EnemyFlyingShooter : MonoBehaviour
 
         Vector3 desiredVelocity = state == State.Chase ? ChaseVelocity() : IdleVelocity();
         desiredVelocity = Avoid(desiredVelocity);
+        if (status != null) desiredVelocity *= status.SpeedMultiplier;   // slowed
 
         // horizontal is smoothed, vertical is handled on its own below
         Vector3 desiredFlat = winding ? Vector3.zero : new Vector3(desiredVelocity.x, 0f, desiredVelocity.z);   // hover in place while aiming
@@ -163,7 +202,7 @@ public class EnemyFlyingShooter : MonoBehaviour
 
         if (state == State.Idle)
         {
-            if (dist <= aggroRange && HasSight()) state = State.Chase;
+            if (!targetDead && dist <= aggroRange && HasSight()) state = State.Chase;
         }
         else if (dist > loseAggroRange)
         {
@@ -179,7 +218,11 @@ public class EnemyFlyingShooter : MonoBehaviour
         Vector3 from = transform.position;
         Vector3 to = target.position + Vector3.up;
         Vector3 dir = to - from;
-        return !Physics.Raycast(from, dir.normalized, dir.magnitude, sightMask, QueryTriggerInteraction.Ignore);
+        // barriers are see-through, so only other geometry blocks the view
+        var hits = Physics.RaycastAll(from, dir.normalized, dir.magnitude, sightMask, QueryTriggerInteraction.Ignore);
+        foreach (var h in hits)
+            if (h.collider.GetComponentInParent<Barrier>() == null) return false;
+        return true;
     }
 
     Vector3 IdleVelocity()
@@ -366,7 +409,12 @@ public class EnemyFlyingShooter : MonoBehaviour
         if (Physics.SphereCast(origin, beamRadius, aimDir, out RaycastHit hit, maxLen, damageMask, QueryTriggerInteraction.Ignore))
         {
             end = origin + aimDir * hit.distance;
-            if (hit.collider.CompareTag(targetTag))
+            var barrier = hit.collider.GetComponentInParent<Barrier>();
+            if (barrier != null)
+            {
+                if (barrier.Blocks(targetTag)) barrier.Hit(damage, beamBreaksBarriers, hit.point);
+            }
+            else if (hit.collider.CompareTag(targetTag))
             {
                 var dmg = hit.collider.GetComponentInParent<IDamageable>();
                 if (dmg != null) dmg.TakeDamage(damage, hit.point);

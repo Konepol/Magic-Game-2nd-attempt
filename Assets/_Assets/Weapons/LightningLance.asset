@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: LightningLance
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Lightning Lance
+  defaultProjectile: {fileID: 0}
+  tap:
+    kind: 1
+    damage: 12
+    breaksBarriers: 0
+    effectColor: {r: 0.6, g: 0.85, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 70
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.2
+    laserDuration: 0.15
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 0
+      duration: 0
+      magnitude: 0
+    manaCost: 8
+    cooldown: 0.5
+  hasHoldVariant: 1
+  holdThreshold: 0.7
+  hold:
+    kind: 1
+    damage: 35
+    breaksBarriers: 1
+    effectColor: {r: 1, g: 0.95, b: 0.5, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 90
+    laserRadius: 0.15
+    laserPierces: 1
+    laserWidth: 0.6
+    laserDuration: 0.3
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 3
+      duration: 1.2
+      magnitude: 0
+    manaCost: 30
+    cooldown: 2
+  tapMovement: 0
+  tapRecovery: 0
+  holdingMovement: 1
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 0.5
+  autoRepeatWhenHeld: 0

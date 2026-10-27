@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: SparkStream
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Spark Stream
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  tap:
+    kind: 0
+    damage: 3
+    breaksBarriers: 0
+    effectColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 55
+    lifetime: 4
+    projectileScale: 0.4
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 0
+      duration: 0
+      magnitude: 0
+    manaCost: 2
+    cooldown: 0.1
+  hasHoldVariant: 0
+  holdThreshold: 0.5
+  hold:
+    kind: 0
+    damage: 30
+    breaksBarriers: 0
+    effectColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 0
+      duration: 0
+      magnitude: 0
+    manaCost: 0
+    cooldown: 1.2
+  tapMovement: 0
+  tapRecovery: 0
+  holdingMovement: 0
+  holdingStartsAfter: 0.15
+  heldMovement: 0
+  heldRecovery: 0
+  autoRepeatWhenHeld: 1

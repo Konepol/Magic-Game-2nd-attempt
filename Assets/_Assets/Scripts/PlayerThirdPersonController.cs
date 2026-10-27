@@ -142,6 +142,24 @@ namespace StarterAssets
             }
         }
 
+        private Mana _mana;
+        private PlayerSpellCaster _caster;
+
+        [Tooltip("Walking speed multiplier while casting a Slow spell (Stand spells stop you completely).")]
+        [Range(0.05f, 1f)] public float SlowCastSpeedMultiplier = 0.5f;
+
+        private bool Casting
+        {
+            get
+            {
+                if (_caster == null) _caster = GetComponentInChildren<PlayerSpellCaster>();
+                return _caster != null && _caster.IsCasting;
+            }
+        }
+
+        // casting a Stand spell: no walking, turning to move, or jumping
+        private bool Rooted => _caster != null && _caster.ActiveCastMovement == CastMovement.Stand;
+
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
@@ -238,13 +256,18 @@ namespace StarterAssets
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            // no sprinting while charging mana
+            if (_mana == null) _mana = GetComponent<Mana>();
+            bool sprinting = _input.sprint && (_mana == null || !_mana.IsCharging) && !Casting;
+            float targetSpeed = sprinting ? SprintSpeed : MoveSpeed;
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            bool rooted = Rooted;
+            if (Casting && !rooted) targetSpeed *= SlowCastSpeedMultiplier;   // Slow mode: keep moving, slower
+            if (_input.move == Vector2.zero || rooted) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -277,7 +300,7 @@ namespace StarterAssets
 
             // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
+            if (_input.move != Vector2.zero && !rooted)
             {
                 _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
                                   _mainCamera.transform.eulerAngles.y;
@@ -332,7 +355,7 @@ namespace StarterAssets
                 }
 
                 // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f && !Rooted)
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 058dbd242cdb70645908b3c95d507acd, type: 3}
+  m_Name: ArcanistStaff
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  displayName: Arcanist Staff
+  spells:
+  - {fileID: 11400000, guid: 13e4958c455d47942bd46181c7e05f42, type: 2}
+  - {fileID: 11400000, guid: 92b6b17b061a0e44a9bcd2e1705718b6, type: 2}
+  - {fileID: 11400000, guid: aa6b9cd25aa286249aff61476ac3b512, type: 2}
+  - {fileID: 11400000, guid: 336a91e1ec9f946448d3ada891b824ff, type: 2}

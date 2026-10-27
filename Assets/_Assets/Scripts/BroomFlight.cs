@@ -24,6 +24,7 @@ public class BroomFlight : MonoBehaviour
 
     [Header("Vertical (Space / Ctrl)")]
     [SerializeField] float verticalSpeed = 8f;
+    [SerializeField, Range(0.05f, 1f)] float castSpeedMultiplier = 0.4f;   // speed while casting a spell (charging mana stops you completely instead)
     [SerializeField] float verticalAcceleration = 15f;
     [SerializeField] float verticalCoastTime = 0.4f;
 
@@ -69,6 +70,16 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] bool debugLogs = true;
 
     public bool IsFlying { get; private set; }
+
+    // read-only state for the HUD
+    public float Stamina01 => stamina / Mathf.Max(maxStamina, 0.01f);
+    public bool IsExhausted => exhausted;
+    public bool CanMount => stamina >= minStaminaToMount;
+    public bool IsBoosting => IsFlying && boostFactor > 1.05f;
+    public string MountKeyLabel =>
+        broomAction != null && broomAction.action != null && broomAction.action.bindings.Count > 0
+            ? broomAction.action.bindings[0].ToDisplayString()
+            : "X";
 
     CharacterController controller;
     PlayerThirdPersonController tpc;
@@ -142,7 +153,7 @@ public class BroomFlight : MonoBehaviour
         SetAnimator(true);
     }
 
-    void Dismount()
+    public void Dismount()
     {
         Log("DISMOUNT");
         horizontalVelocity = Vector3.zero;
@@ -171,6 +182,9 @@ public class BroomFlight : MonoBehaviour
             if (p.nameHash == flyingHash) { playerAnimator.SetBool(flyingHash, flying); return; }
     }
 
+    Mana mana;
+    PlayerSpellCaster caster;
+
     void Update()
     {
         UpdateFov();
@@ -181,8 +195,17 @@ public class BroomFlight : MonoBehaviour
         // Space is also the jump key; clear it so it doesn't fire a jump after dismounting
         input.jump = false;
 
+        // charging mana: no accelerating, boosting or climbing, the broom just coasts to a stop
+        if (mana == null) mana = GetComponent<Mana>();
+        bool charging = mana != null && mana.IsCharging;
+
+        // casting a spell slows the broom but does not stop it
+        if (caster == null) caster = GetComponentInChildren<PlayerSpellCaster>();
+        bool casting = caster != null && caster.IsCasting;
+        float castMul = casting ? castSpeedMultiplier : 1f;
+
         // ---------- horizontal: WASD, flat relative to camera yaw ----------
-        Vector2 move = input.move;
+        Vector2 move = charging ? Vector2.zero : input.move;
         Vector3 camForward = Vector3.ProjectOnPlane(mainCamera.transform.forward, Vector3.up).normalized;
         Vector3 camRight = Vector3.ProjectOnPlane(mainCamera.transform.right, Vector3.up).normalized;
         Vector3 wish = camForward * move.y + camRight * move.x;
@@ -198,13 +221,13 @@ public class BroomFlight : MonoBehaviour
 
         // boost only counts while moving, and ramps smoothly
         bool canBoost = stamina > 0f && !exhausted;
-        bool boosting = input.sprint && hasInput && canBoost;
+        bool boosting = input.sprint && hasInput && canBoost && !charging && !casting;
         float targetBoost = boosting ? boostMultiplier : 1f;
         boostFactor = Mathf.MoveTowards(boostFactor, targetBoost, boostBlendSpeed * Time.deltaTime);
 
         if (hasInput)
         {
-            Vector3 target = wish.normalized * (maxSpeed * boostFactor);
+            Vector3 target = wish.normalized * (maxSpeed * boostFactor * castMul);
             horizontalVelocity = Vector3.MoveTowards(
                 horizontalVelocity, target, acceleration * boostFactor * Time.deltaTime);
         }
@@ -215,7 +238,7 @@ public class BroomFlight : MonoBehaviour
         }
 
         // ---------- vertical: Space up, Ctrl down ----------
-        float vInput = (ascendAction.action.IsPressed() ? 1f : 0f)
+        float vInput = charging ? 0f : (ascendAction.action.IsPressed() ? 1f : 0f)
              - (descendAction.action.IsPressed() ? 1f : 0f);
 
         // Space while falling: cancel the fall completely
@@ -225,7 +248,7 @@ public class BroomFlight : MonoBehaviour
         if (Mathf.Abs(vInput) > 0.01f)
         {
             verticalVelocity = Mathf.MoveTowards(
-                verticalVelocity, vInput * verticalSpeed, verticalAcceleration * Time.deltaTime);
+                verticalVelocity, vInput * verticalSpeed * castMul, verticalAcceleration * Time.deltaTime);
         }
         else
         {

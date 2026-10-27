@@ -20,7 +20,8 @@ public class TargetLockOn : MonoBehaviour
     [SerializeField] RectTransform indicator;
     [SerializeField] Animator indicatorAnimator;         // optional, auto-found on the indicator
     [SerializeField] string indicatorBool = "LockOn";
-    [SerializeField] Vector3 indicatorOffset = new Vector3(0f, 1f, 0f);
+    [Tooltip("Where on the target to aim, as a fraction of its size. (0,0,0) = its centre, (0,0.5,0) = its top, (0,-0.5,0) = its feet. Scales with the target.")]
+    [SerializeField] Vector3 aimOffsetFraction = Vector3.zero;
 
     [Header("Detection")]
     [SerializeField] string enemyTag = "Enemy";
@@ -36,9 +37,27 @@ public class TargetLockOn : MonoBehaviour
 
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
-    public Vector3 AimPoint => CurrentTarget != null
-        ? CurrentTarget.position + indicatorOffset
-        : Vector3.zero;
+
+    public string LockKeyLabel =>
+        lockOnAction != null && lockOnAction.action != null && lockOnAction.action.bindings.Count > 0
+            ? lockOnAction.action.bindings[0].ToDisplayString()
+            : "V";
+    public Vector3 AimPoint => CurrentTarget != null ? PointOn(CurrentTarget) : Vector3.zero;
+
+    // a point on the target worked out from its own bounds, so big and small enemies are aimed at the same relative spot
+    Vector3 PointOn(Transform target)
+    {
+        Bounds b;
+        var col = target.GetComponent<Collider>();
+        if (col != null) b = col.bounds;
+        else
+        {
+            var rend = target.GetComponentInChildren<Renderer>();
+            if (rend == null) return target.position + Vector3.up;
+            b = rend.bounds;
+        }
+        return b.center + Vector3.Scale(aimOffsetFraction, b.size);
+    }
 
     AimConstraint aim;
     int camBoolHash, indicatorBoolHash;
@@ -132,7 +151,7 @@ public class TargetLockOn : MonoBehaviour
     }
 
     bool HasLineOfSight(Vector3 point) =>
-        !Physics.Linecast(lockOnPivot.position, point, obstacleLayer);
+        !Blocked(lockOnPivot.position, point);
 
     void Lock(Transform target)
     {
@@ -198,7 +217,7 @@ public class TargetLockOn : MonoBehaviour
         if (IsLocked)
         {
             // follow the enemy; if it is behind the camera, keep the last position
-            Vector3 screen = mainCamera.WorldToScreenPoint(CurrentTarget.position + indicatorOffset);
+            Vector3 screen = mainCamera.WorldToScreenPoint(PointOn(CurrentTarget));
             if (screen.z > 0f) indicator.position = screen;
         }
         else
@@ -206,5 +225,15 @@ public class TargetLockOn : MonoBehaviour
             // free camera: act as the crosshair at screen center
             indicator.position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         }
+    }
+
+    // line of sight check that treats barriers as see-through, so a barrier never stops a lock-on
+    bool Blocked(Vector3 from, Vector3 to)
+    {
+        Vector3 delta = to - from;
+        var hits = Physics.RaycastAll(from, delta.normalized, delta.magnitude, obstacleLayer);
+        foreach (var h in hits)
+            if (h.collider.GetComponentInParent<Barrier>() == null) return true;
+        return false;
     }
 }
