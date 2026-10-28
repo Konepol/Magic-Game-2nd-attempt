@@ -225,7 +225,7 @@ MonoBehaviour:
   beamWidth: 0.25
   damageMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 4294967231
   trackTime: 0.5
   warnTime: 0.5
   warnTrackFraction: 0.7

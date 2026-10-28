@@ -42,6 +42,10 @@ public class WaveSpawner : MonoBehaviour
     float nextTime;
     float nextSpawnTime;
 
+    public event Action Cleared;          // the last wave has been beaten
+    public float StartedAt { get; private set; } = -1f;       // when the first wave began (Time.time), -1 before that
+    public bool IsFinished => phase == Phase.Finished;
+
     public Phase CurrentPhase => phase;
     public int WaveNumber => Mathf.Max(index + 1, 0);
     public int TotalWaves => waves != null ? waves.Length : 0;
@@ -102,7 +106,7 @@ public class WaveSpawner : MonoBehaviour
             case Phase.Fighting:
                 if (alive.Count == 0)
                 {
-                    if (index + 1 >= waves.Length) phase = Phase.Finished;
+                    if (index + 1 >= waves.Length) { phase = Phase.Finished; Cleared?.Invoke(); }
                     else { phase = Phase.Waiting; nextTime = Time.time + betweenWaves; }
                 }
                 break;
@@ -112,7 +116,8 @@ public class WaveSpawner : MonoBehaviour
     void BeginWave()
     {
         index++;
-        if (waves == null || index >= waves.Length) { phase = Phase.Finished; return; }
+        if (waves == null || index >= waves.Length) { phase = Phase.Finished; Cleared?.Invoke(); return; }
+        if (StartedAt < 0f) StartedAt = Time.time;
 
         queue.Clear();
         foreach (var e in waves[index].entries)

@@ -70,6 +70,14 @@ public class PlayerDeath : MonoBehaviour
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
+        else if (Keyboard.current != null && (Keyboard.current.mKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame)
+                 && Application.CanStreamedLevelBeLoaded(PlayerProfile.MenuScene))
+        {
+            Time.timeScale = 1f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            SceneManager.LoadScene(PlayerProfile.MenuScene);
+        }
     }
 
     void OnGUI()
@@ -93,7 +101,7 @@ public class PlayerDeath : MonoBehaviour
 
         GUI.Label(new Rect(0, Screen.height * 0.35f, Screen.width, 100f), "YOU DIED", bigStyle);
         if (t >= restartPromptDelay)
-            GUI.Label(new Rect(0, Screen.height * 0.35f + 100f, Screen.width, 40f), "Press R, Enter or click to restart", smallStyle);
+            GUI.Label(new Rect(0, Screen.height * 0.35f + 100f, Screen.width, 40f), "Press R, Enter or click to restart      M: main menu", smallStyle);
         GUI.color = old;
     }
 }

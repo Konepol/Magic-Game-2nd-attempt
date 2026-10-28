@@ -19,6 +19,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     [SerializeField] Transform muzzle;               // empty at the hand or weapon
     [SerializeField] WeaponData weapon;
     [SerializeField] WeaponData[] loadout;           // weapons to cycle through with the switch key
+    [SerializeField, Tooltip("Use the spells the player picked in the main menu's Customize screen instead of the weapon above.")]
+    bool useProfileLoadout = true;
 
     [Header("Skill Keys (one per weapon slot)")]
     [SerializeField] InputAction[] skillActions =
@@ -51,6 +53,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     float[] cooldownEnd;
     float castingUntil;
     CastingCircle[] holdCircles;
+    List<CastingCircle>[] tierCircles;     // the extra circles of a spell with charge tiers, one per tier reached
+    int[] tierReached;
     bool[] inCombo;          // this slot's key is part of the active combined cast
     bool[] ignoredPress;     // a key press that was refused (cannot combine); ignored until the key is released
     bool[] readyPlayed;      // the "ready" sound has played for this hold
@@ -142,6 +146,12 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         mana = GetComponentInParent<Mana>();
         health = GetComponentInParent<Health>();
+
+        if (useProfileLoadout)
+        {
+            var chosen = PlayerProfile.BuildWeapon();
+            if (chosen != null) { weapon = chosen; loadout = null; }
+        }
         AllocateSlots(CapacityFor(weapon));
     }
 
@@ -164,6 +174,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         effHeld = new float[n];
         charging = new bool[n];
         holdCircles = new CastingCircle[n];
+        tierCircles = new List<CastingCircle>[n];
+        tierReached = new int[n];
         inCombo = new bool[n];
         ignoredPress = new bool[n];
         readyPlayed = new bool[n];
@@ -272,17 +284,31 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 float realHeld = Time.time - pressTime[i];                 // for the tap window
                 float held = effHeld[i];                                   // for the circle and the cast time
                 float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
-                var heldVariant = hasHold ? spell.hold : spell.tap;     // the variant this hold cast completes as
+                var baseVariant = hasHold ? spell.hold : spell.tap;     // what the first circle is made for
                 bool complete = held >= castTime;
+                int tier = hasHold && complete ? spell.TierAt(held) : 0;
+                var heldVariant = hasHold ? spell.VariantForTier(tier) : spell.tap;     // the variant this hold cast would fire as right now
 
                 // after the tap window the player has committed to a hold cast: the circle starts drawing and finishes with the cast time
                 if (held >= spell.tapWindow)
                 {
                     if (holdCircles[i] == null && spell.holdCircle != null)
-                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, heldVariant.effectColor, this, heldVariant, spell.circleScale);
+                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale);
 
                     if (holdCircles[i] != null)
                         holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
+
+                    // charging past the cast time: each tier adds a bigger circle, and a chime and a small jolt mark the step up
+                    if (hasHold && spell.TierCount > 0)
+                    {
+                        UpdateTierCircles(i, spell, held);
+                        if (tier > tierReached[i])
+                        {
+                            tierReached[i] = tier;
+                            SpellFX.Play(Sfx.Ready, muzzle.position, 1f);
+                            CameraShake.Add(0.2f);
+                        }
+                    }
 
                     // aimed spells without a casting circle keep the plain ring
                     if (heldVariant.NeedsAim && spell.holdCircle == null)
@@ -299,7 +325,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     if (realHeld < spell.tapWindow)
                     {
                         DropCircle(i);
-                        Cast(i, spell.tap, spell);                           // a quick tap: instant
+                        if (spell.tapDoesNothing) HoldHint(i, spell);        // this spell has to be charged: a tap only reminds the player
+                        else Cast(i, spell.tap, spell);                      // a quick tap: instant
                     }
                     else if (hasHold && !complete)
                     {
@@ -307,8 +334,18 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
                     else
                     {
+                        // the strongest tier the mana can pay for
+                        var fire = heldVariant;
+                        int firedTier = 0;
+                        if (hasHold)
+                        {
+                            firedTier = tier;
+                            while (firedTier > 0 && mana != null && !mana.CanAfford(spell.VariantForTier(firedTier).manaCost)) firedTier--;
+                            fire = spell.VariantForTier(firedTier);
+                        }
+
                         TakeCentre(i);                                       // released while other casts are going: it rotates to the centre as it fires
-                        FinishHoldCast(i, Cast(i, heldVariant, spell));      // the circle was complete and the player let go: the spell fires
+                        FinishHoldCast(i, Cast(i, fire, spell), firedTier);  // the circle was complete and the player let go: the spell fires
                     }
                 }
                 else if (complete && holdCircles[i] != null)
@@ -356,6 +393,54 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         UpdateMulticastLayout();
 
         if (!aimingNow) SetAimRing(false, Vector3.zero, 0f, Color.white);
+    }
+
+    // the extra circles of a charge-tier spell: each one draws between the previous tier's time and its own, on top of the earlier ones
+    void UpdateTierCircles(int slot, SpellData spell, float held)
+    {
+        var tiers = spell.extraTiers;
+        var list = tierCircles[slot] ?? (tierCircles[slot] = new List<CastingCircle>());
+
+        float start = Mathf.Max(spell.holdThreshold, 0.05f);
+        for (int t = 0; t < tiers.Length; t++)
+        {
+            float end = tiers[t].time;
+            if (held >= start && tiers[t].circle != null)
+            {
+                while (list.Count <= t) list.Add(null);
+                if (list[t] == null)
+                {
+                    var v = spell.VariantForTier(t + 1);
+                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale);
+                }
+
+                if (list[t] != null)
+                {
+                    list[t].SetProgress((held - start) / Mathf.Max(end - start, 0.05f));
+                    if (held >= end) list[t].Complete();
+                }
+            }
+            start = end;
+        }
+    }
+
+    void EachTierCircle(int slot, System.Action<CastingCircle> action)
+    {
+        var list = tierCircles != null ? tierCircles[slot] : null;
+        if (list == null) return;
+        foreach (var c in list) if (c != null) action(c);
+        list.Clear();
+    }
+
+    // a quick tap on a spell that must be charged
+    void HoldHint(int slot, SpellData spell)
+    {
+        CastFailed?.Invoke("Hold to charge");
+        if (spell.tapCircle != null && Time.time - lastTapCircle[slot] > 0.3f)
+        {
+            lastTapCircle[slot] = Time.time;
+            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale);
+        }
     }
 
     // ---------- combining spells (recipes) and multicasting ----------
@@ -449,6 +534,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         pressTime[i] = Time.time;
         effHeld[i] = 0f;
         readyPlayed[i] = false;
+        tierReached[i] = 0;
     }
 
     // a hold spell key was pressed: start it, join a recipe with the casts already going, or cast it alongside them
@@ -723,6 +809,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             else if (holdCircles[id] != null)
             {
                 holdCircles[id].SetPlacement(angle, radius, scale);
+                var extra = tierCircles[id];
+                if (extra != null) foreach (var c in extra) if (c != null) c.SetPlacement(angle, radius, scale);
             }
 
             if (id != leavingId) order.Add(new KeyValuePair<int, int>(place, id));
@@ -783,6 +871,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         places[slot] = 0;
         if (holdCircles[slot] != null) holdCircles[slot].SetPlacement(0f, multicastRingRadius, 1f);
+        if (tierCircles[slot] != null) foreach (var c in tierCircles[slot]) if (c != null) c.SetPlacement(0f, multicastRingRadius, 1f);
         leavingId = slot;
         leavingUntil = Time.time + 0.45f;
     }
@@ -803,10 +892,24 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         var sp = GetSpell(id);
         bool ready = IsReady(id);
+
+        // a charge-tier spell: the name follows the tier reached, and the bar fills toward the next tier
+        int tier = ready ? sp.TierAt(effHeld[id]) : 0;
+        float progress = Mathf.Clamp01(effHeld[id] / Mathf.Max(sp.holdThreshold, 0.05f));
+        if (ready && sp.TierCount > 0)
+        {
+            if (tier >= sp.TierCount) progress = 1f;
+            else
+            {
+                float from = tier == 0 ? sp.holdThreshold : sp.extraTiers[tier - 1].time;
+                progress = Mathf.Clamp01((effHeld[id] - from) / Mathf.Max(sp.extraTiers[tier].time - from, 0.05f));
+            }
+        }
+
         return new CastEntryInfo
         {
-            name = ready ? sp.HoldName : sp.displayName,
-            progress = Mathf.Clamp01(effHeld[id] / Mathf.Max(sp.holdThreshold, 0.05f)),
+            name = ready ? sp.TierName(tier) : sp.displayName,
+            progress = progress,
             ready = ready, primary = primary, isCombo = false,
         };
     }
@@ -835,12 +938,24 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
     }
 
-    void FinishHoldCast(int slot, bool success)
+    // the spell fired as tier `tier` (0 = the normal hold version). Its circles fade out as a finished cast; a higher tier's circle that was
+    // still drawing (or that the mana could not pay for) falls back: it breaks instead, so it never looks like that bigger spell was cast.
+    void FinishHoldCast(int slot, bool success, int tier = 0)
     {
         if (!success) { FizzleCast(slot, "Not enough mana"); return; }
 
         if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.35f);
         holdCircles[slot] = null;
+
+        var list = tierCircles[slot];
+        if (list == null) return;
+        for (int j = 0; j < list.Count; j++)
+        {
+            if (list[j] == null) continue;
+            if (j < tier) list[j].FadeOut(0.35f);       // circle j belongs to tier j + 1
+            else list[j].Fizzle();
+        }
+        list.Clear();
     }
 
     // the spell failed (released too early, or not enough mana): break the circle, no cast, short lockout
@@ -850,6 +965,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         if (holdCircles[slot] != null) holdCircles[slot].Fizzle();
         holdCircles[slot] = null;
+        EachTierCircle(slot, c => c.Fizzle());
 
         cooldownEnd[slot] = Time.time + fizzleCooldown;
         cooldownTotal[slot] = fizzleCooldown;
@@ -862,7 +978,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
     void DropCircle(int slot)
     {
-        if (holdCircles == null || holdCircles[slot] == null) return;
+        if (holdCircles == null) return;
+        EachTierCircle(slot, c => c.FadeOut(0.2f));
+        if (holdCircles[slot] == null) return;
         holdCircles[slot].FadeOut(0.2f);
         holdCircles[slot] = null;
     }
@@ -994,6 +1112,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         result = default;
         return false;
     }
+
+    // where a spell would go right now: toward the locked target, or the cursor / crosshair
+    public Vector3 AimDirection => muzzle != null && mainCamera != null ? GetAimDirection() : transform.forward;
+    public Vector3 AimOrigin => muzzle != null ? muzzle.position : transform.position;
 
     Vector3 GetAimDirection()
     {

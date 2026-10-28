@@ -2439,6 +2439,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 632599717}
   m_CullTransparentMesh: 1
+--- !u!1 &644729619
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 644729621}
+  - component: {fileID: 644729620}
+  m_Layer: 0
+  m_Name: StageRunner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &644729620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644729619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bed7f26b94cc7cb4a87f7fa7b0ca0909, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageRunner
+  spawner: {fileID: 681589519}
+  enemyTag: Enemy
+  resultsDelay: 1.5
+--- !u!4 &644729621
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644729619}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &662362457
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3642,6 +3689,7 @@ MonoBehaviour:
   weapon: {fileID: 11400000, guid: f19557741e41ae34eb9463ed96caacdd, type: 2}
   loadout:
   - {fileID: 11400000, guid: f19557741e41ae34eb9463ed96caacdd, type: 2}
+  useProfileLoadout: 1
   skillActions:
   - m_Name: Skill1
     m_Type: 1
@@ -4305,8 +4353,6 @@ MonoBehaviour:
   readyColor: {r: 1, g: 0.8, b: 0.2, a: 1}
   warningColor: {r: 0.8, g: 0.25, b: 0.2, a: 1}
   manaChargeColor: {r: 0.6, g: 0.9, b: 1, a: 1}
-  broomLowBelow: 0.25
-  broomPoundStrength: 0.06
   chargeHintBelow: 0.5
   shiftHealthColorWhenLow: 1
   lowHealthColor: {r: 0.95, g: 0.25, b: 0.2, a: 1}
@@ -8297,6 +8343,7 @@ GameObject:
   - component: {fileID: 4416926081459036373}
   - component: {fileID: 6982812146598649887}
   - component: {fileID: 6982812146598649886}
+  - component: {fileID: 6982812146598649888}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -9106,17 +9153,10 @@ MonoBehaviour:
   - {fileID: 182751461}
   fovKick: 12
   fovBlendSpeed: 2.5
-  maxStamina: 200
   flyDrain: 1.5
   boostDrain: 18
-  groundRegen: 25
-  minStaminaToMount: 15
-  boostRecoverThreshold: 30
-  dismountWhenEmpty: 1
-  staminaFill: {fileID: 0}
-  staminaGroup: {fileID: 0}
-  fullColor: {r: 0.3, g: 0.9, b: 1, a: 1}
-  lowColor: {r: 1, g: 0.35, b: 0.25, a: 1}
+  regenWhileFlying: 0.35
+  remountThreshold: 30
   fallBrakeTime: 0.7
   redirectRate: 60
   dismountCarry: 0.5
@@ -9191,6 +9231,51 @@ MonoBehaviour:
   chargeRegenPerSecond: 35
   interruptLockout: 1
   chargeColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+--- !u!114 &6982812146598649888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081459036377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aaf3b4ccc1072745bd48399e618071a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBarrier
+  raiseAction:
+    m_Name: Barrier
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: 3b317d61-c3cd-45ed-8685-6a30a87f4518
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 3469e2a2-2dc5-4a9f-8b48-46fdc42317c2
+      m_Path: <Keyboard>/f
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Barrier
+      m_Flags: 0
+    m_Flags: 0
+    m_Priority: 0
+  holdToRaise: 1
+  distance: 2.2
+  width: 3.2
+  height: 2.4
+  hexRadius: 0.42
+  thickness: 0.2
+  hoverHeight: 0.1
+  followSpeed: 16
+  levelLimit: 0.3
+  color: {r: 0.4, g: 0.8, b: 1, a: 0.4}
+  chargingCoverage: 0.45
+  chargeRateWithBarrier: 0.4
+  manaPerDamage: 1
+  minManaToRaise: 5
+  breakLockout: 3
 --- !u!4 &6983258931977558208
 Transform:
   m_ObjectHideFlags: 0
@@ -9896,3 +9981,4 @@ SceneRoots:
   - {fileID: 287283500}
   - {fileID: 1431043221}
   - {fileID: 681589520}
+  - {fileID: 644729621}

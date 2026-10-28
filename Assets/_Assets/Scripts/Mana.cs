@@ -20,6 +20,34 @@ public class Mana : MonoBehaviour
     public float Max => maxMana;
     public bool IsCharging { get; private set; }
 
+    // set by anything that holds mana back (the player's barrier): no natural regeneration while true (holding the charge key still works)
+    public bool RegenBlocked => RegenScale <= 0f;
+
+    // natural regeneration speed, as the product of everything slowing it: the barrier stops it (0), the broom slows it
+    public float RegenScale
+    {
+        get
+        {
+            float scale = 1f;
+            foreach (var kv in regenScales) scale *= kv.Value;
+            return scale;
+        }
+    }
+
+    readonly System.Collections.Generic.Dictionary<object, float> regenScales = new System.Collections.Generic.Dictionary<object, float>();
+
+    // 1 = normal, 0 = no regeneration; each owner (barrier, broom) sets its own, and 1 clears it
+    public void SetRegenScale(object owner, float scale)
+    {
+        if (scale >= 0.999f) regenScales.Remove(owner);
+        else regenScales[owner] = Mathf.Max(0f, scale);
+    }
+
+    public void SetRegenBlocked(object owner, bool blocked) => SetRegenScale(owner, blocked ? 0f : 1f);
+
+    // slows (or speeds up) charging with the charge key; the barrier slows it while it is up
+    public float ChargeRateMultiplier { get; set; } = 1f;
+
     public string ChargeKeyLabel =>
         chargeAction.bindings.Count > 0 ? chargeAction.bindings[0].ToDisplayString() : "R";
 
@@ -46,6 +74,8 @@ public class Mana : MonoBehaviour
 
     void OnDisable()
     {
+        regenScales.Clear();
+        ChargeRateMultiplier = 1f;
         chargeAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
         IsCharging = false;
@@ -69,6 +99,17 @@ public class Mana : MonoBehaviour
         lastSpendTime = Time.time;
         Changed?.Invoke(Current, maxMana);
         return true;
+    }
+
+    // takes up to this much mana (a barrier soaking damage); returns how much was actually taken
+    public float Drain(float amount)
+    {
+        if (amount <= 0f || Current <= 0f) return 0f;
+        float taken = Mathf.Min(amount, Current);
+        Current -= taken;
+        lastSpendTime = Time.time;
+        Changed?.Invoke(Current, maxMana);
+        return taken;
     }
 
     public void Restore(float amount)
@@ -100,8 +141,8 @@ public class Mana : MonoBehaviour
         if (IsCharging && !wasCharging) SpellFX.Play(Sfx.Charge, transform.position);
 
         float rate = 0f;
-        if (IsCharging) rate = chargeRegenPerSecond;
-        else if (Time.time - lastSpendTime >= regenDelay) rate = regenPerSecond;
+        if (IsCharging) rate = chargeRegenPerSecond * ChargeRateMultiplier;
+        else if (Time.time - lastSpendTime >= regenDelay) rate = regenPerSecond * RegenScale;
 
         if (rate > 0f && Current < maxMana)
         {

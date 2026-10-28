@@ -26,6 +26,10 @@ public class Health : MonoBehaviour, IDamageable
     // fires for every Health in the scene (health, amount, hit point), used by floating damage numbers
     public static event Action<Health, float, Vector3> AnyDamaged;
 
+    // the damage that was really taken (a hit past the remaining health counts only what was left), and every death; used by the stage statistics
+    public static event Action<Health, float> AnyDamageApplied;
+    public static event Action<Health> AnyDied;
+
     float invulnerableUntil;
 
     void Awake() => Current = maxHealth;
@@ -37,7 +41,9 @@ public class Health : MonoBehaviour, IDamageable
         if (IsDead || amount <= 0f || Time.time < invulnerableUntil) return;
 
         invulnerableUntil = Time.time + invulnerableTime;
+        float applied = Mathf.Min(amount, Current);
         Current = Mathf.Max(0f, Current - amount);
+        AnyDamageApplied?.Invoke(this, applied);
         Damaged?.Invoke(amount);
         AnyDamaged?.Invoke(this, amount, hitPoint);
         Changed?.Invoke(Current, maxHealth);
@@ -66,6 +72,7 @@ public class Health : MonoBehaviour, IDamageable
         IsDead = true;
         onDeath?.Invoke();
         Died?.Invoke();
+        AnyDied?.Invoke(this);
         if (destroyOnDeath) Destroy(gameObject, destroyDelay);
     }
 }

@@ -31,9 +31,6 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Color warningColor = new Color(0.8f, 0.25f, 0.2f);
     [SerializeField] Color manaChargeColor = new Color(0.6f, 0.9f, 1f);     // mana bar pulse while charging mana
 
-    [Header("Broom")]
-    [SerializeField, Range(0f, 1f)] float broomLowBelow = 0.25f;     // while flying under this much stamina the broom box pounds
-    [SerializeField] float broomPoundStrength = 0.06f;               // how much bigger it swells at the top of each beat
 
     [Header("Mana")]
     [SerializeField, Range(0f, 1f)] float chargeHintBelow = 0.5f;   // under this fraction of mana the bar reminds you which key charges it
@@ -282,14 +279,16 @@ public class PlayerHUD : MonoBehaviour
 
             s.nameText.text = spell.displayName;
             s.keyText.text = caster.GetKeyLabel(i);
-            s.costText.text = spell.hasHoldVariant
-                ? Mathf.RoundToInt(spell.tap.manaCost) + " / " + Mathf.RoundToInt(spell.hold.manaCost)
-                : Mathf.RoundToInt(spell.tap.manaCost).ToString();
+            s.costText.text = spell.tapDoesNothing
+                ? "Hold " + Mathf.RoundToInt(spell.hold.manaCost)
+                : spell.hasHoldVariant
+                    ? Mathf.RoundToInt(spell.tap.manaCost) + " / " + Mathf.RoundToInt(spell.hold.manaCost)
+                    : Mathf.RoundToInt(spell.tap.manaCost).ToString();
 
             s.cooldown.fillAmount = caster.GetCooldown01(i);
 
             // can't afford: a red cast over whatever the background looks like
-            bool affordable = mana == null || mana.CanAfford(spell.tap.manaCost);
+            bool affordable = mana == null || mana.CanAfford(spell.tapDoesNothing ? spell.hold.manaCost : spell.tap.manaCost);
             s.bg.color = affordable ? baseBg[i] : baseBg[i] * new Color(1f, 0.45f, 0.45f, 1f);
 
             // border: its normal colour, blue while charging a hold spell, gold once the hold version is ready
@@ -306,27 +305,22 @@ public class PlayerHUD : MonoBehaviour
         if (broomBox == null || broom == null) return;
 
         bool flying = broom.IsFlying;
-        float st = broom.Stamina01;
 
-        // broom: fill = stamina, border shows the state
-        broomBox.cooldown.color = Color.Lerp(lowHealthColor, new Color(0.3f, 0.85f, 0.9f), Mathf.Clamp01(st / 0.35f)) * new Color(1f, 1f, 1f, 0.55f);
-        broomBox.cooldown.fillAmount = st;
-        broomBox.costText.text = flying ? Mathf.CeilToInt(st * 100f) + "%" : (broom.CanMount ? "READY" : "LOW");
-        broomBox.costText.color = flying ? Color.white : (broom.CanMount ? new Color(0.6f, 1f, 0.7f) : new Color(1f, 0.5f, 0.45f));
-        broomBox.border.color = flying ? chargingColor : (broom.IsExhausted || !broom.CanMount ? warningColor : broomBorder);
-
-        // low on stamina while flying: the box pounds like a heartbeat, faster the closer it gets to empty
-        float pound = 1f;
-        if (flying && st < broomLowBelow)
+        // broom: no energy bar (the mounting is free). After running dry it is locked until the mana is back up: the box shows that progress.
+        if (broomBox.cooldown.enabled) broomBox.cooldown.enabled = false;
+        bool locked = !flying && !broom.CanMount;
+        if (locked)
         {
-            float urgency = 1f - Mathf.Clamp01(st / Mathf.Max(broomLowBelow, 0.01f));      // 0 at the threshold, 1 when empty
-            float rate = Mathf.Lerp(5f, 9f, urgency);
-            broomBeatPhase += rate * Time.unscaledDeltaTime;
-            float beat = Mathf.Pow(Mathf.Abs(Mathf.Sin(broomBeatPhase)), 3f);              // sharp thump, then rest
-            pound = 1f + broomPoundStrength * beat;
-            broomBox.border.color = Color.Lerp(warningColor, Color.white, beat * 0.5f);
+            broomBox.costText.text = Mathf.FloorToInt(broom.ManaNow) + "/" + Mathf.CeilToInt(broom.RemountThreshold);
+            broomBox.costText.color = new Color(1f, 0.5f, 0.45f);
+            broomBox.border.color = warningColor;
         }
-        broomBox.border.rectTransform.localScale = Vector3.Lerp(broomBox.border.rectTransform.localScale, broomScale * pound, 1f - Mathf.Exp(-25f * Time.unscaledDeltaTime));
+        else
+        {
+            broomBox.costText.text = flying ? "FLYING" : "READY";
+            broomBox.costText.color = flying ? Color.white : new Color(0.6f, 1f, 0.7f);
+            broomBox.border.color = flying ? chargingColor : broomBorder;
+        }
     }
 
     // the combined spell's box: only visible while two or more spells are being combined

@@ -9,6 +9,23 @@ public enum SpellKind
     Barrier,      // a wall with health that blocks enemy shots
 }
 
+// A stronger version of a hold spell, reached by keeping the key held past the cast time (see SpellData.extraTiers).
+[Serializable]
+public class ChargeTier
+{
+    public string displayName = "Greater";
+    [Tooltip("Seconds held (counted like the cast time) at which this tier is reached. Must be later than the previous tier.")]
+    public float time = 3f;
+    [Tooltip("Multiplies the hold version's damage.")]
+    public float damageMultiplier = 1.5f;
+    [Tooltip("Multiplies the blast / explosion size (and projectile size).")]
+    public float sizeMultiplier = 1.3f;
+    public float manaMultiplier = 1.3f;
+    [Tooltip("An extra casting circle that draws itself on top of the earlier ones while charging toward this tier. Make it bigger and busier.")]
+    public CastingCircleData circle;
+    [Range(0.3f, 3f)] public float circleScale = 1f;
+}
+
 // One way of casting a spell. A spell has a tap variant and, optionally, a hold variant.
 [Serializable]
 public class SpellVariant
@@ -119,6 +136,12 @@ public class SpellData : ScriptableObject
     [UnityEngine.Serialization.FormerlySerializedAs("autoCombinable")]
     public bool multicastable = true;
 
+    [Header("Charge tiers (hold spells)")]
+    [Tooltip("Tapping the key does nothing except remind the player to hold it.")]
+    public bool tapDoesNothing = false;
+    [Tooltip("Keep holding past the cast time and the spell grows into a stronger version at each of these times: bigger, harder hitting, with a bigger circle.")]
+    public ChargeTier[] extraTiers;
+
     [Header("Tap-only spells")]
     public bool autoRepeatWhenHeld = false; // keeps casting the tap variant while the key is held (ignored when there is a hold variant)
 
@@ -126,4 +149,41 @@ public class SpellData : ScriptableObject
     public string HoldName => string.IsNullOrEmpty(holdDisplayName) ? "Greater " + displayName : holdDisplayName;
 
     public SpellVariant Pick(float heldTime) => hasHoldVariant && heldTime >= holdThreshold ? hold : tap;
+
+    // ---------- charge tiers: 0 = the normal hold version (reached at the cast time), 1.. = the extra tiers ----------
+
+    [NonSerialized] SpellVariant[] tierVariants;
+
+    void OnValidate() => tierVariants = null;
+
+    public int TierCount => extraTiers != null ? extraTiers.Length : 0;
+
+    // the tier reached after holding this long (only meaningful once the cast time is up)
+    public int TierAt(float held)
+    {
+        int tier = 0;
+        for (int i = 0; i < TierCount; i++)
+            if (held >= extraTiers[i].time) tier = i + 1;
+        return tier;
+    }
+
+    public SpellVariant VariantForTier(int tier)
+    {
+        if (tier <= 0 || tier > TierCount) return hold;
+
+        if (tierVariants == null || tierVariants.Length != TierCount + 1) tierVariants = new SpellVariant[TierCount + 1];
+        if (tierVariants[tier] != null) return tierVariants[tier];
+
+        var t = extraTiers[tier - 1];
+        var v = hold.Clone();
+        v.damage *= t.damageMultiplier;
+        v.aoeRadius *= t.sizeMultiplier;
+        v.explosionRadius *= t.sizeMultiplier;
+        v.projectileScale *= t.sizeMultiplier;
+        v.manaCost *= t.manaMultiplier;
+        tierVariants[tier] = v;
+        return v;
+    }
+
+    public string TierName(int tier) => tier <= 0 || tier > TierCount ? HoldName : extraTiers[tier - 1].displayName;
 }

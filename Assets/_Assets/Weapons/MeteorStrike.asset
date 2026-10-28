@@ -53,7 +53,7 @@ MonoBehaviour:
   holdThreshold: 1.5
   hold:
     kind: 2
-    damage: 70
+    damage: 120
     breaksBarriers: 1
     effectColor: {r: 1, g: 0.25, b: 0.1, a: 1}
     projectilePrefab: {fileID: 0}
@@ -70,7 +70,7 @@ MonoBehaviour:
     laserPierces: 0
     laserWidth: 0.3
     laserDuration: 0.2
-    aoeRadius: 8
+    aoeRadius: 9
     aoeRange: 35
     aoeHeight: 6
     aoeDelay: 1
@@ -101,4 +101,13 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Cataclysm
   multicastable: 1
+  tapDoesNothing: 1
+  extraTiers:
+  - displayName: Apocalypse
+    time: 3.4
+    damageMultiplier: 2.6
+    sizeMultiplier: 1.7
+    manaMultiplier: 1.6
+    circle: {fileID: 11400000, guid: fd4aa8045df3e094ebc7f326a25eb5e8, type: 2}
+    circleScale: 1.15
   autoRepeatWhenHeld: 0

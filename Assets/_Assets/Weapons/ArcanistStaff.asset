@@ -16,9 +16,10 @@ MonoBehaviour:
   spells:
   - {fileID: 11400000, guid: 13e4958c455d47942bd46181c7e05f42, type: 2}
   - {fileID: 11400000, guid: 92b6b17b061a0e44a9bcd2e1705718b6, type: 2}
-  - {fileID: 11400000, guid: aa6b9cd25aa286249aff61476ac3b512, type: 2}
   - {fileID: 11400000, guid: 336a91e1ec9f946448d3ada891b824ff, type: 2}
   combos:
   - {fileID: 11400000, guid: 6c67523768ec19a47bdbbf8418879c23, type: 2}
   - {fileID: 11400000, guid: b22a9e5162429634f99e4f0fd9d3bfaf, type: 2}
-  allowAutoCombine: 1
+  allowMulticast: 1
+  multicastDelay: 0.3
+  maxMulticast: 3

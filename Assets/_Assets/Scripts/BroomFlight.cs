@@ -44,21 +44,17 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] float fovKick = 12f;                // extra degrees at full boost
     [SerializeField] float fovBlendSpeed = 2.5f;         // amount per second (1 = full kick)
 
-    [Header("Stamina")]
-    [SerializeField] float maxStamina = 100f;
-    [SerializeField] float flyDrain = 1.5f;              // per second while flying
-    [SerializeField] float boostDrain = 18f;             // extra per second while boosting
-    [SerializeField] float groundRegen = 25f;            // per second while on the ground
-    [SerializeField] float minStaminaToMount = 15f;
-    [SerializeField] float boostRecoverThreshold = 30f;  // boost stays locked after empty until above this
-    [SerializeField] bool dismountWhenEmpty = true;
+    [Header("Mana (mounting is free)")]
+    [SerializeField, Tooltip("Mana per second spent while flying.")]
+    float flyDrain = 1.5f;
+    [SerializeField, Tooltip("Extra mana per second spent while boosting.")]
+    float boostDrain = 18f;
+    [SerializeField, Range(0f, 1f), Tooltip("Natural mana regeneration while on the broom, as a share of normal. It slows down but never stops.")]
+    float regenWhileFlying = 0.35f;
+    [UnityEngine.Serialization.FormerlySerializedAs("boostRecoverThreshold")]
+    [SerializeField, Tooltip("After running out of mana on the broom, the broom cannot be mounted (or boosted) again until the mana is back to this.")]
+    float remountThreshold = 30f;
 
-    [Header("Stamina UI")]
-    [SerializeField] Image staminaFill;                  // Image Type = Filled, Horizontal
-    [SerializeField] CanvasGroup staminaGroup;           // optional, fades the bar when full and grounded
-    [SerializeField] Color fullColor = new Color(0.3f, 0.9f, 1f);
-    [SerializeField] Color lowColor = new Color(1f, 0.35f, 0.25f);
-    
     [Header("Mount In Air (carry fall speed)")]
     [SerializeField] float fallBrakeTime = 0.7f;     // no input: seconds to stop the fall (higher = falls longer before hovering)
     [SerializeField] float redirectRate = 60f;       // direction key: fall speed converted into movement per second
@@ -73,9 +69,10 @@ public class BroomFlight : MonoBehaviour
     public bool IsFlying { get; private set; }
 
     // read-only state for the HUD
-    public float Stamina01 => stamina / Mathf.Max(maxStamina, 0.01f);
     public bool IsExhausted => exhausted;
-    public bool CanMount => stamina >= minStaminaToMount;
+    public bool CanMount => !exhausted;                         // mounting costs nothing, but running dry locks the broom until some mana is back
+    public float RemountThreshold => remountThreshold;
+    public float ManaNow => mana != null ? mana.Current : 0f;
     public bool IsBoosting => IsFlying && boostFactor > 1.05f;
     public string MountKeyLabel =>
         broomAction != null && broomAction.action != null && broomAction.action.bindings.Count > 0
@@ -90,7 +87,6 @@ public class BroomFlight : MonoBehaviour
     int flyingHash;
     float boostFactor = 1f;
     float lastGroundY;
-    float stamina;
     bool exhausted;
     float fovAmount, prevFovAmount;
     float[] baseFov;
@@ -103,7 +99,7 @@ public class BroomFlight : MonoBehaviour
         tpc = GetComponent<PlayerThirdPersonController>();
         input = GetComponent<StarterAssetsInputs>();
         flyingHash = Animator.StringToHash(flyingBool);
-        stamina = maxStamina;
+        mana = GetComponent<Mana>();
         baseFov = new float[fovCameras.Length];
         for (int i = 0; i < fovCameras.Length; i++)
             baseFov[i] = fovCameras[i].Lens.FieldOfView;
@@ -120,17 +116,23 @@ public class BroomFlight : MonoBehaviour
         descendAction.action.Enable();
     }
 
-    void OnDisable() { broomAction.action.performed -= OnBroomPressed; }
+    void OnDisable()
+    {
+        broomAction.action.performed -= OnBroomPressed;
+        if (mana != null) mana.SetRegenScale(this, 1f);
+    }
 
     void OnBroomPressed(InputAction.CallbackContext ctx)
     {
         if (IsFlying) { Dismount(); return; }
 
-        if (stamina < minStaminaToMount)
+        if (!CanMount)
         {
-            Log("Not enough stamina to mount (" + stamina.ToString("F0") + ")");
+            Log("Broom locked until mana reaches " + remountThreshold.ToString("F0"));
+            if (mana != null) mana.NotifyInsufficient();
             return;
         }
+
         Mount();
     }
 
@@ -189,9 +191,8 @@ public class BroomFlight : MonoBehaviour
     void Update()
     {
         UpdateFov();
-        UpdateStaminaUI();
 
-        if (!IsFlying) { UpdateStamina(false); return; }
+        if (!IsFlying) { UpdateManaUse(false); return; }
 
         // Space is also the jump key; clear it so it doesn't fire a jump after dismounting
         input.jump = false;
@@ -223,7 +224,7 @@ public class BroomFlight : MonoBehaviour
         }
 
         // boost only counts while moving, and ramps smoothly
-        bool canBoost = stamina > 0f && !exhausted;
+        bool canBoost = mana != null && mana.Current > 0f && !exhausted;
         bool boosting = input.sprint && hasInput && canBoost && !charging && !casting;
         float targetBoost = boosting ? boostMultiplier : 1f;
         boostFactor = Mathf.MoveTowards(boostFactor, targetBoost, boostBlendSpeed * Time.deltaTime);
@@ -274,8 +275,8 @@ public class BroomFlight : MonoBehaviour
         if (remaining < 0f)
             verticalVelocity = Mathf.Min(verticalVelocity, Mathf.Max(remaining * 2f, -verticalSpeed));
 
-        UpdateStamina(boosting);
-        if (!IsFlying) return;   // stamina ran out and we dismounted this frame
+        UpdateManaUse(boosting);
+        if (!IsFlying) return;   // the mana ran out and we dismounted this frame
         
         // ---------- move ----------
         Vector3 velocity = horizontalVelocity + Vector3.up * verticalVelocity;
@@ -332,39 +333,28 @@ public class BroomFlight : MonoBehaviour
         }
     }
 
-    void UpdateStamina(bool boosting)
+    // mounting is free; flying (and boosting) spends mana while regeneration runs slowed down.
+    // Running dry throws you off and locks the broom until the mana is back up to the remount threshold.
+    void UpdateManaUse(bool boosting)
     {
+        if (mana == null) mana = GetComponent<Mana>();
+        if (mana == null) return;
+
+        mana.SetRegenScale(this, IsFlying ? regenWhileFlying : 1f);
+
         if (IsFlying)
         {
-            stamina -= (flyDrain + (boosting ? boostDrain : 0f)) * Time.deltaTime;
-            if (stamina <= 0f)
+            mana.Drain((flyDrain + (boosting ? boostDrain : 0f)) * Time.deltaTime);
+            if (mana.Current <= 0.001f)
             {
-                stamina = 0f;
                 exhausted = true;
-                if (dismountWhenEmpty) { Log("Out of stamina, dismounting"); Dismount(); }
+                Log("Out of mana, dismounting");
+                Dismount();
             }
         }
-        else if (tpc.Grounded)
+        else if (exhausted && mana.Current >= remountThreshold)
         {
-            stamina = Mathf.MoveTowards(stamina, maxStamina, groundRegen * Time.deltaTime);
-            if (exhausted && stamina >= boostRecoverThreshold) exhausted = false;
-        }
-    }
-
-    void UpdateStaminaUI()
-    {
-        float t = stamina / maxStamina;
-
-        if (staminaFill != null)
-        {
-            staminaFill.fillAmount = t;
-            staminaFill.color = Color.Lerp(lowColor, fullColor, Mathf.Clamp01(t / 0.35f));
-        }
-
-        if (staminaGroup != null)
-        {
-            float target = (IsFlying || t < 0.999f) ? 1f : 0f;
-            staminaGroup.alpha = Mathf.MoveTowards(staminaGroup.alpha, target, 4f * Time.unscaledDeltaTime);
+            exhausted = false;
         }
     }
 }

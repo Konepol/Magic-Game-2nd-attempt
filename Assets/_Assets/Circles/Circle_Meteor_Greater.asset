@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_Meteor_Greater
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.5
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 8
+  tiltSpeed: 1.2
+  readyColor: {r: 1, g: 0.88, b: 0.45, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 1
+  readyPulse: 0.8
+  layers:
+  - name: Outer Ring
+    texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -6
+    anchor: 2
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.12
+    scaleToAoeRadius: 1
+    startAt: 0
+    drawTime: 0.5
+    appear: 0
+  - name: Outer Runes
+    texture: {fileID: 2800000, guid: 4685829d196a13e4484910200391b238, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 10
+    anchor: 2
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.98
+    scaleToAoeRadius: 1
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 0
+  - name: Star
+    texture: {fileID: 2800000, guid: 17e9260bc22007b45b0bd9732e0526dd, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -22
+    anchor: 2
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.74
+    scaleToAoeRadius: 1
+    startAt: 0.3
+    drawTime: 0.5
+    appear: 0
+  - name: Segments
+    texture: {fileID: 2800000, guid: 30a07607e11638e42be7d383455aacf2, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 35
+    anchor: 2
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.5
+    scaleToAoeRadius: 1
+    startAt: 0.45
+    drawTime: 0.45
+    appear: 0
+  - name: Great Sigil
+    texture: {fileID: 2800000, guid: 9d36f1b1893357846a7010893aaecd07, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 14
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.4
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.6
+    appear: 0
+  - name: Great Runes
+    texture: {fileID: 2800000, guid: 4685829d196a13e4484910200391b238, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -20
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.9
+    scaleToAoeRadius: 0
+    startAt: 0.15
+    drawTime: 0.55
+    appear: 0
+  - name: Great Ring
+    texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 8
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.9
+    scaleToAoeRadius: 0
+    startAt: 0.05
+    drawTime: 0.5
+    appear: 0
+  - name: Great Star
+    texture: {fileID: 2800000, guid: 17e9260bc22007b45b0bd9732e0526dd, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 60
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.7
+    scaleToAoeRadius: 0
+    startAt: 0.4
+    drawTime: 0.45
+    appear: 1
+  - name: Great Glow
+    texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.35
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 4.4
+    scaleToAoeRadius: 0
+    startAt: 0.2
+    drawTime: 0.6
+    appear: 2
+  - name: Floor Ring
+    texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 6
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 5.2
+    scaleToAoeRadius: 0
+    startAt: 0.3
+    drawTime: 0.5
+    appear: 0
+  - name: Floor Segments
+    texture: {fileID: 2800000, guid: 30a07607e11638e42be7d383455aacf2, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -28
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 4.2
+    scaleToAoeRadius: 0
+    startAt: 0.5
+    drawTime: 0.45
+    appear: 1
