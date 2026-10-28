@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f74694bb4d113419d50deadfb305ff, type: 3}
+  m_Name: SpellFXLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::SpellFXLibrary
+  cast: {fileID: 8300000, guid: dd28cfcf83070e04884780a75f698fea, type: 3}
+  laser: {fileID: 8300000, guid: 46935db7b0b3b3440b900a516d7da56c, type: 3}
+  explosion: {fileID: 8300000, guid: 9be0364fd2fc5ff42ad7704f9aa0bde9, type: 3}
+  hit: {fileID: 8300000, guid: 0a62e55fb984d03419ce0b87a596bb4d, type: 3}
+  barrierHit: {fileID: 8300000, guid: 1d0f5cb11ad359e43878b691a2ed492b, type: 3}
+  barrierPlace: {fileID: 8300000, guid: 057329fbfc992a8478ac132f45a36645, type: 3}
+  playerHurt: {fileID: 8300000, guid: 099ab29c6ec13f34b9e706f3006b90bd, type: 3}
+  death: {fileID: 8300000, guid: 60af5936766bb0f4b9b7e8c0cfd580c8, type: 3}
+  wave: {fileID: 8300000, guid: 4965948905c73dc45879eaa065d02c59, type: 3}
+  charge: {fileID: 8300000, guid: 6462a538fe678264dbd399f7e69e6243, type: 3}
+  fizzle: {fileID: 8300000, guid: cc47f4b409c85ea4f82da236335da339, type: 3}
+  ready: {fileID: 8300000, guid: d80eb313482f817448474b851cd846a0, type: 3}
+  volume: 0.8
+  pitchVariation: 0.08
+  explosionFx: {fileID: 3447060520228131918, guid: 0509c3169d559354db258498925bdea7, type: 3}
+  hitSparkFx: {fileID: 3491349602551564668, guid: 7dc86df9bca25404fbab3ff06fc0fcf2, type: 3}
+  barrierBreakFx: {fileID: 147663362541654497, guid: c7986e9dd9d346f47a6f498c170bd236, type: 3}
+  castFlashFx: {fileID: 7463700135430447881, guid: 562cf42caae881b419a5495ef1cdf0f6, type: 3}

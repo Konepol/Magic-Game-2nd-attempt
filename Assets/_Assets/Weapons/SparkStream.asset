@@ -50,7 +50,7 @@ MonoBehaviour:
     manaCost: 2
     cooldown: 0.1
   hasHoldVariant: 0
-  holdThreshold: 0.5
+  holdThreshold: 0.25
   hold:
     kind: 0
     damage: 30
@@ -92,4 +92,11 @@ MonoBehaviour:
   holdingStartsAfter: 0.15
   heldMovement: 0
   heldRecovery: 0
+  tapWindow: 0.2
+  interruptible: 0
+  interruptDamage: 1
+  holdCircle: {fileID: 11400000, guid: 022fa5209c02a1546a28b2937382ffef, type: 2}
+  tapCircle: {fileID: 0}
+  circleScale: 0.9
+  tapCircleScale: 0.45
   autoRepeatWhenHeld: 1

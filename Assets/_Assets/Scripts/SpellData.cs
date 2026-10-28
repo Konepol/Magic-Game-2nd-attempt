@@ -61,6 +61,8 @@ public class SpellVariant
 
     // variants that are aimed with a ring while the key is held
     public bool NeedsAim => kind == SpellKind.GroundAoE;
+
+    public SpellVariant Clone() => (SpellVariant)MemberwiseClone();
 }
 
 [CreateAssetMenu(menuName = "Magic/Spell", fileName = "NewSpell")]
@@ -74,7 +76,7 @@ public class SpellData : ScriptableObject
 
     [Header("Hold (optional)")]
     public bool hasHoldVariant = false;
-    public float holdThreshold = 0.5f;      // hold at least this long for the hold variant
+    public float holdThreshold = 0.5f;      // the CAST TIME: the circle completes after this long; the spell then waits for the key to be released
     public SpellVariant hold = new SpellVariant { damage = 30f, cooldown = 1.2f };
 
     [Header("Movement while casting (stronger spells should be stricter and take longer)")]
@@ -91,8 +93,37 @@ public class SpellData : ScriptableObject
     public CastMovement heldMovement = CastMovement.Stand;
     public float heldRecovery = 0.5f;
 
+    [Header("Hold casting (hold spells take time to cast)")]
+    [Tooltip("Letting go within this time is a quick tap: the tap version fires instantly. Holding longer commits to the hold cast, and letting go before the cast time fizzles it (nothing is cast).")]
+    public float tapWindow = 0.2f;
+    [Tooltip("Strong casts can be broken: taking a hit while the circle is drawing makes the spell fizzle.")]
+    public bool interruptible = false;
+    [Tooltip("A hit has to do at least this much damage to interrupt the cast.")]
+    public float interruptDamage = 1f;
+
+    [Header("Casting circle")]
+    [Tooltip("Drawn while the key is held. It completes when the cast time (Hold Threshold) is up.")]
+    public CastingCircleData holdCircle;
+    [Tooltip("The small quick circle that plays when the spell is tapped (instant cast).")]
+    public CastingCircleData tapCircle;
+    [Range(0.3f, 2f), Tooltip("Stronger spells get a bigger circle.")]
+    public float circleScale = 1f;
+    [Range(0.1f, 1f)] public float tapCircleScale = 0.45f;
+
+    [Header("Naming")]
+    [Tooltip("The name shown once the hold circle completes. Leave empty for 'Greater <name>'.")]
+    public string holdDisplayName = "";
+
+    [Header("Combining and multicasting")]
+    [Tooltip("Can be cast at the same time as other spells (multicast) when there is no designed recipe. Recipes ignore this.")]
+    [UnityEngine.Serialization.FormerlySerializedAs("autoCombinable")]
+    public bool multicastable = true;
+
     [Header("Tap-only spells")]
     public bool autoRepeatWhenHeld = false; // keeps casting the tap variant while the key is held (ignored when there is a hold variant)
+
+    // the name once the hold version is ready
+    public string HoldName => string.IsNullOrEmpty(holdDisplayName) ? "Greater " + displayName : holdDisplayName;
 
     public SpellVariant Pick(float heldTime) => hasHoldVariant && heldTime >= holdThreshold ? hold : tap;
 }

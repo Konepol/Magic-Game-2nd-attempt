@@ -188,6 +188,7 @@ public class EnemyFlyingShooter : MonoBehaviour
         Vector3 desiredFlat = winding ? Vector3.zero : new Vector3(desiredVelocity.x, 0f, desiredVelocity.z);   // hover in place while aiming
         Vector3 flatVel = Vector3.MoveTowards(new Vector3(velocity.x, 0f, velocity.z), desiredFlat, acceleration * dt);
         velocity = new Vector3(flatVel.x, VerticalVelocity(), flatVel.z);
+        BlockByObstacles(dt);
         transform.position += velocity * dt;
         ClampAboveGround();
 
@@ -323,6 +324,18 @@ public class EnemyFlyingShooter : MonoBehaviour
             return Vector3.ClampMagnitude(slid, desired.magnitude);
         }
         return desired;
+    }
+
+    // never move into a wall or barrier: slide along its surface instead
+    void BlockByObstacles(float dt)
+    {
+        Vector3 step = velocity * dt;
+        float dist = step.magnitude;
+        if (dist < 0.0001f) return;
+
+        if (Physics.SphereCast(transform.position, avoidRadius, step / dist, out RaycastHit hit, dist + 0.05f, obstacleMask, QueryTriggerInteraction.Ignore)
+            && !hit.transform.IsChildOf(transform))
+            velocity = Vector3.ProjectOnPlane(velocity, hit.normal);
     }
 
     void FaceTowards(Vector3 dir)

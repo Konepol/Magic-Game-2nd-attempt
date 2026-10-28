@@ -50,7 +50,7 @@ MonoBehaviour:
     manaCost: 25
     cooldown: 2
   hasHoldVariant: 1
-  holdThreshold: 1
+  holdThreshold: 1.5
   hold:
     kind: 2
     damage: 70
@@ -92,4 +92,13 @@ MonoBehaviour:
   holdingStartsAfter: 0.15
   heldMovement: 2
   heldRecovery: 0.8
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 5
+  holdCircle: {fileID: 11400000, guid: 2d73929177bdfa94387df53194dce952, type: 2}
+  tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
+  circleScale: 1
+  tapCircleScale: 0.45
+  holdDisplayName: Cataclysm
+  multicastable: 1
   autoRepeatWhenHeld: 0

@@ -24,6 +24,7 @@ public class BroomFlight : MonoBehaviour
 
     [Header("Vertical (Space / Ctrl)")]
     [SerializeField] float verticalSpeed = 8f;
+    [SerializeField] bool strafeWhileCasting = true;   // casting turns the broom to face your aim (locked target or camera direction) while you keep moving
     [SerializeField, Range(0.05f, 1f)] float castSpeedMultiplier = 0.4f;   // speed while casting a spell (charging mana stops you completely instead)
     [SerializeField] float verticalAcceleration = 15f;
     [SerializeField] float verticalCoastTime = 0.4f;
@@ -211,8 +212,10 @@ public class BroomFlight : MonoBehaviour
         Vector3 wish = camForward * move.y + camRight * move.x;
         bool hasInput = move.sqrMagnitude > 0.01f;
 
-        // direction key while falling: convert fall speed into movement along the input direction
-        if (hasInput && verticalVelocity < 0f)
+        // direction key while falling: convert fall speed into movement along the input direction.
+        // Only for a passive fall (e.g. mounting in mid-air); actively descending with the descend key must keep its speed.
+        bool descendHeld = !charging && descendAction.action.IsPressed();
+        if (hasInput && verticalVelocity < 0f && !descendHeld)
         {
             float amount = Mathf.Min(redirectRate * Time.deltaTime, -verticalVelocity);
             verticalVelocity += amount;
@@ -291,6 +294,13 @@ public class BroomFlight : MonoBehaviour
 
     void RotateBody()
     {
+        // casting: face the aim (locked target or camera direction) while still moving any direction, like strafing on foot
+        if (strafeWhileCasting && caster != null && caster.TryGetFacingDirection(out Vector3 faceDir))
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(faceDir, Vector3.up), turnSpeed * Time.deltaTime);
+            return;
+        }
+
         // face the direction of travel, yaw only (height never tilts the body)
         if (horizontalVelocity.sqrMagnitude < 0.25f) return;
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 // A wall with health. Blocks projectiles and beams from the side it protects against.
 // Takes visible cracks where it is hit, shifts toward red as it weakens, and shows a health bar once damaged.
@@ -39,7 +40,7 @@ public class Barrier : MonoBehaviour
 
         if (health.IsDead)
         {
-            SpellFX.Burst(point, 2.5f, baseColor, 45);
+            SpellFX.Shatter(point, baseColor);
             SpellFX.Play(Sfx.BarrierHit, point, 1f);
         }
         return health.IsDead;
@@ -69,6 +70,13 @@ public class Barrier : MonoBehaviour
             var cc = protectedBody.GetComponentInParent<CharacterController>();
             if (cc != null) Physics.IgnoreCollision(go.GetComponent<Collider>(), cc);
         }
+
+        // ground enemies path around the wall (the player is unaffected: the wall does not collide with them)
+        var obstacle = go.AddComponent<NavMeshObstacle>();
+        obstacle.shape = NavMeshObstacleShape.Box;
+        obstacle.size = Vector3.one;          // the wall's own scale makes it the right size
+        obstacle.carving = true;
+        obstacle.carveOnlyStationary = false;
 
         b.health = go.AddComponent<Health>();
         b.health.Configure(maxHealth, true, 0.05f);
@@ -119,11 +127,15 @@ public class Barrier : MonoBehaviour
     {
         if (frontQuad == null) return;
 
-        bool front = transform.InverseTransformPoint(worldPoint).z < 0f;
-        Transform quad = front ? frontQuad : backQuad;
-        Color32[] pixels = front ? frontPixels : backPixels;
-        Texture2D tex = front ? frontTex : backTex;
+        // the same crack goes on both faces, at the same spot in the world, so it can also be seen through the wall from behind
+        var state = Random.state;
+        DrawCrackOn(frontQuad, frontPixels, frontTex, worldPoint, lost);
+        Random.state = state;                                   // same random pattern on the other face
+        DrawCrackOn(backQuad, backPixels, backTex, worldPoint, lost);
+    }
 
+    void DrawCrackOn(Transform quad, Color32[] pixels, Texture2D tex, Vector3 worldPoint, float lost)
+    {
         Vector3 local = quad.InverseTransformPoint(worldPoint);
         Vector2 origin = new Vector2(
             Mathf.Clamp01(local.x + 0.5f) * (TexSize - 1),

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,7 +11,7 @@ public enum CastMovement
     Stand,   // cannot walk, sprint or jump on foot
 }
 
-public class PlayerSpellCaster : MonoBehaviour
+public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 {
     [Header("References")]
     [SerializeField] Camera mainCamera;
@@ -40,6 +41,8 @@ public class PlayerSpellCaster : MonoBehaviour
     [SerializeField] bool useMousePosition = false;  // false = screen center crosshair
 
     [Header("Casting")]
+    [SerializeField] float fizzleCooldown = 0.35f;     // short lockout after a spell fizzles, so it cannot be spammed
+    [SerializeField] float faceAimAfterCast = 0.35f;   // how long after a cast the player keeps facing the aim (strafing), even for spells that do not restrict movement
 
     [Header("Feedback")]
     [SerializeField] bool showChargeBar = true;
@@ -47,15 +50,30 @@ public class PlayerSpellCaster : MonoBehaviour
 
     float[] cooldownEnd;
     float castingUntil;
+    CastingCircle[] holdCircles;
+    bool[] inCombo;          // this slot's key is part of the active combined cast
+    bool[] ignoredPress;     // a key press that was refused (cannot combine); ignored until the key is released
+    bool[] readyPlayed;      // the "ready" sound has played for this hold
+    float[] lastTapCircle;
+    float[] effHeld;         // how long each hold has been held at full speed (multicasting slows it down)
+    [Header("Multicasting")]
+    [SerializeField] float multicastAngleStep = 42f;       // degrees between neighbouring casts on the ring around the player
+    [SerializeField] float multicastRingRadius = 1.8f;     // how much further from the player the ring is than a single cast's circle
+    [SerializeField] float multicastSideScale = 0.7f;      // size of the casts that are not at the front
+    float facingUntil;
     CastMovement lastCastMovement;
     float[] cooldownTotal;
     Mana mana;
+    Health health;
     float[] pressTime;
     bool[] charging;
     LineRenderer aimRing;
     Material aimRingMat;
 
     public WeaponData Weapon => weapon;
+
+    // raised when a cast fails: "Fizzled", "Interrupted" or "Not enough mana" (the HUD shows it)
+    public event System.Action<string> CastFailed;
     // The strictest movement restriction from: spells being held right now (their HOLDING state, once held past a moment),
     // and the spell just fired (its TAP or HELD state, for its recovery time). Movement scripts slow or root the player from this.
     public CastMovement ActiveCastMovement
@@ -81,12 +99,35 @@ public class PlayerSpellCaster : MonoBehaviour
 
     public bool IsCasting => ActiveCastMovement != CastMovement.Free;
 
+    // While a cast key is held, and for a moment after any cast (whether or not the spell restricts movement), the player
+    // should face where they are aiming: the locked target if there is one, otherwise where the camera points.
+    // This is what lets them strafe while casting.
+    public bool TryGetFacingDirection(out Vector3 direction)
+    {
+        direction = Vector3.zero;
+        if (!enabled || charging == null || mainCamera == null) return false;
+
+        bool active = Time.time < facingUntil;
+        for (int i = 0; i < charging.Length && !active; i++) active = charging[i];
+        if (!active) return false;
+
+        Vector3 dir = (lockOn != null && lockOn.IsLocked)
+            ? lockOn.AimPoint - transform.position
+            : mainCamera.transform.forward;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return false;
+
+        direction = dir.normalized;
+        return true;
+    }
+
     public bool CanSwitchWeapon => loadout != null && loadout.Length > 1;
 
     public void Equip(WeaponData newWeapon)
     {
+        DropAllCircles();
         weapon = newWeapon;
-        for (int i = 0; i < charging.Length; i++) charging[i] = false;
+        AllocateSlots(Mathf.Max(CapacityFor(newWeapon), 1));       // a different weapon may have more or fewer spells
     }
 
     // 0..1 progress of the current hold toward the hold variant, 0 when not charging
@@ -94,29 +135,57 @@ public class PlayerSpellCaster : MonoBehaviour
     {
         var spell = GetSpell(slot);
         if (spell == null || !spell.hasHoldVariant || !charging[slot]) return 0f;
-        return Mathf.Clamp01((Time.time - pressTime[slot]) / Mathf.Max(spell.holdThreshold, 0.01f));
+        return Mathf.Clamp01(effHeld[slot] / Mathf.Max(spell.holdThreshold, 0.01f));
     }
 
     void Awake()
     {
         mana = GetComponentInParent<Mana>();
-        cooldownEnd = new float[skillActions.Length];
-        cooldownTotal = new float[skillActions.Length];
-        pressTime = new float[skillActions.Length];
-        charging = new bool[skillActions.Length];
+        health = GetComponentInParent<Health>();
+        AllocateSlots(CapacityFor(weapon));
     }
+
+    // a weapon may have fewer or more spells than there are keys; spells past the last key have no key bound yet
+    int CapacityFor(WeaponData w)
+    {
+        int n = skillActions.Length;
+        if (w != null && w.spells != null) n = Mathf.Max(n, w.spells.Length);
+        if (loadout != null)
+            foreach (var l in loadout)
+                if (l != null && l.spells != null) n = Mathf.Max(n, l.spells.Length);
+        return n;
+    }
+
+    void AllocateSlots(int n)
+    {
+        cooldownEnd = new float[n];
+        cooldownTotal = new float[n];
+        pressTime = new float[n];
+        effHeld = new float[n];
+        charging = new bool[n];
+        holdCircles = new CastingCircle[n];
+        inCombo = new bool[n];
+        ignoredPress = new bool[n];
+        readyPlayed = new bool[n];
+        lastTapCircle = new float[n];
+    }
+
+    InputAction ActionFor(int slot) => slot >= 0 && slot < skillActions.Length ? skillActions[slot] : null;
 
     void OnEnable()
     {
         foreach (var a in skillActions) a.Enable();
         switchWeaponAction.Enable();
+        if (health != null) health.Damaged += OnDamaged;
     }
 
     void OnDisable()
     {
         foreach (var a in skillActions) a.Disable();
         switchWeaponAction.Disable();
+        if (health != null) health.Damaged -= OnDamaged;
         SetAimRing(false, Vector3.zero, 0f, Color.white);
+        DropAllCircles();
     }
 
     void OnDestroy()
@@ -126,7 +195,7 @@ public class PlayerSpellCaster : MonoBehaviour
 
     // ---------- read-only info for the HUD ----------
 
-    public int SlotCount => skillActions.Length;
+    public int SlotCount => cooldownEnd != null ? cooldownEnd.Length : skillActions.Length;
     public SpellData GetSpellAt(int slot) => GetSpell(slot);
     public bool IsCharging(int slot) => charging[slot];
 
@@ -138,7 +207,8 @@ public class PlayerSpellCaster : MonoBehaviour
 
     public string GetKeyLabel(int slot)
     {
-        var a = skillActions[slot];
+        var a = ActionFor(slot);
+        if (a == null) return "-";                       // past the last key: its binding is not decided yet
         return a.bindings.Count > 0 ? a.bindings[0].ToDisplayString() : "";
     }
 
@@ -156,65 +226,719 @@ public class PlayerSpellCaster : MonoBehaviour
         if (mana != null && mana.IsCharging)
         {
             for (int i = 0; i < charging.Length; i++) charging[i] = false;
+            DropAllCircles();
             SetAimRing(false, Vector3.zero, 0f, Color.white);
             return;
         }
 
         bool aimingNow = false;
+        float multicastFactor = MulticastFactor;      // casting several spells at once makes each one slower
 
-        for (int i = 0; i < skillActions.Length; i++)
+        for (int i = 0; i < cooldownEnd.Length; i++)
         {
             var spell = GetSpell(i);
-            if (spell == null) { charging[i] = false; continue; }
+            if (spell == null) { charging[i] = false; DropCircle(i); continue; }
 
-            var action = skillActions[i];
+            var action = ActionFor(i);
+            if (action == null) { charging[i] = false; DropCircle(i); continue; }      // no key bound to this slot yet
 
-            // spells with a hold variant, or an aimed tap, are decided on release; the rest fire on press
-            bool decidedOnRelease = spell.hasHoldVariant || spell.tap.NeedsAim;
+            // part of a combined cast: the combination runs this key
+            if (inCombo[i]) continue;
 
-            if (decidedOnRelease)
+            // a press that was refused (nothing to combine with) stays ignored until the key is let go
+            if (ignoredPress[i])
+            {
+                if (!action.IsPressed()) ignoredPress[i] = false;
+                continue;
+            }
+
+            bool hasHold = spell.hasHoldVariant;
+            bool aimedTapOnly = !hasHold && spell.tap.NeedsAim;   // aim with the key held, release to cast
+
+            if (hasHold || aimedTapOnly)
             {
                 if (action.WasPressedThisFrame() && Time.time >= cooldownEnd[i])
                 {
-                    charging[i] = true;
-                    pressTime[i] = Time.time;
+                    // hold spells can join a cast that is already being held, forming a combination
+                    if (hasHold) OnHoldPressed(i, spell);
+                    else StartHold(i);
+
+                    if (ignoredPress[i] || inCombo[i]) continue;
                 }
 
                 if (!charging[i]) continue;
 
-                var variant = spell.Pick(Time.time - pressTime[i]);
+                if (!inCombo[i]) effHeld[i] += Time.deltaTime / multicastFactor;
+                float realHeld = Time.time - pressTime[i];                 // for the tap window
+                float held = effHeld[i];                                   // for the circle and the cast time
+                float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
+                var heldVariant = hasHold ? spell.hold : spell.tap;     // the variant this hold cast completes as
+                bool complete = held >= castTime;
 
-                // the ring follows the aim while the key is held
-                if (variant.NeedsAim)
+                // after the tap window the player has committed to a hold cast: the circle starts drawing and finishes with the cast time
+                if (held >= spell.tapWindow)
                 {
-                    aimingNow = true;
-                    SetAimRing(true, GetAoeTarget(variant, out _), variant.aoeRadius, variant.effectColor);
+                    if (holdCircles[i] == null && spell.holdCircle != null)
+                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, heldVariant.effectColor, this, heldVariant, spell.circleScale);
+
+                    if (holdCircles[i] != null)
+                        holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
+
+                    // aimed spells without a casting circle keep the plain ring
+                    if (heldVariant.NeedsAim && spell.holdCircle == null)
+                    {
+                        aimingNow = true;
+                        SetAimRing(true, GetAoeTarget(heldVariant, out _), heldVariant.aoeRadius, heldVariant.effectColor);
+                    }
                 }
 
                 if (action.WasReleasedThisFrame())
                 {
                     charging[i] = false;
-                    Cast(i, variant, spell);
+
+                    if (realHeld < spell.tapWindow)
+                    {
+                        DropCircle(i);
+                        Cast(i, spell.tap, spell);                           // a quick tap: instant
+                    }
+                    else if (hasHold && !complete)
+                    {
+                        FizzleCast(i, "Fizzled");                            // let go before the cast time: the spell fails, nothing is cast
+                    }
+                    else
+                    {
+                        TakeCentre(i);                                       // released while other casts are going: it rotates to the centre as it fires
+                        FinishHoldCast(i, Cast(i, heldVariant, spell));      // the circle was complete and the player let go: the spell fires
+                    }
+                }
+                else if (complete && holdCircles[i] != null)
+                {
+                    holdCircles[i].Complete();                               // fully drawn: ready, waiting for the player to release
+                    if (!readyPlayed[i])
+                    {
+                        readyPlayed[i] = true;
+                        SpellFX.Play(Sfx.Ready, muzzle.position, 0.8f);
+                    }
                 }
             }
             else
             {
-                bool wants = spell.autoRepeatWhenHeld ? action.IsPressed() : action.WasPressedThisFrame();
+                bool keyDown = action.IsPressed();
+                bool wants = spell.autoRepeatWhenHeld ? keyDown : action.WasPressedThisFrame();
                 if (wants && Time.time >= cooldownEnd[i]) Cast(i, spell.tap, spell);
+
+                // a rapid-fire spell keeps its circle up and spinning for as long as the key is held
+                if (spell.autoRepeatWhenHeld && spell.holdCircle != null)
+                {
+                    if (action.WasPressedThisFrame()) pressTime[i] = Time.time;
+
+                    if (keyDown)
+                    {
+                        if (holdCircles[i] == null)
+                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale);
+
+                        float p = (Time.time - pressTime[i]) / Mathf.Max(spell.holdThreshold, 0.05f);
+                        if (holdCircles[i] != null)
+                        {
+                            holdCircles[i].SetProgress(p);
+                            if (p >= 1f) holdCircles[i].Complete();
+                        }
+                    }
+                    else
+                    {
+                        DropCircle(i);
+                    }
+                }
             }
         }
+
+        UpdateCombo();
+        UpdateMulticastLayout();
 
         if (!aimingNow) SetAimRing(false, Vector3.zero, 0f, Color.white);
     }
 
-    void Cast(int slot, SpellVariant v, SpellData spell)
+    // ---------- combining spells (recipes) and multicasting ----------
+
+    class ComboSpec
     {
-        if (Time.time < cooldownEnd[slot] || muzzle == null || mainCamera == null) return;
+        public string name;                // shown once the combination is ready
+        public string preName;             // the ingredients, shown while it is being cast
+        public float castTime, manaCost, cooldown;
+        public SpellData result;
+        public SpellVariant variant;
+        public CastingCircleData circle;
+        public float circleScale = 1f;
+        public Color color = Color.white;
+        public bool interruptible;
+        public float interruptDamage = 1f;
+        public CastMovement heldMovement;
+        public float recovery;
+    }
+
+    class ComboState
+    {
+        public List<int> slots = new List<int>();
+        public ComboSpec spec;
+        public float startTime;
+        public float effHeld;
+        public bool readyPlayed;
+        public readonly List<CastingCircle> circles = new List<CastingCircle>();
+    }
+
+    ComboState combo;
+
+    // read-only info for the HUD: the recipe box above the health bar
+    public bool ComboActive => combo != null;
+    public float ComboCost => combo != null ? combo.spec.manaCost : 0f;
+    public float ComboProgress => combo != null ? Mathf.Clamp01(combo.effHeld / Mathf.Max(combo.spec.castTime, 0.05f)) : 0f;
+    public bool ComboReady => combo != null && ComboProgress >= 1f;
+    public string ComboName => combo == null ? "" : (ComboReady ? combo.spec.name : combo.spec.preName);
+
+    public string ComboKeys
+    {
+        get
+        {
+            if (combo == null) return "";
+            var keys = new List<string>();
+            foreach (int slot in combo.slots) keys.Add(GetKeyLabel(slot));
+            return string.Join("+", keys);
+        }
+    }
+
+    // one thing being cast (a single spell or a recipe combination), for the HUD's charging bars
+    public struct CastEntryInfo
+    {
+        public string name;
+        public float progress;
+        public bool ready;
+        public bool primary;      // the one at the centre of the aim
+        public bool isCombo;
+    }
+
+    readonly List<CastEntryInfo> entryInfos = new List<CastEntryInfo>();
+    public IReadOnlyList<CastEntryInfo> CastEntries => entryInfos;
+
+    // Where each cast sits on the ring around the player: 0 is the front, 1 2 3 go round to the right, -1 -2 -3 to the left.
+    // A single cast sits at the front. Once a second cast joins, nobody holds the front: the first moves to 1, the new one to -1,
+    // the next to 2, -2, 3, -3 ... The front is only used by a cast that has just been released.
+    readonly Dictionary<int, int> places = new Dictionary<int, int>();
+    int leavingId = -1;                          // a released cast that is still shown (fading) at the front
+    float leavingUntil;
+
+    const int ComboId = 1000;
+
+    // number of casts going on at once
+    int EntryCount
+    {
+        get
+        {
+            int n = combo != null ? 1 : 0;
+            for (int j = 0; j < charging.Length; j++)
+                if (charging[j] && !inCombo[j] && !ignoredPress[j]) n++;
+            return n;
+        }
+    }
+
+    // every extra cast adds a fraction to every cast time
+    float MulticastFactor => 1f + (weapon != null ? weapon.multicastDelay : 0.3f) * Mathf.Max(0, EntryCount - 1);
+
+    void StartHold(int i)
+    {
+        charging[i] = true;
+        pressTime[i] = Time.time;
+        effHeld[i] = 0f;
+        readyPlayed[i] = false;
+    }
+
+    // a hold spell key was pressed: start it, join a recipe with the casts already going, or cast it alongside them
+    void OnHoldPressed(int i, SpellData spell)
+    {
+        var units = new List<List<int>>();                    // each running single cast, and the current combination as one block
+        int comboUnit = -1;
+        for (int j = 0; j < charging.Length; j++)
+            if (j != i && charging[j] && !inCombo[j] && !ignoredPress[j]) units.Add(new List<int> { j });
+        if (combo != null) { comboUnit = units.Count; units.Add(new List<int>(combo.slots)); }
+
+        if (units.Count == 0) { StartHold(i); return; }
+
+        pressTime[i] = Time.time;
+
+        // 1) a recipe made of the new spell plus some of what is already being cast (the biggest match wins)
+        ComboSpec bestSpec = null;
+        List<int> bestSet = null;
+        for (int mask = (1 << units.Count) - 1; mask > 0; mask--)
+        {
+            if (comboUnit >= 0 && (mask & (1 << comboUnit)) == 0) continue;      // only one combination at a time, and it must stay whole
+
+            var set = new List<int> { i };
+            for (int k = 0; k < units.Count; k++)
+                if ((mask & (1 << k)) != 0) set.AddRange(units[k]);
+
+            var spec = BuildRecipeSpec(set);
+            if (spec != null && (bestSet == null || set.Count > bestSet.Count)) { bestSpec = spec; bestSet = set; }
+        }
+        if (bestSpec != null) { FormCombo(bestSet, bestSpec); return; }
+
+        // 2) no recipe: cast it alongside the others (multicast), if everything involved allows it
+        if (CanMulticast(spell)) { StartHold(i); return; }
+
+        // 3) cannot combine and cannot multicast: the cast already going carries on, and this one does not cast
+        ignoredPress[i] = true;
+        CastFailed?.Invoke("Can't combine");
+    }
+
+    bool CanMulticast(SpellData incoming)
+    {
+        if (weapon == null || !weapon.allowMulticast || !incoming.multicastable) return false;
+        if (EntryCount >= weapon.maxMulticast) return false;
+
+        for (int j = 0; j < charging.Length; j++)
+        {
+            if (!charging[j] || inCombo[j] || ignoredPress[j]) continue;
+            var sp = GetSpell(j);
+            if (sp != null && !sp.multicastable) return false;
+        }
+        if (combo != null)
+            foreach (int j in combo.slots)
+            {
+                var sp = GetSpell(j);
+                if (sp != null && !sp.multicastable) return false;
+            }
+        return true;
+    }
+
+    // a designed recipe for exactly these spells, otherwise nothing
+    ComboSpec BuildRecipeSpec(List<int> slots)
+    {
+        if (weapon == null || weapon.combos == null) return null;
+
+        var spells = new List<SpellData>();
+        foreach (int slot in slots)
+        {
+            var sp = GetSpell(slot);
+            if (sp == null || !sp.hasHoldVariant) return null;
+            spells.Add(sp);
+        }
+
+        foreach (var recipe in weapon.combos)
+            if (recipe != null && recipe.result != null && recipe.Matches(spells))
+                return SpecFromRecipe(recipe, slots);
+        return null;
+    }
+
+    ComboSpec SpecFromRecipe(SpellCombo recipe, List<int> slots)
+    {
+        var result = recipe.result;
+        var variant = result.hasHoldVariant ? result.hold : result.tap;
+
+        return new ComboSpec
+        {
+            name = result.displayName, preName = JoinNames(slots), result = result, variant = variant,
+            castTime = result.hasHoldVariant ? result.holdThreshold : 0.8f,
+            manaCost = variant.manaCost, cooldown = variant.cooldown,
+            circle = result.holdCircle, circleScale = result.circleScale, color = variant.effectColor,
+            interruptible = result.interruptible, interruptDamage = result.interruptDamage,
+            heldMovement = result.heldMovement, recovery = result.heldRecovery,
+        };
+    }
+
+    string JoinNames(List<int> slots)
+    {
+        var names = new List<string>();
+        foreach (int slot in slots) names.Add(GetSpell(slot).displayName);
+        return string.Join(" + ", names);
+    }
+
+    void FormCombo(List<int> set, ComboSpec spec)
+    {
+        float carried = 0f;
+        if (combo == null)
+        {
+            combo = new ComboState();
+            float earliest = float.MaxValue;
+            foreach (int j in set) earliest = Mathf.Min(earliest, pressTime[j]);
+            combo.startTime = earliest;
+        }
+        else carried = combo.effHeld;
+
+        foreach (int j in set) carried = Mathf.Max(carried, effHeld[j]);       // time already spent holding counts
+        combo.effHeld = carried;
+
+        foreach (int j in set)
+        {
+            DropCircle(j);                        // the individual circles merge into the combined one
+            inCombo[j] = true;
+            charging[j] = true;
+        }
+
+        ClearComboCircles(0.2f);
+        combo.slots = set;
+        combo.spec = spec;
+        combo.readyPlayed = false;
+
+        if (spec.circle != null)
+            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale));
+
+        SpellFX.Sparks(muzzle != null ? muzzle.position : transform.position, spec.color);
+    }
+
+    void UpdateCombo()
+    {
+        if (combo == null) return;
+
+        combo.effHeld += Time.deltaTime / MulticastFactor;
+        float p = ComboProgress;
+        bool ready = p >= 1f;
+
+        foreach (var c in combo.circles)
+        {
+            if (c == null) continue;
+            c.SetProgress(p);
+            if (ready) c.Complete();
+        }
+
+        if (ready && !combo.readyPlayed)
+        {
+            combo.readyPlayed = true;
+            if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
+        }
+
+        // as soon as one of the keys is let go, the combined cast is decided
+        bool released = false;
+        foreach (int j in combo.slots)
+        {
+            var action = ActionFor(j);
+            if (action == null || !action.IsPressed()) { released = true; break; }
+        }
+
+        if (!released) return;
+        if (ready) FireCombo(); else FizzleCombo("Fizzled");
+    }
+
+    void FireCombo()
+    {
+        var cb = combo;
+        var spec = cb.spec;
+
+        bool ok = Cast(cb.slots[0], spec.variant, spec.result);       // the recipe's own cost is on its spell
+        if (!ok) { FizzleCombo("Not enough mana"); return; }
+
+        // the whole group shares one cooldown, and one movement / recovery rule
+        foreach (int j in cb.slots)
+        {
+            cooldownEnd[j] = Time.time + spec.cooldown;
+            cooldownTotal[j] = spec.cooldown;
+            charging[j] = false;
+            inCombo[j] = false;
+        }
+        castingUntil = Time.time + spec.recovery;
+        facingUntil = Time.time + Mathf.Max(faceAimAfterCast, spec.recovery);
+        lastCastMovement = spec.heldMovement;
+
+        foreach (var c in cb.circles) if (c != null) c.FadeOut(0.4f);
+        combo = null;
+    }
+
+    void FizzleCombo(string reason)
+    {
+        if (combo == null) return;
+
+        foreach (var c in combo.circles) if (c != null) c.Fizzle();
+        CastFailed?.Invoke(reason);
+
+        foreach (int j in combo.slots)
+        {
+            cooldownEnd[j] = Time.time + fizzleCooldown;
+            cooldownTotal[j] = fizzleCooldown;
+            charging[j] = false;
+            inCombo[j] = false;
+        }
+
+        if (muzzle != null)
+        {
+            SpellFX.Play(Sfx.Fizzle, muzzle.position, 0.9f);
+            SpellFX.Sparks(muzzle.position + transform.forward * 0.5f, new Color(1f, 0.4f, 0.3f));
+        }
+        combo = null;
+    }
+
+    void ClearComboCircles(float fade)
+    {
+        if (combo == null) return;
+        foreach (var c in combo.circles) if (c != null) c.FadeOut(fade);
+        combo.circles.Clear();
+    }
+
+    // Several casts at once sit on a ring around the player (see places). Releasing a cast moves it to the front as it fires; when a cast
+    // leaves, the others close the gap by moving toward the front, and a lone cast that is left goes back to the front.
+    void UpdateMulticastLayout()
+    {
+        entryInfos.Clear();
+
+        var active = new List<int>();
+        for (int j = 0; j < charging.Length; j++)
+            if (charging[j] && !inCombo[j] && !ignoredPress[j] && GetSpell(j) != null) active.Add(j);
+        if (combo != null) active.Add(ComboId);
+
+        // the fired cast is gone
+        if (leavingId >= 0 && Time.time >= leavingUntil)
+        {
+            places.Remove(leavingId);
+            leavingId = -1;
+        }
+
+        var gone = new List<int>();
+        foreach (var kv in places) if (kv.Key != leavingId && !active.Contains(kv.Key)) gone.Add(kv.Key);
+        foreach (int id in gone) places.Remove(id);
+
+        active.Sort((x, y) => StartOf(x).CompareTo(StartOf(y)));
+        foreach (int id in active)
+        {
+            if (places.ContainsKey(id)) continue;
+
+            // the second cast starts a multicast: the first leaves the front for place 1
+            if (leavingId < 0 && places.Count == 1)
+                foreach (var key in new List<int>(places.Keys)) places[key] = 1;
+
+            places[id] = FreePlace();
+        }
+
+        if (places.Count == 0) { leavingId = -1; return; }
+        CloseGaps();
+
+        float radius = places.Count > 1 ? multicastRingRadius : 1f;
+
+        var order = new List<KeyValuePair<int, int>>();       // (place, id), listed left to right for the bars
+        foreach (var kv in places)
+        {
+            int id = kv.Key, place = kv.Value;
+            float angle = places.Count == 1 ? 0f : place * multicastAngleStep;
+            float scale = places.Count == 1 || id == leavingId ? 1f : multicastSideScale;
+
+            if (id == ComboId)
+            {
+                if (combo != null) foreach (var c in combo.circles) if (c != null) c.SetPlacement(angle, radius, scale);
+            }
+            else if (holdCircles[id] != null)
+            {
+                holdCircles[id].SetPlacement(angle, radius, scale);
+            }
+
+            if (id != leavingId) order.Add(new KeyValuePair<int, int>(place, id));
+        }
+
+        order.Sort((x, y) => x.Key.CompareTo(y.Key));
+        foreach (var kv in order) entryInfos.Add(MakeInfo(kv.Value, places.Count == 1));
+    }
+
+    bool PlaceTaken(int place)
+    {
+        foreach (var kv in places) if (kv.Value == place) return true;
+        return false;
+    }
+
+    // the first free place: 0 for the very first cast, then 1, -1, 2, -2, 3, -3 ...
+    int FreePlace()
+    {
+        if (places.Count == 0) return 0;
+        for (int k = 1; k < 64; k++)
+        {
+            int place = k % 2 == 1 ? (k + 1) / 2 : -(k / 2);
+            if (!PlaceTaken(place)) return place;
+        }
+        return 0;
+    }
+
+    // everyone moves toward the front to fill a gap: the right side becomes 1 2 3 ..., the left side -1 -2 -3 ...
+    // (the front itself is only for a cast being fired, or for a cast that is alone)
+    void CloseGaps()
+    {
+        if (places.Count == 1)
+        {
+            foreach (var key in new List<int>(places.Keys)) places[key] = 0;
+            return;
+        }
+
+        var right = new List<int>();
+        var left = new List<int>();
+        foreach (var kv in places)
+        {
+            if (kv.Key == leavingId) continue;
+            if (kv.Value >= 0) right.Add(kv.Key);                  // a cast left at the front joins the right side
+            else left.Add(kv.Key);
+        }
+        right.Sort((x, y) => places[x].CompareTo(places[y]));
+        left.Sort((x, y) => places[y].CompareTo(places[x]));          // -1 first
+
+        for (int i = 0; i < right.Count; i++) places[right[i]] = i + 1;
+        for (int i = 0; i < left.Count; i++) places[left[i]] = -(i + 1);
+        if (leavingId >= 0 && places.ContainsKey(leavingId)) places[leavingId] = 0;
+    }
+
+    // a released cast moves to the front and fires from there (its circle glides to the front while it fades)
+    void TakeCentre(int slot)
+    {
+        if (leavingId >= 0 || !places.TryGetValue(slot, out int place) || place == 0 || places.Count <= 1) return;
+
+        places[slot] = 0;
+        if (holdCircles[slot] != null) holdCircles[slot].SetPlacement(0f, multicastRingRadius, 1f);
+        leavingId = slot;
+        leavingUntil = Time.time + 0.45f;
+    }
+
+    float StartOf(int id) => id == ComboId ? combo.startTime : pressTime[id];
+
+    bool IsReady(int id)
+    {
+        if (id == ComboId) return ComboReady;
+        var sp = GetSpell(id);
+        return sp != null && effHeld[id] >= Mathf.Max(sp.holdThreshold, 0.05f);
+    }
+
+    CastEntryInfo MakeInfo(int id, bool primary)
+    {
+        if (id == ComboId)
+            return new CastEntryInfo { name = ComboName, progress = ComboProgress, ready = ComboReady, primary = primary, isCombo = true };
+
+        var sp = GetSpell(id);
+        bool ready = IsReady(id);
+        return new CastEntryInfo
+        {
+            name = ready ? sp.HoldName : sp.displayName,
+            progress = Mathf.Clamp01(effHeld[id] / Mathf.Max(sp.holdThreshold, 0.05f)),
+            ready = ready, primary = primary, isCombo = false,
+        };
+    }
+
+    // ---------- casting circles ----------
+
+    // getting hit while a strong cast is drawing breaks it
+    void OnDamaged(float amount)
+    {
+        if (combo != null && combo.spec.interruptible && amount >= combo.spec.interruptDamage && Time.time - combo.startTime > 0.2f)
+        {
+            FizzleCombo("Interrupted");
+            return;
+        }
+
+        for (int i = 0; i < charging.Length; i++)
+        {
+            if (!charging[i] || inCombo[i]) continue;
+            var spell = GetSpell(i);
+            if (spell == null || !spell.interruptible || amount < spell.interruptDamage) continue;
+            if (Time.time - pressTime[i] < spell.tapWindow) continue;     // still just a tap, no circle yet
+
+            charging[i] = false;
+            FizzleCast(i, "Interrupted");
+            cooldownEnd[i] += 0.3f;                                         // being broken costs a little extra time
+        }
+    }
+
+    void FinishHoldCast(int slot, bool success)
+    {
+        if (!success) { FizzleCast(slot, "Not enough mana"); return; }
+
+        if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.35f);
+        holdCircles[slot] = null;
+    }
+
+    // the spell failed (released too early, or not enough mana): break the circle, no cast, short lockout
+    void FizzleCast(int slot, string reason)
+    {
+        CastFailed?.Invoke(reason);
+
+        if (holdCircles[slot] != null) holdCircles[slot].Fizzle();
+        holdCircles[slot] = null;
+
+        cooldownEnd[slot] = Time.time + fizzleCooldown;
+        cooldownTotal[slot] = fizzleCooldown;
+        if (muzzle != null)
+        {
+            SpellFX.Play(Sfx.Fizzle, muzzle.position, 0.9f);
+            SpellFX.Sparks(muzzle.position + transform.forward * 0.5f, new Color(1f, 0.4f, 0.3f));
+        }
+    }
+
+    void DropCircle(int slot)
+    {
+        if (holdCircles == null || holdCircles[slot] == null) return;
+        holdCircles[slot].FadeOut(0.2f);
+        holdCircles[slot] = null;
+    }
+
+    void DropAllCircles()
+    {
+        if (holdCircles == null) return;
+        for (int i = 0; i < holdCircles.Length; i++) DropCircle(i);
+
+        if (combo != null)
+        {
+            ClearComboCircles(0.2f);
+            foreach (int j in combo.slots) { inCombo[j] = false; charging[j] = false; }
+            combo = null;
+        }
+    }
+
+    // per-frame cache so many circle layers do not each repeat the same aiming raycasts
+    readonly Pose[] poseCache = new Pose[3];
+    readonly int[] poseFrame = { -1, -1, -1 };
+    readonly SpellVariant[] poseVariant = new SpellVariant[3];
+    readonly float[] poseDistance = new float[3];
+
+    // where a circle layer's anchor is right now
+    public Pose GetCirclePose(CircleAnchor anchor, CastingCircleData data, SpellVariant variant)
+    {
+        int k = (int)anchor;
+        if (poseFrame[k] == Time.frameCount && poseVariant[k] == variant && Mathf.Approximately(poseDistance[k], data.frontDistance))
+            return poseCache[k];
+
+        Pose pose = ComputeCirclePose(anchor, data, variant);
+        poseCache[k] = pose;
+        poseFrame[k] = Time.frameCount;
+        poseVariant[k] = variant;
+        poseDistance[k] = data.frontDistance;
+        return pose;
+    }
+
+    Pose ComputeCirclePose(CircleAnchor anchor, CastingCircleData data, SpellVariant variant)
+    {
+        if (muzzle == null || mainCamera == null) return new Pose(transform.position, Quaternion.identity);
+
+        switch (anchor)
+        {
+            case CircleAnchor.Front:
+            {
+                Vector3 aim = GetAimDirection();
+                return new Pose(muzzle.position + aim * data.frontDistance, Quaternion.LookRotation(aim));
+            }
+            case CircleAnchor.Feet:
+            {
+                Vector3 p = transform.root.position;
+                if (RaycastSkippingOwnBarriers(p + Vector3.up, Vector3.down, 3f, groundMask, out RaycastHit hit)) p = hit.point;
+                return new Pose(p + Vector3.up * 0.05f, Quaternion.Euler(90f, 0f, 0f));
+            }
+            default:   // AimPoint
+            {
+                bool inAir = false;
+                Vector3 p = (variant != null && variant.NeedsAim)
+                    ? GetAoeTarget(variant, out inAir)
+                    : ((lockOn != null && lockOn.IsLocked) ? lockOn.AimPoint : GetCursorAimPoint());
+
+                if (inAir) return new Pose(p, Quaternion.LookRotation(mainCamera.transform.forward));   // target is in the air: stand the circle up facing the camera
+                return new Pose(p + Vector3.up * 0.06f, Quaternion.Euler(90f, 0f, 0f));
+            }
+        }
+    }
+
+    bool Cast(int slot, SpellVariant v, SpellData spell)
+    {
+        if (Time.time < cooldownEnd[slot] || muzzle == null || mainCamera == null) return false;
 
         if (mana != null && !mana.CanAfford(v.manaCost))
         {
             mana.NotifyInsufficient();
-            return;
+            return false;
         }
 
         bool cast = false;
@@ -229,17 +953,27 @@ public class PlayerSpellCaster : MonoBehaviour
             case SpellKind.Barrier: cast = CastBarrier(v); break;
         }
 
-        if (!cast) return;
+        if (!cast) return false;
 
         cooldownEnd[slot] = Time.time + v.cooldown;
         bool wasHold = spell.hasHoldVariant && ReferenceEquals(v, spell.hold);
         castingUntil = Time.time + (wasHold ? spell.heldRecovery : spell.tapRecovery);
+        facingUntil = Time.time + Mathf.Max(faceAimAfterCast, wasHold ? spell.heldRecovery : spell.tapRecovery);
         lastCastMovement = wasHold ? spell.heldMovement : spell.tapMovement;
         cooldownTotal[slot] = v.cooldown;
         if (mana != null) mana.Spend(v.manaCost);
 
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
         SpellFX.Play(sound, muzzle.position, 0.8f);
+        SpellFX.CastFlash(muzzle.position, v.effectColor);
+
+        // a tapped (instant) spell gets a small quick circle; limited in rate so rapid-fire spells do not flood the screen
+        if (spell.tapCircle != null && ReferenceEquals(v, spell.tap) && Time.time - lastTapCircle[slot] > 0.3f)
+        {
+            lastTapCircle[slot] = Time.time;
+            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale);
+        }
+        return true;
     }
 
     // ---------- aiming ----------

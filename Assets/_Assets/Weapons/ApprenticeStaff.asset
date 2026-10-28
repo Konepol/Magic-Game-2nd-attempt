@@ -18,3 +18,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e39d82728ce879d4da0efc195bdfc7da, type: 2}
   - {fileID: 11400000, guid: 336a91e1ec9f946448d3ada891b824ff, type: 2}
   - {fileID: 11400000, guid: f87301bd9846d1d4b85c28a5493327a7, type: 2}
+  combos:
+  - {fileID: 11400000, guid: 5740cae9140ad1d4a9217a362a8d7800, type: 2}
+  - {fileID: 11400000, guid: f17019eca2b3bb54095ddbd597eea35a, type: 2}
+  allowAutoCombine: 1

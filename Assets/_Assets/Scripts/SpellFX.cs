@@ -1,12 +1,28 @@
 using System;
 using UnityEngine;
 
-public enum Sfx { Cast, Laser, Explosion, Hit, BarrierHit, BarrierPlace, PlayerHurt, Death, Wave, Charge }
+public enum Sfx { Cast, Laser, Explosion, Hit, BarrierHit, BarrierPlace, PlayerHurt, Death, Wave, Charge, Fizzle, Ready }
 
 // Placeholder particles and synthesized sounds, so spells have feedback before real assets exist.
 public static class SpellFX
 {
     static Material particleMat;
+    static SpellFXLibrary library;
+    static bool libraryLoaded;
+
+    // your own sounds and effects, if the library asset exists; anything missing falls back to the generated placeholders
+    static SpellFXLibrary Library
+    {
+        get
+        {
+            if (!libraryLoaded)
+            {
+                library = Resources.Load<SpellFXLibrary>("SpellFXLibrary");
+                libraryLoaded = true;
+            }
+            return library;
+        }
+    }
     static readonly AudioClip[] clips = new AudioClip[16];
     static readonly float[] lastPlayed = new float[16];
     const int SampleRate = 44100;
@@ -57,7 +73,50 @@ public static class SpellFX
         ps.Play();
     }
 
-    public static void Sparks(Vector3 pos, Color color) => Burst(pos, 0.6f, color, 10);
+    // ---------- effect prefabs (fall back to the generated bursts when the library has none) ----------
+
+    public static void Explosion(Vector3 pos, float radius, Color color)
+    {
+        var fx = Library != null ? Library.explosionFx : null;
+        if (fx != null) SpawnFx(fx, pos, radius / 3f, color);   // the prefab is designed for a radius of about 3
+        else Burst(pos, radius, color, 30 + Mathf.RoundToInt(radius * 8f));
+    }
+
+    public static void Sparks(Vector3 pos, Color color)
+    {
+        var fx = Library != null ? Library.hitSparkFx : null;
+        if (fx != null) SpawnFx(fx, pos, 1f, color);
+        else Burst(pos, 0.6f, color, 10);
+    }
+
+    public static void Shatter(Vector3 pos, Color color)
+    {
+        var fx = Library != null ? Library.barrierBreakFx : null;
+        if (fx != null) SpawnFx(fx, pos, 1f, color);
+        else Burst(pos, 2.5f, color, 45);
+    }
+
+    public static void CastFlash(Vector3 pos, Color color)
+    {
+        var fx = Library != null ? Library.castFlashFx : null;
+        if (fx != null) SpawnFx(fx, pos, 1f, color);
+    }
+
+    static void SpawnFx(GameObject prefab, Vector3 pos, float scale, Color tint)
+    {
+        var go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity);
+        go.transform.localScale = Vector3.one * Mathf.Max(scale, 0.2f);
+
+        // tint everything except smoke, keeping the alpha each system was designed with
+        foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
+        {
+            if (ps.name.StartsWith("Smoke")) continue;
+            var main = ps.main;
+            Color c = tint;
+            c.a = main.startColor.color.a;
+            main.startColor = c;
+        }
+    }
 
     static Material GetParticleMaterial()
     {
@@ -102,8 +161,32 @@ public static class SpellFX
         if (Time.unscaledTime - lastPlayed[i] < 0.04f) return;   // stops many hits at once from stacking up
         lastPlayed[i] = Time.unscaledTime;
 
+        // your own clip if there is one, with a little random pitch so repeats don't sound identical
+        var lib = Library;
+        var custom = lib != null ? lib.Get(sfx) : null;
+        if (custom != null)
+        {
+            PlayClip(custom, pos, volume * lib.volume, 1f + UnityEngine.Random.Range(-lib.pitchVariation, lib.pitchVariation));
+            return;
+        }
+
         if (clips[i] == null) clips[i] = Generate(sfx);
         AudioSource.PlayClipAtPoint(clips[i], pos, volume);
+    }
+
+    static void PlayClip(AudioClip clip, Vector3 pos, float volume, float pitch)
+    {
+        var go = new GameObject("Sfx_" + clip.name);
+        go.transform.position = pos;
+        var src = go.AddComponent<AudioSource>();
+        src.clip = clip;
+        src.volume = Mathf.Clamp01(volume);
+        src.pitch = pitch;
+        src.spatialBlend = 1f;
+        src.minDistance = 6f;
+        src.maxDistance = 70f;
+        src.Play();
+        UnityEngine.Object.Destroy(go, clip.length / Mathf.Max(pitch, 0.1f) + 0.1f);
     }
 
     static AudioClip Make(string name, float seconds, Func<float, float, float> gen)
@@ -177,6 +260,20 @@ public static class SpellFX
                     float f = t < 0.25f ? 440f : 660f;
                     float local = t < 0.25f ? t : t - 0.25f;
                     return Mathf.Sin(Tau * f * t) * Mathf.Exp(-local * 6f) * 0.4f;
+                });
+            case Sfx.Fizzle:
+                return Make("fizzle", 0.3f, (t, d) =>
+                {
+                    phase += Tau * Mathf.Lerp(600f, 90f, t / d) / SampleRate;
+                    lp += (noise() - lp) * 0.4f;
+                    return (Mathf.Sin(phase) * 0.5f + lp * 0.6f) * Mathf.Exp(-t * 9f);
+                });
+            case Sfx.Ready:
+                return Make("ready", 0.5f, (t, d) =>
+                {
+                    float f = t < 0.12f ? 880f : 1320f;
+                    float local = t < 0.12f ? t : t - 0.12f;
+                    return (Mathf.Sin(Tau * f * t) + 0.4f * Mathf.Sin(Tau * f * 2f * t)) * Mathf.Min(1f, local * 80f) * Mathf.Exp(-local * 9f) * 0.5f;
                 });
             default: // Charge
                 return Make("charge", 0.5f, (t, d) =>

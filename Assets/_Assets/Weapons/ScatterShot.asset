@@ -18,7 +18,7 @@ MonoBehaviour:
     kind: 0
     damage: 5
     breaksBarriers: 0
-    effectColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+    effectColor: {r: 0.75, g: 0.55, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 40
     lifetime: 4
@@ -50,12 +50,12 @@ MonoBehaviour:
     manaCost: 12
     cooldown: 0.6
   hasHoldVariant: 1
-  holdThreshold: 0.7
+  holdThreshold: 0.8
   hold:
     kind: 0
     damage: 7
     breaksBarriers: 0
-    effectColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+    effectColor: {r: 0.85, g: 0.45, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 40
     lifetime: 4
@@ -92,4 +92,13 @@ MonoBehaviour:
   holdingStartsAfter: 0.15
   heldMovement: 1
   heldRecovery: 0.4
+  tapWindow: 0.2
+  interruptible: 0
+  interruptDamage: 5
+  holdCircle: {fileID: 11400000, guid: 39e9f0d1034bdc9499d12e3d7707cefe, type: 2}
+  tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
+  circleScale: 1.1
+  tapCircleScale: 0.45
+  holdDisplayName: 
+  multicastable: 1
   autoRepeatWhenHeld: 0

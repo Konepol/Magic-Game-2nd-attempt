@@ -161,6 +161,9 @@ public static class HudBuilder
         so.FindProperty("chargeFill").objectReferenceValue = chargeFill;
         so.ApplyModifiedProperties();
         AddLockIndicator();
+        AddCastLabel();
+        AddComboSlot();
+        AddCastBars();
 
         // the HUD draws these now, so the caster's own on-screen versions are switched off
         if (caster != null)
@@ -211,6 +214,150 @@ public static class HudBuilder
         AssignSlot(so.FindProperty("lockBox"), lockBox);
         so.ApplyModifiedProperties();
         EditorSceneManager.MarkSceneDirty(hudGo.scene);
+    }
+
+    // Adds the cast label (spell name / "release!" / why a cast failed) just under the charge bar of an already built HUD,
+    // leaving everything else you have edited alone.
+    [MenuItem("Tools/Magic/Add Cast Label To HUD")]
+    public static void AddCastLabel()
+    {
+        var hudGo = GameObject.Find("GUIs/HUD");
+        var hud = hudGo != null ? hudGo.GetComponent<PlayerHUD>() : null;
+        if (hud == null)
+        {
+            Debug.LogError("Add Cast Label: build the HUD first (Tools > Magic > Build HUD).");
+            return;
+        }
+
+        var existing = hudGo.transform.Find("CastLabel");
+        if (existing != null) Undo.DestroyObjectImmediate(existing.gameObject);
+
+        white = EnsureWhiteSprite();
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        var label = MakeText(hudGo.transform, "CastLabel", 20, TextAnchor.MiddleCenter, Color.white);
+        Undo.RegisterCreatedObjectUndo(label.gameObject, "Add Cast Label");
+        Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -66f), new Vector2(500f, 30f));
+        label.fontStyle = FontStyle.Bold;
+        var outline = label.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        outline.effectDistance = new Vector2(1.5f, -1.5f);
+        label.text = "Spell";
+        label.gameObject.SetActive(false);
+
+        var so = new SerializedObject(hud);
+        so.FindProperty("castLabel").objectReferenceValue = label;
+        so.ApplyModifiedProperties();
+        EditorSceneManager.MarkSceneDirty(hudGo.scene);
+    }
+
+    // Adds the combined-spell box above the health bar. It starts hidden and only shows while spells are being combined.
+    // It leaves everything else you have edited alone.
+    [MenuItem("Tools/Magic/Add Combo Slot To HUD")]
+    public static void AddComboSlot()
+    {
+        var hudGo = GameObject.Find("GUIs/HUD");
+        var hud = hudGo != null ? hudGo.GetComponent<PlayerHUD>() : null;
+        if (hud == null)
+        {
+            Debug.LogError("Add Combo Slot: build the HUD first (Tools > Magic > Build HUD).");
+            return;
+        }
+
+        var existing = hudGo.transform.Find("ComboIndicator");
+        if (existing != null) Undo.DestroyObjectImmediate(existing.gameObject);
+
+        white = EnsureWhiteSprite();
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        // centred above the health bar
+        var bar = hudGo.transform.Find("HealthBar") as RectTransform;
+        float scale = 0.9f;
+        float y = bar != null ? bar.anchoredPosition.y + bar.sizeDelta.y * 0.5f + 96f * scale * 0.5f + 16f : 260f;
+
+        var box = BuildSlot(hudGo.transform, "ComboIndicator", new Vector2(0f, y), 96f);
+        Undo.RegisterCreatedObjectUndo(box.border.gameObject, "Add Combo Slot");
+        box.border.rectTransform.localScale = Vector3.one * scale;
+        box.nameText.text = "Combined Spell";
+        box.keyText.text = "Q+E";
+        box.costText.text = "60";
+        box.cooldown.color = new Color(0f, 0f, 0f, 0.7f);
+        box.border.gameObject.SetActive(false);
+
+        var so = new SerializedObject(hud);
+        AssignSlot(so.FindProperty("comboBox"), box);
+        so.ApplyModifiedProperties();
+        EditorSceneManager.MarkSceneDirty(hudGo.scene);
+    }
+
+    // Gives the charging bar a name label and adds two more bars, so up to three spells being cast at once each get their own bar,
+    // shown side by side. Leaves everything else you have edited alone.
+    [MenuItem("Tools/Magic/Add Cast Bars To HUD")]
+    public static void AddCastBars()
+    {
+        var hudGo = GameObject.Find("GUIs/HUD");
+        var hud = hudGo != null ? hudGo.GetComponent<PlayerHUD>() : null;
+        if (hud == null)
+        {
+            Debug.LogError("Add Cast Bars: build the HUD first (Tools > Magic > Build HUD).");
+            return;
+        }
+
+        white = EnsureWhiteSprite();
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        var first = hudGo.transform.Find("ChargeBar");
+        if (first == null) { Debug.LogError("Add Cast Bars: the HUD has no ChargeBar."); return; }
+
+        // remove bars made by an earlier run
+        foreach (var name in new[] { "ChargeBar2", "ChargeBar3" })
+        {
+            var old = hudGo.transform.Find(name);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+        }
+        var oldLabel = first.Find("Label");
+        if (oldLabel != null) Undo.DestroyObjectImmediate(oldLabel.gameObject);
+
+        AddBarLabel(first);
+
+        var bars = new Transform[3];
+        bars[0] = first;
+        for (int k = 1; k < 3; k++)
+        {
+            var copy = Object.Instantiate(first.gameObject, hudGo.transform);
+            copy.name = "ChargeBar" + (k + 1);
+            Undo.RegisterCreatedObjectUndo(copy, "Add Cast Bars");
+            copy.SetActive(false);
+            bars[k] = copy.transform;
+        }
+
+        var so = new SerializedObject(hud);
+        var back = so.FindProperty("castBarBack");
+        var fill = so.FindProperty("castBarFill");
+        var label = so.FindProperty("castBarLabel");
+        back.arraySize = fill.arraySize = label.arraySize = 3;
+        for (int k = 0; k < 3; k++)
+        {
+            back.GetArrayElementAtIndex(k).objectReferenceValue = bars[k].GetComponent<Image>();
+            fill.GetArrayElementAtIndex(k).objectReferenceValue = bars[k].Find("Fill").GetComponent<Image>();
+            label.GetArrayElementAtIndex(k).objectReferenceValue = bars[k].Find("Label").GetComponent<Text>();
+        }
+        so.ApplyModifiedProperties();
+        EditorSceneManager.MarkSceneDirty(hudGo.scene);
+    }
+
+    static void AddBarLabel(Transform bar)
+    {
+        var label = MakeText(bar, "Label", 15, TextAnchor.UpperCenter, Color.white);
+        Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -24f), new Vector2(200f, 28f));
+        label.fontStyle = FontStyle.Bold;
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = 9;
+        label.resizeTextMaxSize = 16;
+        var outline = label.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        outline.effectDistance = new Vector2(1.2f, -1.2f);
+        label.text = "Spell";
     }
 
     // ---------- helpers ----------

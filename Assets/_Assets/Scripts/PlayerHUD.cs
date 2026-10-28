@@ -46,6 +46,7 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Slot[] slots;
     [SerializeField] Slot broomBox;
     [SerializeField] Slot lockBox;                     // lock-on indicator (optional)
+    [SerializeField] Slot comboBox;                    // combined spell, hidden until two or more spells are combined (optional)
     [SerializeField] Image manaBg, manaFill;
     [SerializeField] Text manaText;
     [SerializeField] Image healthBg, healthChip, healthFill;
@@ -53,6 +54,12 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Text waveText, weaponLabel;
     [SerializeField] Image vignette;
     [SerializeField] Image chargeBack, chargeFill;     // hold-charge bar under the crosshair
+    [SerializeField] Text castLabel;                   // why a cast failed (briefly)
+    [Header("Charging bars: one per spell being cast, side by side (index 0 is the first bar)")]
+    [SerializeField] Image[] castBarBack;
+    [SerializeField] Image[] castBarFill;
+    [SerializeField] Text[] castBarLabel;
+    [SerializeField] float castBarSpacing = 190f;      // distance between side-by-side bars
 
     PlayerSpellCaster caster;
     Mana mana;
@@ -61,6 +68,7 @@ public class PlayerHUD : MonoBehaviour
     BroomFlight broom;
     TargetLockOn lockOn;
     Color lockBorder;
+    Color comboBg;
 
     // what you set in the editor, remembered as the "normal" look
     Vector2[] placedPositions;
@@ -70,6 +78,12 @@ public class PlayerHUD : MonoBehaviour
     Color broomBorder, manaBgBase, manaFillBase, healthFillBase, chargeFillBase;
     Vector3 healthBgScale;
 
+    string castFailText;
+    Vector2 broomPlaced, lockPlaced;                    // where the broom and lock boxes were placed; they step outward when the row gets wider
+    int baseSlotCount;                                  // slots that were placed in the editor; extra ones are made for weapons with more spells
+    Vector2 castBarBasePos;
+    Vector3 castBarScale = Vector3.one;
+    float castFailUntil;
     float vignetteAlpha;
     float manaFlash;
     float healthShown = 1f, healthChipValue = 1f;
@@ -94,19 +108,68 @@ public class PlayerHUD : MonoBehaviour
         waves = FindAnyObjectByType<WaveSpawner>();
         lockOn = FindAnyObjectByType<TargetLockOn>();
 
+        baseSlotCount = slots.Length;
         RememberEditorLook();
+        ExtendSlots(caster != null ? caster.SlotCount : slots.Length);
+
+        // combined spell names can be long ("Fusion: A + B + C"), so that text shrinks to fit its box
+        if (comboBox != null)
+        {
+            comboBox.nameText.resizeTextForBestFit = true;
+            comboBox.nameText.resizeTextMinSize = 8;
+            comboBox.nameText.resizeTextMaxSize = 15;
+        }
 
         if (broomBox != null && broom != null) broomBox.keyText.text = broom.MountKeyLabel;
         if (lockBox != null && lockOn != null) lockBox.keyText.text = lockOn.LockKeyLabel;
 
         if (health != null) health.Damaged += OnPlayerDamaged;
+        if (caster != null) caster.CastFailed += OnCastFailed;
         if (mana != null) mana.Insufficient += OnInsufficient;
     }
 
     void OnDestroy()
     {
         if (health != null) health.Damaged -= OnPlayerDamaged;
+        if (caster != null) caster.CastFailed -= OnCastFailed;
         if (mana != null) mana.Insufficient -= OnInsufficient;
+    }
+
+    // a weapon may have more spells than the slots placed in the editor: extra slots are copies of the last one,
+    // continuing the row with the same spacing (this also runs whenever a different weapon needs more slots)
+    void ExtendSlots(int needed)
+    {
+        if (needed <= slots.Length) return;
+
+        int old = slots.Length;
+        var list = new System.Collections.Generic.List<Slot>(slots);
+        var template = slots[baseSlotCount - 1];
+        float step = baseSlotCount > 1 ? (placedPositions[baseSlotCount - 1].x - placedPositions[0].x) / (baseSlotCount - 1) : 110f;
+
+        System.Array.Resize(ref placedPositions, needed);
+        System.Array.Resize(ref baseBg, needed);
+        System.Array.Resize(ref baseBorder, needed);
+
+        for (int k = old; k < needed; k++)
+        {
+            var go = Instantiate(template.border.gameObject, template.border.transform.parent);
+            go.name = "Slot" + (k + 1);
+            var bg = go.transform.Find("Background");
+            list.Add(new Slot
+            {
+                border = go.GetComponent<Image>(),
+                bg = bg.GetComponent<Image>(),
+                cooldown = bg.Find("CooldownFill").GetComponent<Image>(),
+                nameText = bg.Find("Name").GetComponent<Text>(),
+                keyText = bg.Find("Key").GetComponent<Text>(),
+                costText = bg.Find("Cost").GetComponent<Text>(),
+            });
+
+            placedPositions[k] = new Vector2(placedPositions[baseSlotCount - 1].x + step * (k - baseSlotCount + 1), placedPositions[baseSlotCount - 1].y);
+            baseBg[k] = baseBg[baseSlotCount - 1];
+            baseBorder[k] = baseBorder[baseSlotCount - 1];
+        }
+        slots = list.ToArray();
     }
 
     // everything the HUD changes at runtime goes back to what you set in the editor
@@ -122,8 +185,21 @@ public class PlayerHUD : MonoBehaviour
             baseBorder[i] = slots[i].border.color;
         }
 
-        if (broomBox != null) { broomBorder = broomBox.border.color; broomScale = broomBox.border.rectTransform.localScale; }
-        if (lockBox != null) lockBorder = lockBox.border.color;
+        // the charging bars: remember where the first one is, so several can be spread around it
+        if (castBarBack == null || castBarBack.Length == 0)
+        {
+            if (chargeBack != null && chargeFill != null) { castBarBack = new[] { chargeBack }; castBarFill = new[] { chargeFill }; castBarLabel = new Text[1]; }
+        }
+        if (castBarBack != null && castBarBack.Length > 0 && castBarBack[0] != null)
+        {
+            castBarBasePos = castBarBack[0].rectTransform.anchoredPosition;
+            castBarScale = castBarBack[0].rectTransform.localScale;
+            if (castBarFill[0] != null) chargeFillBase = castBarFill[0].color;
+        }
+
+        if (broomBox != null) { broomBorder = broomBox.border.color; broomScale = broomBox.border.rectTransform.localScale; broomPlaced = broomBox.border.rectTransform.anchoredPosition; }
+        if (lockBox != null) { lockBorder = lockBox.border.color; lockPlaced = lockBox.border.rectTransform.anchoredPosition; }
+        if (comboBox != null) { comboBg = comboBox.bg.color; comboBox.border.gameObject.SetActive(false); }
         manaBgBase = manaBg.color;
         manaFillBase = manaFill.color;
         healthFillBase = healthFill.color;
@@ -134,11 +210,18 @@ public class PlayerHUD : MonoBehaviour
     void OnPlayerDamaged(float amount) => vignetteAlpha = Mathf.Clamp(0.25f + amount * 0.01f, 0.25f, 0.6f);
     void OnInsufficient() => manaFlash = 1f;
 
+    void OnCastFailed(string reason)
+    {
+        castFailText = reason;
+        castFailUntil = Time.unscaledTime + 0.9f;
+    }
+
     void Update()
     {
         ArrangeSlots();
         UpdateSpellBar();
         UpdateIndicators();
+        UpdateCombo();
         UpdateMana();
         UpdateHealth();
         UpdateVignette();
@@ -149,16 +232,23 @@ public class PlayerHUD : MonoBehaviour
     void ArrangeSlots()
     {
         if (caster == null) return;
+        if (caster.SlotCount > slots.Length) ExtendSlots(caster.SlotCount);
 
         int used = 0;
         for (int i = 0; i < slots.Length; i++)
             if (caster.GetSpellAt(i) != null) used++;
 
         // spacing and centre come from the positions you placed the slots at
+        int baseCount = Mathf.Max(baseSlotCount, 1);
         float centerX = 0f, step = 0f;
-        for (int i = 0; i < slots.Length; i++) centerX += placedPositions[i].x;
-        centerX /= slots.Length;
-        if (slots.Length > 1) step = (placedPositions[slots.Length - 1].x - placedPositions[0].x) / (slots.Length - 1);
+        for (int i = 0; i < baseCount; i++) centerX += placedPositions[i].x;
+        centerX /= baseCount;
+        if (baseCount > 1) step = (placedPositions[baseCount - 1].x - placedPositions[0].x) / (baseCount - 1);
+
+        // a row wider than the one placed in the editor pushes the broom and lock boxes outward so they never overlap the slots
+        float extra = Mathf.Max(0, used - baseCount) * Mathf.Abs(step) * 0.5f;
+        if (broomBox != null) broomBox.border.rectTransform.anchoredPosition = new Vector2(broomPlaced.x - extra, broomPlaced.y);
+        if (lockBox != null) lockBox.border.rectTransform.anchoredPosition = new Vector2(lockPlaced.x + extra, lockPlaced.y);
 
         int k = 0;
         for (int i = 0; i < slots.Length; i++)
@@ -167,7 +257,7 @@ public class PlayerHUD : MonoBehaviour
             slots[i].border.gameObject.SetActive(has);
             if (!has) continue;
 
-            if (slotLayout == SlotLayout.CenterActive && slots.Length > 1)
+            if (slotLayout == SlotLayout.CenterActive && baseCount > 1)
             {
                 float x = centerX + (k - (used - 1) * 0.5f) * step;
                 slots[i].border.rectTransform.anchoredPosition = new Vector2(x, placedPositions[i].y);
@@ -237,6 +327,26 @@ public class PlayerHUD : MonoBehaviour
             broomBox.border.color = Color.Lerp(warningColor, Color.white, beat * 0.5f);
         }
         broomBox.border.rectTransform.localScale = Vector3.Lerp(broomBox.border.rectTransform.localScale, broomScale * pound, 1f - Mathf.Exp(-25f * Time.unscaledDeltaTime));
+    }
+
+    // the combined spell's box: only visible while two or more spells are being combined
+    void UpdateCombo()
+    {
+        if (comboBox == null || caster == null) return;
+
+        bool active = caster.ComboActive;
+        if (comboBox.border.gameObject.activeSelf != active) comboBox.border.gameObject.SetActive(active);
+        if (!active) return;
+
+        bool ready = caster.ComboReady;
+        comboBox.nameText.text = caster.ComboName;
+        comboBox.keyText.text = caster.ComboKeys;
+        comboBox.costText.text = Mathf.RoundToInt(caster.ComboCost).ToString();
+        comboBox.cooldown.fillAmount = 1f - caster.ComboProgress;      // darkness drains away as the cast completes
+
+        bool affordable = mana == null || mana.CanAfford(caster.ComboCost);
+        comboBox.bg.color = affordable ? comboBg : comboBg * new Color(1f, 0.45f, 0.45f, 1f);
+        comboBox.border.color = ready ? readyColor : chargingColor;
     }
 
     // lock-on: "NONE" while nothing is locked, the target's name while locked
@@ -321,20 +431,50 @@ public class PlayerHUD : MonoBehaviour
         if (weaponLabel != null && caster != null && caster.Weapon != null)
             weaponLabel.text = "Weapon: " + caster.Weapon.displayName + (caster.CanSwitchWeapon ? "  (Tab to switch)" : "");
 
-        if (chargeBack == null || chargeFill == null || caster == null) return;
+        if (caster == null) return;
 
-        int charging = -1;
-        for (int i = 0; i < slots.Length; i++)
+        // one charging bar per spell being cast, side by side; the name changes to the stronger version once it is ready
+        var entries = caster.CastEntries;
+        int n = entries.Count;
+        int bars = castBarBack != null ? castBarBack.Length : 0;
+        float glide = 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime);
+
+        for (int k = 0; k < bars; k++)
         {
-            var spell = caster.GetSpellAt(i);
-            if (spell != null && spell.hasHoldVariant && caster.IsCharging(i)) { charging = i; break; }
+            if (castBarBack[k] == null) continue;
+
+            bool on = k < n;
+            if (castBarBack[k].gameObject.activeSelf != on) castBarBack[k].gameObject.SetActive(on);
+            if (!on) continue;
+
+            var e = entries[k];
+            var rt = castBarBack[k].rectTransform;
+            Vector2 target = new Vector2(castBarBasePos.x + (k - (n - 1) * 0.5f) * castBarSpacing, castBarBasePos.y);
+            rt.anchoredPosition = Vector2.Lerp(rt.anchoredPosition, target, glide);
+            rt.localScale = Vector3.Lerp(rt.localScale, castBarScale * (e.primary || n == 1 ? 1f : 0.9f), glide);
+
+            if (castBarFill[k] != null)
+            {
+                castBarFill[k].fillAmount = e.progress;
+                castBarFill[k].color = e.ready ? readyColor : chargeFillBase;
+            }
+            if (castBarLabel != null && k < castBarLabel.Length && castBarLabel[k] != null)
+            {
+                castBarLabel[k].text = e.name;
+                castBarLabel[k].color = e.ready ? readyColor : (e.primary || n == 1 ? Color.white : new Color(1f, 1f, 1f, 0.8f));
+            }
         }
 
-        chargeBack.gameObject.SetActive(charging >= 0);
-        if (charging < 0) return;
-
-        float charge = caster.GetCharge(charging);
-        chargeFill.fillAmount = charge;
-        chargeFill.color = charge >= 1f ? readyColor : chargeFillBase;
+        // why the last cast failed, briefly
+        if (castLabel != null)
+        {
+            bool failing = Time.unscaledTime < castFailUntil;
+            if (castLabel.gameObject.activeSelf != failing) castLabel.gameObject.SetActive(failing);
+            if (failing)
+            {
+                castLabel.text = castFailText;
+                castLabel.color = Color.Lerp(new Color(1f, 0.3f, 0.25f, 0f), new Color(1f, 0.3f, 0.25f, 1f), Mathf.Clamp01((castFailUntil - Time.unscaledTime) / 0.5f));
+            }
+        }
     }
 }

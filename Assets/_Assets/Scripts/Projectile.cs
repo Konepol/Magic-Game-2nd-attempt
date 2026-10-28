@@ -219,7 +219,7 @@ public class ExplosionFlash : MonoBehaviour
     public static void Spawn(Vector3 point, float radius, Color? color = null)
     {
         Color c = color ?? new Color(1f, 0.55f, 0.15f);
-        SpellFX.Burst(point, radius, c, 30 + Mathf.RoundToInt(radius * 8f));
+        SpellFX.Explosion(point, radius, c);
         SpellFX.Play(Sfx.Explosion, point);
         CameraShake.AddAt(point, Mathf.Clamp01(radius * 0.07f));
 

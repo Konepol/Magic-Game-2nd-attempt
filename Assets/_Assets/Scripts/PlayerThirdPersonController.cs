@@ -144,6 +144,19 @@ namespace StarterAssets
 
         private Mana _mana;
         private PlayerSpellCaster _caster;
+        private float _lockFaceVelocity;
+
+        [Tooltip("While casting, the character faces where they are aiming (the locked target, or where the camera points) and moves around it (strafing). Otherwise they face the direction they walk.")]
+        public bool StrafeWhileCasting = true;
+
+        // true while casting: the direction to face instead of the walking direction
+        private bool TryGetFacing(out Vector3 direction)
+        {
+            direction = Vector3.zero;
+            if (!StrafeWhileCasting) return false;
+            if (_caster == null) _caster = GetComponentInChildren<PlayerSpellCaster>();
+            return _caster != null && _caster.TryGetFacingDirection(out direction);
+        }
 
         [Tooltip("Walking speed multiplier while casting a Slow spell (Stand spells stop you completely).")]
         [Range(0.05f, 1f)] public float SlowCastSpeedMultiplier = 0.5f;
@@ -307,8 +320,16 @@ namespace StarterAssets
                 float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
                     RotationSmoothTime);
 
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+                // rotate to face input direction relative to camera position (when locked on, facing is handled below)
+                if (!TryGetFacing(out _)) transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
+
+            // casting: face the aim (locked target or camera direction), whatever direction we are moving
+            if (TryGetFacing(out Vector3 faceDir))
+            {
+                float yaw = Mathf.Atan2(faceDir.x, faceDir.z) * Mathf.Rad2Deg;
+                float faced = Mathf.SmoothDampAngle(transform.eulerAngles.y, yaw, ref _lockFaceVelocity, RotationSmoothTime);
+                transform.rotation = Quaternion.Euler(0.0f, faced, 0.0f);
             }
 
 
