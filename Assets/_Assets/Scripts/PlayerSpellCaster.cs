@@ -652,6 +652,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public IReadOnlyList<int> QueuedSlots => queued;
     public bool IsQueued(int slot) => queued.Contains(slot);
 
+    // is this spell part of a combination right now: queued, in the ready combined spell, or in the one being cast
+    public bool IsCombining(int slot) =>
+        queued.Contains(slot) || (pendingSlots != null && pendingSlots.Contains(slot)) || (combo != null && combo.slots.Contains(slot));
+
     bool Equipped(SpellData spell)
     {
         for (int j = 0; j < cooldownEnd.Length; j++) if (GetSpell(j) == spell) return true;

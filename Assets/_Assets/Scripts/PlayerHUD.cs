@@ -307,15 +307,31 @@ public class PlayerHUD : MonoBehaviour
             Color border = baseBorder[i];
             if (caster.IsCharging(i))
                 border = spell.hasHoldVariant && caster.GetCharge(i) >= 1f ? readyColor : chargingColor;
-            // combining: queued spells glow, spells that cannot join the fusion are dimmed
+            // combining: spells that cannot join the fusion are dimmed
             if (caster.Queueing)
             {
-                if (caster.IsQueued(i)) border = readyColor;
+                if (caster.IsQueued(i)) { }
                 else if (!caster.CanQueue(i)) { s.bg.color = baseBg[i] * new Color(0.4f, 0.4f, 0.4f, 1f); border = baseBorder[i] * new Color(0.5f, 0.5f, 0.5f, 1f); }
             }
+            // a spell that is being combined is marked: violet border, and its cost line says so
+            if (costColors == null || costColors.Length != slots.Length)
+            {
+                costColors = new Color[slots.Length];
+                for (int k = 0; k < slots.Length; k++) costColors[k] = slots[k].costText.color;
+            }
+            if (caster.IsCombining(i))
+            {
+                border = combiningColor;
+                s.costText.text = "COMBINING";
+                s.costText.color = combiningColor;
+            }
+            else s.costText.color = costColors[i];
             s.border.color = border;
         }
     }
+
+    Color[] costColors;
+    static readonly Color combiningColor = new Color(0.72f, 0.5f, 1f);
 
     void UpdateIndicators()
     {
