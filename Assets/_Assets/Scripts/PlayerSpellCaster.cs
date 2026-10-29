@@ -723,6 +723,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         var spec = pendingSpec;
         var set = pendingSlots;
+
+        // casts already going: the combined spell joins them (multicast) if everything allows it
+        if (EntryCount > 0 && !CanMulticast(spec.result))
+        {
+            CastFailed?.Invoke("Can't cast together");
+            return;
+        }
         ClearPending();
 
         foreach (int j in set)
@@ -812,12 +819,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             var sp = GetSpell(j);
             if (sp != null && !sp.multicastable) return false;
         }
-        if (combo != null)
-            foreach (int j in combo.slots)
-            {
-                var sp = GetSpell(j);
-                if (sp != null && !sp.multicastable) return false;
-            }
+        if (combo != null && combo.spec.result != null && !combo.spec.result.multicastable) return false;      // the combined spell counts as one cast
         return true;
     }
 
