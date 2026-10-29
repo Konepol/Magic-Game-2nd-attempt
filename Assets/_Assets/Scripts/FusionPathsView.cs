@@ -11,15 +11,14 @@ public class FusionPathsView
     {
         public SpellData spell;               // the spell added on the way here (null for the root)
         public List<SpellData> set;           // everything combined at this node
-        public bool hasMore;                  // more steps above, not drawn
+        public Vector2 pos;
         public string result;                 // the fusion this chain finishes (null if it goes on)
         public readonly List<Node> children = new List<Node>();
         public float x;                       // 0..1 across the area
         public int depth;
     }
 
-    const float AreaW = 640f, AreaH = 470f;
-    const float NodeH = 68f, LayerStep = 110f, FirstY = 34f;
+    const float NodeW = 230f, NodeH = 72f, Pad = 24f, TitleH = 30f;
 
     readonly PlayerSpellCaster caster;
     readonly RectTransform area, content;
@@ -34,7 +33,7 @@ public class FusionPathsView
         area.anchorMin = area.anchorMax = Vector2.zero;
         area.pivot = Vector2.zero;
         area.anchoredPosition = new Vector2(20f, 190f);        // above the combined-spell box in the corner
-        area.sizeDelta = new Vector2(AreaW, AreaH);
+        area.sizeDelta = new Vector2(300f, 200f);
         area.gameObject.AddComponent<RectMask2D>();            // anything past the edge is cut
 
         var title = UIKit.Label(area, "Title", "FUSION PATHS", 20, new Color(0.6f, 0.65f, 0.75f), TextAnchor.UpperLeft, true);
@@ -90,26 +89,35 @@ public class FusionPathsView
         var root = new Node { set = new List<SpellData>(held) };
         root.result = ResultOf(root.set);
         Grow(root);
-        Prune(root);
 
         if (root.children.Count == 0 && root.result == null) { area.gameObject.SetActive(false); return; }
 
-        // layout: leaves are spread across the width, a parent sits over its children
-        int leaves = 0;
-        int maxPerLayer = 1;
-        var perLayer = new Dictionary<int, int>();
-        Place(root, ref leaves, perLayer);
-        foreach (var kv in perLayer) maxPerLayer = Mathf.Max(maxPerLayer, kv.Value);
-        if (leaves < 1) leaves = 1;
-        Spread(root, leaves);
+        // the group sits in the middle and every spell that can join it is placed on a ring around it
+        int n = root.children.Count;
+        float rootW = Mathf.Clamp(60f + 14f * RootTitle(root).Length, 200f, 420f);
+        float ring = n == 0 ? 0f : Mathf.Max(150f, n * (NodeW + 14f) / (2f * Mathf.PI));
+        float w = n == 0 ? rootW + 2f * Pad : Mathf.Max(rootW, 2f * ring + NodeW) + 2f * Pad;
+        float h = n == 0 ? NodeH + 2f * Pad + TitleH : 2f * ring + NodeH + 2f * Pad + TitleH;
+        area.sizeDelta = new Vector2(w, h);
 
-        float nodeW = Mathf.Clamp(AreaW / Mathf.Max(maxPerLayer, 1) - 12f, 110f, 200f);
+        Vector2 centre = new Vector2(w * 0.5f, (h - TitleH) * 0.5f);
+        root.pos = centre;
+        for (int i = 0; i < n; i++)
+        {
+            float angle = Mathf.PI * 0.5f - i * 2f * Mathf.PI / n;        // first one at the top, then clockwise
+            root.children[i].pos = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * ring;
+        }
 
-        // edges first so the boxes sit on top of them
-        DrawEdges(root, nodeW);
-        DrawNode(root, held, nodeW, true);
-
+        DrawNode(root, held, rootW, true);
         area.gameObject.SetActive(true);
+    }
+
+    string RootTitle(Node node)
+    {
+        if (node.result != null) return node.result;
+        var names = new List<string>();
+        foreach (var h in node.set) names.Add(h.displayName);
+        return string.Join(" + ", names);
     }
 
     // the fusion whose recipe is exactly this group, if any
@@ -131,7 +139,7 @@ public class FusionPathsView
     // children: every spell that still appears in a recipe containing the whole group (in a fixed order so each group shows once)
     void Grow(Node node)
     {
-        if (node.depth >= 4) return;
+        if (node.depth >= 1) return;
         var options = new List<SpellData>();
         foreach (var combo in caster.Combos)
         {
@@ -154,72 +162,12 @@ public class FusionPathsView
         }
     }
 
-    // only three rows above the held spell are drawn; a node with more beyond them gets an arrow pointing up instead
-    const int MaxRows = 3;
-
-    static void Prune(Node node)
-    {
-        if (node.depth >= MaxRows) { node.hasMore = node.children.Count > 0; node.children.Clear(); return; }
-        foreach (var c in node.children) Prune(c);
-    }
-
-    static void Place(Node node, ref int leaf, Dictionary<int, int> perLayer)
-    {
-        perLayer[node.depth] = perLayer.TryGetValue(node.depth, out int n) ? n + 1 : 1;
-        if (node.children.Count == 0) { node.x = leaf++; return; }
-
-        foreach (var c in node.children) Place(c, ref leaf, perLayer);
-        float sum = 0f;
-        foreach (var c in node.children) sum += c.x;
-        node.x = sum / node.children.Count;
-    }
-
-    static void Spread(Node node, int leaves)
-    {
-        node.x = (node.x + 0.5f) / leaves;
-        foreach (var c in node.children) Spread(c, leaves);
-    }
-
-    Vector2 PositionOf(Node n) => new Vector2(Mathf.Lerp(40f, AreaW - 40f, n.x), FirstY + n.depth * LayerStep + NodeH * 0.5f);
-
-    void DrawEdges(Node node, float nodeW)
-    {
-        foreach (var c in node.children)
-        {
-            Vector2 from = PositionOf(node) + new Vector2(0f, NodeH * 0.5f);
-            Vector2 to = PositionOf(c) - new Vector2(0f, NodeH * 0.5f);
-            Line(from, to);
-            DrawEdges(c, nodeW);
-        }
-    }
-
-    void Line(Vector2 a, Vector2 b)
-    {
-        var color = new Color(1f, 0.82f, 0.35f, 0.75f);
-        Vector2 d = b - a;
-
-        var line = UIKit.Box(content, "Edge", color);
-        var rt = line.rectTransform;
-        rt.anchorMin = rt.anchorMax = Vector2.zero;
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = (a + b) * 0.5f;
-        rt.sizeDelta = new Vector2(d.magnitude, 3f);
-        rt.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
-
-        // arrowhead just below the box it points at
-        var head = UIKit.Box(content, "Arrow", color);
-        var hr = head.rectTransform;
-        hr.anchorMin = hr.anchorMax = Vector2.zero;
-        hr.pivot = new Vector2(0.5f, 0.5f);
-        hr.anchoredPosition = b - d.normalized * 6f;
-        hr.sizeDelta = new Vector2(13f, 13f);
-        hr.localRotation = Quaternion.Euler(0f, 0f, 45f);
-    }
+    Vector2 PositionOf(Node n) => n.pos;
 
     void DrawNode(Node node, List<SpellData> held, float nodeW, bool isRoot)
     {
         Vector2 p = PositionOf(node);
-        float width = isRoot ? Mathf.Min(nodeW * 1.6f, 300f) : nodeW;
+        float width = nodeW;
 
         string text;
         Color fill, textColor = Color.white;
@@ -237,7 +185,7 @@ public class FusionPathsView
             for (int i = 0; i < caster.SlotCount; i++) if (caster.GetSpellAt(i) == node.spell) slot = i;
             string add = slot >= 0
                 ? "<color=#9FD8FF>+ [" + caster.GetKeyLabel(slot) + "]</color> " + node.spell.displayName
-                : "<color=#808080>+ " + node.spell.displayName + " (not equipped)</color>";
+                : "<color=#808080>+ " + node.spell.displayName + " (no key)</color>";
             text = title + "\n" + add;
             fill = slot >= 0 ? new Color(0.12f, 0.17f, 0.26f, 0.95f) : new Color(0.1f, 0.1f, 0.12f, 0.95f);
         }
@@ -258,12 +206,6 @@ public class FusionPathsView
         label.rectTransform.offsetMin = new Vector2(5f, 3f);
         label.rectTransform.offsetMax = new Vector2(-5f, -3f);
 
-        if (node.hasMore)
-        {
-            Vector2 top = p + new Vector2(0f, NodeH * 0.5f);
-            Line(top, top + new Vector2(0f, 26f));
-        }
-
-        foreach (var c in node.children) DrawNode(c, held, nodeW, false);
+        foreach (var c in node.children) DrawNode(c, held, NodeW, false);
     }
 }
