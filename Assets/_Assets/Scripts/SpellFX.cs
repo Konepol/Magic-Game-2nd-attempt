@@ -75,8 +75,12 @@ public static class SpellFX
 
     // ---------- effect prefabs (fall back to the generated bursts when the library has none) ----------
 
+    // the golden 3D star-and-glow style (MagicFX); false brings back the old prefab/placeholder effects
+    public static bool UseMagicFX = true;
+
     public static void Explosion(Vector3 pos, float radius, Color color)
     {
+        if (UseMagicFX) { MagicFX.Pop(pos, Mathf.Max(radius * 0.8f, 0.8f), color, 6 + Mathf.RoundToInt(radius * 2f)); return; }
         var fx = Library != null ? Library.explosionFx : null;
         if (fx != null) SpawnFx(fx, pos, radius / 3f, color);   // the prefab is designed for a radius of about 3
         else Burst(pos, radius, color, 30 + Mathf.RoundToInt(radius * 8f));
@@ -84,6 +88,7 @@ public static class SpellFX
 
     public static void Sparks(Vector3 pos, Color color)
     {
+        if (UseMagicFX) { MagicFX.Hit(pos, color); return; }
         var fx = Library != null ? Library.hitSparkFx : null;
         if (fx != null) SpawnFx(fx, pos, 1f, color);
         else Burst(pos, 0.6f, color, 10);
@@ -91,6 +96,7 @@ public static class SpellFX
 
     public static void Shatter(Vector3 pos, Color color)
     {
+        if (UseMagicFX) { MagicFX.Pop(pos, 1.6f, color, 10); return; }
         var fx = Library != null ? Library.barrierBreakFx : null;
         if (fx != null) SpawnFx(fx, pos, 1f, color);
         else Burst(pos, 2.5f, color, 45);
@@ -98,6 +104,7 @@ public static class SpellFX
 
     public static void CastFlash(Vector3 pos, Color color)
     {
+        if (UseMagicFX) { MagicFX.Gather(pos, color); return; }
         var fx = Library != null ? Library.castFlashFx : null;
         if (fx != null) SpawnFx(fx, pos, 1f, color);
     }

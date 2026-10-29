@@ -47,6 +47,12 @@ public class Projectile : MonoBehaviour
 
     void Start()
     {
+        if (SpellFX.UseMagicFX)
+        {
+            var rend = GetComponentInChildren<Renderer>();
+            Color col = rend != null && rend.sharedMaterial != null && rend.sharedMaterial.HasProperty("_BaseColor") ? rend.sharedMaterial.GetColor("_BaseColor") : new Color(1f, 0.8f, 0.4f);
+            MagicFX.StarTrail(transform, col, Mathf.Clamp(transform.localScale.x, 0.6f, 2f));
+        }
         spawnTime = Time.time;
         baseScale = transform.localScale;
         Destroy(gameObject, lifetime);
