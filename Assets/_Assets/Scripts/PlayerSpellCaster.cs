@@ -17,6 +17,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     [SerializeField] Camera mainCamera;
     [SerializeField] TargetLockOn lockOn;
     [SerializeField] Transform muzzle;               // empty at the hand or weapon
+    [SerializeField] Transform launchPoint;          // where shots and beams come out (the wand tip); the muzzle is used when empty
     [SerializeField] WeaponData weapon;
     [SerializeField] WeaponData[] loadout;           // weapons to cycle through with the switch key
     [SerializeField, Tooltip("Use the spells the player picked in the main menu's Customize screen instead of the weapon above.")]
@@ -1423,7 +1424,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
         SpellFX.Play(sound, muzzle.position, 0.8f);
-        SpellFX.CastFlash(muzzle.position, v.effectColor);
+        SpellFX.CastFlash(LaunchPosition, v.effectColor);
 
         // a tapped (instant) spell gets a small quick circle; limited in rate so rapid-fire spells do not flood the screen
         if (spell.tapCircle != null && ReferenceEquals(v, spell.tap) && Time.time - lastTapCircle[slot] > 0.3f)
@@ -1524,6 +1525,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         SpellVisuals.SetRing(aimRing, center + Vector3.up * 0.06f, radius);
     }
 
+    Vector3 LaunchPosition => launchPoint != null ? launchPoint.position : muzzle.position;
+
     // ---------- spell kinds ----------
 
     bool CastProjectile(SpellVariant v, SpellData spell)
@@ -1539,7 +1542,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             float angle = count == 1 ? 0f : Mathf.Lerp(-v.spreadDegrees * 0.5f, v.spreadDegrees * 0.5f, k / (float)(count - 1));
             Vector3 shotDir = Quaternion.AngleAxis(angle, mainCamera.transform.up) * dir;
 
-            var p = Instantiate(prefab, muzzle.position, Quaternion.LookRotation(shotDir));
+            var p = Instantiate(prefab, LaunchPosition, Quaternion.LookRotation(shotDir));
             p.Init(v.damage, v.projectileSpeed, v.lifetime, v.projectileScale, v.explosionRadius,
                 v.pierceCount, v.explodeOnPierce, v.breaksBarriers, v.status);
         }
@@ -1549,7 +1552,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     // instant hit along the aim line
     bool CastLaser(SpellVariant v)
     {
-        Vector3 origin = muzzle.position;
+        Vector3 origin = LaunchPosition;
         Vector3 dir = GetAimDirection();
         Vector3 end = origin + dir * v.laserRange;
 

@@ -37,6 +37,10 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] float dashSpeed = 32f;
     [SerializeField] float dashDuration = 0.18f;
     [SerializeField] float dashCooldown = 0.7f;
+    [SerializeField, Tooltip("Speed right after the dash, as a multiple of normal flight speed (1.5 = 50% faster).")]
+    float dashExitMultiplier = 1.5f;
+    [SerializeField, Tooltip("Units per second the extra speed fades at until it is back to normal.")]
+    float overspeedDecay = 5f;
     [SerializeField, Tooltip("Max seconds between the two taps.")]
     float doubleTapWindow = 0.28f;
 
@@ -341,18 +345,32 @@ public class BroomFlight : MonoBehaviour
         {
             horizontalVelocity = dashDir * dashSpeed;
             dashTimer -= Time.deltaTime;
-            if (dashTimer <= 0f) horizontalVelocity = dashDir * maxSpeed;   // keep some momentum, then normal flight takes over
-        }
-        else if (hasInput)
-        {
-            Vector3 target = wish.normalized * (maxSpeed * boostFactor * castMul);
-            horizontalVelocity = Vector3.MoveTowards(
-                horizontalVelocity, target, acceleration * boostFactor * Time.deltaTime);
+            if (dashTimer <= 0f)   // leave the dash faster than normal flight; the extra speed bleeds off below
+                horizontalVelocity = dashDir * Mathf.Max(maxSpeed * dashExitMultiplier, maxSpeed * boostFactor * castMul);
         }
         else
         {
-            float decel = maxSpeed / Mathf.Max(coastTime, 0.01f);
-            horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, Vector3.zero, decel * Time.deltaTime);
+            float speed = horizontalVelocity.magnitude;
+            float cap = maxSpeed * boostFactor * castMul;
+            bool overspeed = speed > cap + 0.01f;
+
+            if (hasInput && overspeed)
+            {
+                // steer toward the input while keeping the speed, and let the extra speed fade slowly
+                Vector3 steered = Vector3.MoveTowards(horizontalVelocity, wish.normalized * speed, acceleration * boostFactor * Time.deltaTime);
+                horizontalVelocity = steered.normalized * Mathf.MoveTowards(speed, cap, overspeedDecay * Time.deltaTime);
+            }
+            else if (hasInput)
+            {
+                Vector3 target = wish.normalized * cap;
+                horizontalVelocity = Vector3.MoveTowards(
+                    horizontalVelocity, target, acceleration * boostFactor * Time.deltaTime);
+            }
+            else
+            {
+                float decel = overspeed ? overspeedDecay : maxSpeed / Mathf.Max(coastTime, 0.01f);
+                horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, Vector3.zero, decel * Time.deltaTime);
+            }
         }
 
         // ---------- vertical: Space up, Ctrl down ----------

@@ -189,10 +189,51 @@ public static class WitchBuilder
         tip.SetParent(wand.transform, false);
         tip.localPosition = new Vector3(0f, 0f, 0.55f);
 
+        // shots and beams come out of the wand tip
+        var so = new SerializedObject(Object.FindAnyObjectByType<PlayerSpellCaster>());
+        so.FindProperty("launchPoint").objectReferenceValue = tip;
+        so.ApplyModifiedProperties();
+
         var glow = wand.AddComponent<WandGlow>();
         glow.gemIndex = 1;
         EditorUtility.SetDirty(wand);
+        BuildBroom(root, sceneName, wandMat);
         Debug.Log("Witch built for " + sceneName + " (" + body.vertexCount + " vertices).");
+    }
+
+    // a simple broom to ride: a lavender handle, a bundle of straw bristles tied with gold, and a little star at the front
+    static void BuildBroom(Transform root, string sceneName, Material mat)
+    {
+        var holder = root.Find("Broom");
+        if (holder == null) return;
+
+        // the old stand-in model stays in the scene but is hidden
+        foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
+            if (r.gameObject.name != "WitchBroom") r.enabled = false;
+
+        var old = holder.Find("WitchBroom");
+        if (old != null) Object.DestroyImmediate(old.gameObject);
+
+        var go = new GameObject("WitchBroom");
+        go.transform.SetParent(holder, false);
+        go.transform.localPosition = Vector3.zero;
+        go.transform.localRotation = Quaternion.identity;
+
+        var straw = C(0.98f, 0.84f, 0.55f);
+        var strawDark = C(0.88f, 0.68f, 0.40f);
+        var mb = new MeshBuilder(go.transform, null);
+        mb.TubeLocal(new[] { new Vector3(0f, 0.04f, -0.75f), new Vector3(0f, 0.05f, 0.1f), new Vector3(0f, 0.10f, 0.95f) }, new[] { 0.034f, 0.03f, 0.026f }, WandWood, 0f, 12);
+        mb.TubeLocal(new[] { new Vector3(0f, 0.04f, -0.7f), new Vector3(0f, 0.04f, -0.95f), new Vector3(0f, 0.035f, -1.2f), new Vector3(0f, 0.03f, -1.42f) },
+                     new[] { 0.06f, 0.15f, 0.17f, 0.04f }, straw, 0f, 16);
+        mb.TubeLocal(new[] { new Vector3(0f, 0.035f, -1.1f), new Vector3(0f, 0.03f, -1.45f) }, new[] { 0.11f, 0.02f }, strawDark, 0f, 12);
+        mb.EllipsoidLocal(new Vector3(0f, 0.04f, -0.72f), new Vector3(0.075f, 0.075f, 0.035f), Gold, 0f);                  // the tie
+        mb.EllipsoidLocal(new Vector3(0f, 0.10f, 0.98f), new Vector3(0.036f, 0.036f, 0.036f), Gold, 0f);
+        mb.StarLocal(new Vector3(0f, 0.1f, 1.07f), new Vector3(0f, 1f, 0f), new Vector3(1f, 0f, 0f), 0.09f, 0.03f, Gold, 0f);
+
+        var mesh = mb.ToStaticMesh("Broom_" + sceneName);
+        AssetDatabase.CreateAsset(mesh, ModelDir + "/Broom_" + sceneName + ".asset");
+        go.AddComponent<MeshFilter>().sharedMesh = mesh;
+        go.AddComponent<MeshRenderer>().sharedMaterial = mat;
     }
 
     static Material Material(string path, Shader shader, System.Action<Material> setup)
