@@ -100,5 +100,10 @@ MonoBehaviour:
   circleScale: 1.3
   tapCircleScale: 0.45
   holdDisplayName: 
-  autoCombinable: 0
+  multicastable: 0
+  chant:
+  - Thunder, carry the falling star
+  - Strike the earth as one!
+  tapDoesNothing: 0
+  extraTiers: []
   autoRepeatWhenHeld: 0

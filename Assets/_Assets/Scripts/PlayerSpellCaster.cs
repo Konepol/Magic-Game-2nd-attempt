@@ -30,6 +30,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         new InputAction("Skill3", InputActionType.Button, "<Keyboard>/q"),
         new InputAction("Skill4", InputActionType.Button, "<Keyboard>/e"),
     };
+    [SerializeField, Tooltip("Keys for the slots after the ones above (slot 5, 6, 7 ...).")]
+    string[] extraSkillKeys = { "<Keyboard>/r", "<Keyboard>/t", "<Keyboard>/g" };
     [SerializeField] InputAction switchWeaponAction = new InputAction("SwitchWeapon", InputActionType.Button, "<Keyboard>/tab");
 
     [Header("Targeting")]
@@ -55,6 +57,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     CastingCircle[] holdCircles;
     List<CastingCircle>[] tierCircles;     // the extra circles of a spell with charge tiers, one per tier reached
     int[] tierReached;
+    bool[] latched;                 // a key that was let go while another key of the chord is still down: it keeps counting as held
     bool[] inCombo;          // this slot's key is part of the active combined cast
     bool[] ignoredPress;     // a key press that was refused (cannot combine); ignored until the key is released
     bool[] readyPlayed;      // the "ready" sound has played for this hold
@@ -147,6 +150,15 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         mana = GetComponentInParent<Mana>();
         health = GetComponentInParent<Health>();
 
+        // more spells than the first four keys: the extra slots get their own keys
+        if (extraSkillKeys != null && extraSkillKeys.Length > 0)
+        {
+            var all = new List<InputAction>(skillActions);
+            for (int i = 0; i < extraSkillKeys.Length; i++)
+                all.Add(new InputAction("Skill" + (skillActions.Length + i + 1), InputActionType.Button, extraSkillKeys[i]));
+            skillActions = all.ToArray();
+        }
+
         if (useProfileLoadout)
         {
             var chosen = PlayerProfile.BuildWeapon();
@@ -176,6 +188,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         holdCircles = new CastingCircle[n];
         tierCircles = new List<CastingCircle>[n];
         tierReached = new int[n];
+        latched = new bool[n];
         inCombo = new bool[n];
         ignoredPress = new bool[n];
         readyPlayed = new bool[n];
@@ -269,16 +282,20 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             if (hasHold || aimedTapOnly)
             {
-                if (action.WasPressedThisFrame() && Time.time >= cooldownEnd[i])
+                if (action.WasPressedThisFrame())
                 {
-                    // hold spells can join a cast that is already being held, forming a combination
-                    if (hasHold) OnHoldPressed(i, spell);
-                    else StartHold(i);
+                    if (latched[i]) latched[i] = false;               // pressed again while it was only counting as held
+                    else if (Time.time >= cooldownEnd[i])
+                    {
+                        // hold spells can join a cast that is already being held, forming a combination
+                        if (hasHold) OnHoldPressed(i, spell);
+                        else StartHold(i);
 
-                    if (ignoredPress[i] || inCombo[i]) continue;
+                        if (ignoredPress[i] || inCombo[i]) continue;
+                    }
                 }
 
-                if (!charging[i]) continue;
+                if (!charging[i]) { latched[i] = false; continue; }
 
                 if (!inCombo[i]) effHeld[i] += Time.deltaTime / multicastFactor;
                 float realHeld = Time.time - pressTime[i];                 // for the tap window
@@ -297,6 +314,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
                     if (holdCircles[i] != null)
                         holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
+
+                    // the chant above the head: one sentence at a time while the circle draws, more for the charge tiers
+                    if (hasHold)
+                    {
+                        var chantLines = spell.AllChantLines();
+                        if (chantLines.Length > 0) ChantDisplay.Show(i, chantLines, ChantReveal(spell, held), baseVariant.effectColor);
+                    }
 
                     // charging past the cast time: each tier adds a bigger circle, and a chime and a small jolt mark the step up
                     if (hasHold && spell.TierCount > 0)
@@ -318,9 +342,17 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
                 }
 
-                if (action.WasReleasedThisFrame())
+                // Chords can be built one key at a time: a key let go while another key of the chord is still down, and before its spell is
+                // ready, keeps counting as held (so E+R, let go of E, press T is still E+R+T) and everything resolves when the last key comes up.
+                // Once a spell is ready, letting go of its key fires it as before, even while other spells are still being held (multicasting).
+                bool released = action.WasReleasedThisFrame();
+                if (released && !complete && realHeld >= spell.tapWindow && OtherChordKeyDown(i)) { latched[i] = true; released = false; }
+                else if (latched[i] && !OtherChordKeyDown(i)) { latched[i] = false; released = true; }
+
+                if (released)
                 {
                     charging[i] = false;
+                    latched[i] = false;
 
                     if (realHeld < spell.tapWindow)
                     {
@@ -374,6 +406,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                         if (holdCircles[i] == null)
                             holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale);
 
+                        var rapidChant = spell.AllChantLines();
+                        if (rapidChant.Length > 0) ChantDisplay.Show(i, rapidChant, rapidChant.Length, spell.tap.effectColor);
+
                         float p = (Time.time - pressTime[i]) / Mathf.Max(spell.holdThreshold, 0.05f);
                         if (holdCircles[i] != null)
                         {
@@ -393,6 +428,29 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         UpdateMulticastLayout();
 
         if (!aimingNow) SetAimRing(false, Vector3.zero, 0f, Color.white);
+    }
+
+    // how many sentences of the spell's chant are showing after being held this long: the spell's own sentences over its cast time, then
+    // each charge tier's sentences while that tier is being charged
+    int ChantReveal(SpellData spell, float held)
+    {
+        int count = 0;
+        float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
+
+        int own = spell.chant != null ? spell.chant.Length : 0;
+        if (own > 0)
+            count += held >= castTime ? own : Mathf.CeilToInt(Mathf.Clamp01((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f)) * own);
+
+        float start = castTime;
+        for (int t = 0; t < spell.TierCount; t++)
+        {
+            float end = spell.extraTiers[t].time;
+            int lines = spell.extraTiers[t].chant != null ? spell.extraTiers[t].chant.Length : 0;
+            if (lines > 0 && held >= start)
+                count += held >= end ? lines : Mathf.CeilToInt(Mathf.Clamp01((held - start) / Mathf.Max(end - start, 0.05f)) * lines);
+            start = end;
+        }
+        return count;
     }
 
     // the extra circles of a charge-tier spell: each one draws between the previous tier's time and its own, on top of the earlier ones
@@ -528,6 +586,18 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     // every extra cast adds a fraction to every cast time
     float MulticastFactor => 1f + (weapon != null ? weapon.multicastDelay : 0.3f) * Mathf.Max(0, EntryCount - 1);
 
+    // is a key of some other cast in the chord physically down right now?
+    bool OtherChordKeyDown(int i)
+    {
+        for (int j = 0; j < charging.Length; j++)
+        {
+            if (j == i || !charging[j] || ignoredPress[j]) continue;
+            var a = ActionFor(j);
+            if (a != null && a.IsPressed()) return true;
+        }
+        return false;
+    }
+
     void StartHold(int i)
     {
         charging[i] = true;
@@ -535,6 +605,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         effHeld[i] = 0f;
         readyPlayed[i] = false;
         tierReached[i] = 0;
+        latched[i] = false;
     }
 
     // a hold spell key was pressed: start it, join a recipe with the casts already going, or cast it alongside them
@@ -677,6 +748,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         float p = ComboProgress;
         bool ready = p >= 1f;
 
+        var comboChant = combo.spec.result != null ? combo.spec.result.AllChantLines() : null;
+        if (comboChant != null && comboChant.Length > 0) ChantDisplay.Show(ComboId, comboChant, Mathf.CeilToInt(p * comboChant.Length), combo.spec.color);
+
         foreach (var c in combo.circles)
         {
             if (c == null) continue;
@@ -690,16 +764,38 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
         }
 
-        // as soon as one of the keys is let go, the combined cast is decided
-        bool released = false;
+        bool anyDown = false, anyReleasedNow = false;
         foreach (int j in combo.slots)
         {
             var action = ActionFor(j);
-            if (action == null || !action.IsPressed()) { released = true; break; }
+            if (action == null) { anyReleasedNow = true; continue; }
+            if (action.IsPressed()) anyDown = true;
+            if (action.WasReleasedThisFrame()) anyReleasedNow = true;
         }
 
-        if (!released) return;
-        if (ready) FireCombo(); else FizzleCombo("Fizzled");
+        if (!ready)
+        {
+            // still charging: a key let go while another is down keeps counting as held; if every key is up it has failed
+            if (anyDown)
+            {
+                foreach (int j in combo.slots)
+                {
+                    var action = ActionFor(j);
+                    if (action == null || !action.IsPressed()) latched[j] = true;
+                }
+                return;
+            }
+            foreach (int j in combo.slots) latched[j] = false;
+            FizzleCombo("Fizzled");
+            return;
+        }
+
+        // ready: letting go of a key decides it, as it always did
+        if (!anyDown || anyReleasedNow)
+        {
+            foreach (int j in combo.slots) latched[j] = false;
+            FireCombo();
+        }
     }
 
     void FireCombo()
@@ -723,6 +819,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         lastCastMovement = spec.heldMovement;
 
         foreach (var c in cb.circles) if (c != null) c.FadeOut(0.4f);
+        ChantDisplay.Finish(ComboId);
         combo = null;
     }
 
@@ -731,6 +828,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (combo == null) return;
 
         foreach (var c in combo.circles) if (c != null) c.Fizzle();
+        ChantDisplay.Fail(ComboId);
         CastFailed?.Invoke(reason);
 
         foreach (int j in combo.slots)
@@ -754,6 +852,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (combo == null) return;
         foreach (var c in combo.circles) if (c != null) c.FadeOut(fade);
         combo.circles.Clear();
+        ChantDisplay.Drop(ComboId);
     }
 
     // Several casts at once sit on a ring around the player (see places). Releasing a cast moves it to the front as it fires; when a cast
@@ -944,6 +1043,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         if (!success) { FizzleCast(slot, "Not enough mana"); return; }
 
+        ChantDisplay.Finish(slot);
         if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.35f);
         holdCircles[slot] = null;
 
@@ -963,6 +1063,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         CastFailed?.Invoke(reason);
 
+        ChantDisplay.Fail(slot);
         if (holdCircles[slot] != null) holdCircles[slot].Fizzle();
         holdCircles[slot] = null;
         EachTierCircle(slot, c => c.Fizzle());
@@ -979,6 +1080,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void DropCircle(int slot)
     {
         if (holdCircles == null) return;
+        ChantDisplay.Drop(slot);
         EachTierCircle(slot, c => c.FadeOut(0.2f));
         if (holdCircles[slot] == null) return;
         holdCircles[slot].FadeOut(0.2f);
@@ -988,6 +1090,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void DropAllCircles()
     {
         if (holdCircles == null) return;
+        if (latched != null) System.Array.Clear(latched, 0, latched.Length);
         for (int i = 0; i < holdCircles.Length; i++) DropCircle(i);
 
         if (combo != null)

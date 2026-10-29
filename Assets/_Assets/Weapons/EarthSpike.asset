@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: EarthSpike
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Earth Spike
+  defaultProjectile: {fileID: 0}
+  tap:
+    kind: 2
+    damage: 20
+    breaksBarriers: 0
+    effectColor: {r: 0.8, g: 0.6, b: 0.3, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 3.5
+    aoeRange: 30
+    aoeHeight: 5
+    aoeDelay: 0.45
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 3
+      duration: 0.8
+      magnitude: 0
+    manaCost: 14
+    cooldown: 1.2
+  hasHoldVariant: 1
+  holdThreshold: 1.1
+  hold:
+    kind: 2
+    damage: 45
+    breaksBarriers: 0
+    effectColor: {r: 0.8, g: 0.6, b: 0.3, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 7
+    aoeRange: 32
+    aoeHeight: 5
+    aoeDelay: 0.8
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 3
+      duration: 1.5
+      magnitude: 0
+    manaCost: 38
+    cooldown: 2.5
+  tapMovement: 2
+  tapRecovery: 0.5
+  holdingMovement: 2
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 0.8
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 5
+  holdCircle: {fileID: 11400000, guid: 2d73929177bdfa94387df53194dce952, type: 2}
+  tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
+  circleScale: 0.8
+  tapCircleScale: 0.45
+  holdDisplayName: Quake
+  multicastable: 1
+  chant:
+  - Stone beneath, rise and strike
+  - Shatter all that stands.
+  tapDoesNothing: 0
+  extraTiers: []
+  autoRepeatWhenHeld: 0

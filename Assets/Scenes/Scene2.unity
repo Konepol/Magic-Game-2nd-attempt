@@ -6402,6 +6402,10 @@ MonoBehaviour:
       m_Flags: 0
     m_Flags: 0
     m_Priority: 0
+  extraSkillKeys:
+  - <Keyboard>/r
+  - <Keyboard>/t
+  - <Keyboard>/g
   switchWeaponAction:
     m_Name: SwitchWeapon
     m_Type: 1
@@ -15800,7 +15804,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9adaa92e80fcdd44bf3538ed1206555, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mana
-  maxMana: 100
+  maxMana: 200
   regenPerSecond: 6
   regenDelay: 1.5
   chargeAction:
@@ -15813,7 +15817,7 @@ MonoBehaviour:
     m_SingletonActionBindings:
     - m_Name: 
       m_Id: 2cc7cc6f-92f3-4896-924f-f9529101af1a
-      m_Path: <Keyboard>/r
+      m_Path: <Keyboard>/c
       m_Interactions: 
       m_Processors: 
       m_Groups: 

@@ -24,6 +24,8 @@ public class ChargeTier
     [Tooltip("An extra casting circle that draws itself on top of the earlier ones while charging toward this tier. Make it bigger and busier.")]
     public CastingCircleData circle;
     [Range(0.3f, 3f)] public float circleScale = 1f;
+    [Tooltip("Sentences chanted while charging toward this tier (they appear after the spell's own chant).")]
+    public string[] chant;
 }
 
 // One way of casting a spell. A spell has a tap variant and, optionally, a hold variant.
@@ -136,6 +138,10 @@ public class SpellData : ScriptableObject
     [UnityEngine.Serialization.FormerlySerializedAs("autoCombinable")]
     public bool multicastable = true;
 
+    [Header("Chant (shown above the player's head while casting)")]
+    [Tooltip("One sentence per row; they appear one after another over the cast time.")]
+    public string[] chant;
+
     [Header("Charge tiers (hold spells)")]
     [Tooltip("Tapping the key does nothing except remind the player to hold it.")]
     public bool tapDoesNothing = false;
@@ -154,7 +160,22 @@ public class SpellData : ScriptableObject
 
     [NonSerialized] SpellVariant[] tierVariants;
 
-    void OnValidate() => tierVariants = null;
+    [NonSerialized] string[] chantCache;
+
+    void OnValidate() { tierVariants = null; chantCache = null; }
+
+    // the spell's own chant followed by the chant of each charge tier
+    public string[] AllChantLines()
+    {
+        if (chantCache != null) return chantCache;
+
+        var list = new System.Collections.Generic.List<string>();
+        if (chant != null) list.AddRange(chant);
+        if (extraTiers != null)
+            foreach (var t in extraTiers)
+                if (t != null && t.chant != null) list.AddRange(t.chant);
+        return chantCache = list.ToArray();
+    }
 
     public int TierCount => extraTiers != null ? extraTiers.Length : 0;
 

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45b6a0128cc4350449fbf2b54e30d69c, type: 3}
+  m_Name: Combo_SunLance
+  m_EditorClassIdentifier: Assembly-CSharp::SpellCombo
+  ingredients:
+  - {fileID: 11400000, guid: 6ba9596aaec9ae64b9c81638ad075bf8, type: 2}
+  - {fileID: 11400000, guid: 13e4958c455d47942bd46181c7e05f42, type: 2}
+  - {fileID: 11400000, guid: 336a91e1ec9f946448d3ada891b824ff, type: 2}
+  result: {fileID: 11400000, guid: ae7a0ef08efdc51459f3f28e34ca8198, type: 2}

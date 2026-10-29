@@ -101,4 +101,10 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
+  chant:
+  - Ember, awaken
+  - Burn with the breath of the sun
+  - Bloom, and consume.
+  tapDoesNothing: 0
+  extraTiers: []
   autoRepeatWhenHeld: 0

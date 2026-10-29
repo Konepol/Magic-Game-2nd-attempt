@@ -101,6 +101,10 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Cataclysm
   multicastable: 1
+  chant:
+  - Stars that sleep beyond the veil
+  - Break your silence
+  - Fall upon this earth!
   tapDoesNothing: 1
   extraTiers:
   - displayName: Apocalypse
@@ -110,4 +114,7 @@ MonoBehaviour:
     manaMultiplier: 1.6
     circle: {fileID: 11400000, guid: fd4aa8045df3e094ebc7f326a25eb5e8, type: 2}
     circleScale: 1.15
+    chant:
+    - Heavens, crack and bleed fire
+    - End all things beneath your light!
   autoRepeatWhenHeld: 0

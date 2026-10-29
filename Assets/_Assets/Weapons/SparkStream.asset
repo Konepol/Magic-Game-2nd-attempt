@@ -99,4 +99,10 @@ MonoBehaviour:
   tapCircle: {fileID: 0}
   circleScale: 0.9
   tapCircleScale: 0.45
+  holdDisplayName: 
+  multicastable: 1
+  chant:
+  - Sparks, sing for me.
+  tapDoesNothing: 0
+  extraTiers: []
   autoRepeatWhenHeld: 1

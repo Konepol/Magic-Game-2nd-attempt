@@ -101,4 +101,9 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
+  chant:
+  - Threads of mana, gather in my palm
+  - Take shape, and strike true.
+  tapDoesNothing: 0
+  extraTiers: []
   autoRepeatWhenHeld: 0

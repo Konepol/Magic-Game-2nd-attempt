@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: PlagueStorm
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Plague Storm
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  tap:
+    kind: 0
+    damage: 14
+    breaksBarriers: 0
+    effectColor: {r: 0.6, g: 1, b: 0.3, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 0.9
+    explosionRadius: 2.5
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 14
+    spreadDegrees: 100
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 8
+      magnitude: 14
+    manaCost: 70
+    cooldown: 3.2
+  hasHoldVariant: 1
+  holdThreshold: 1.9
+  hold:
+    kind: 0
+    damage: 14
+    breaksBarriers: 0
+    effectColor: {r: 0.6, g: 1, b: 0.3, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 0.9
+    explosionRadius: 2.5
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 14
+    spreadDegrees: 100
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 8
+      magnitude: 14
+    manaCost: 70
+    cooldown: 3.2
+  tapMovement: 0
+  tapRecovery: 0.2
+  holdingMovement: 2
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 0.7
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 5
+  holdCircle: {fileID: 11400000, guid: 426bc0e833edca64a83e55ca199e2f32, type: 2}
+  tapCircle: {fileID: 0}
+  circleScale: 0.95
+  tapCircleScale: 0.45
+  holdDisplayName: 
+  multicastable: 1
+  chant:
+  - Venom and ember, rot and burn
+  - Let the plague bloom,
+  - and none be spared.
+  tapDoesNothing: 0
+  extraTiers: []
+  autoRepeatWhenHeld: 0

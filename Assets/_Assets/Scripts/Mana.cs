@@ -11,7 +11,7 @@ public class Mana : MonoBehaviour
     [SerializeField] float regenDelay = 1.5f;          // seconds after spending before normal regen starts
 
     [Header("Charging (hold to regain faster)")]
-    [SerializeField] InputAction chargeAction = new InputAction("ChargeMana", InputActionType.Button, "<Keyboard>/r");
+    [SerializeField] InputAction chargeAction = new InputAction("ChargeMana", InputActionType.Button, "<Keyboard>/c");
     [SerializeField] float chargeRegenPerSecond = 35f; // replaces normal regen while charging, starts instantly
     [SerializeField] float interruptLockout = 1f;      // getting hit stops the charge and blocks it for this long
     [SerializeField] Color chargeColor = new Color(0.4f, 0.8f, 1f, 1f);

@@ -101,4 +101,10 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
+  chant:
+  - Shards of the sky, scatter wide
+  - Let none slip between you
+  - Fall like rain.
+  tapDoesNothing: 0
+  extraTiers: []
   autoRepeatWhenHeld: 0

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 // The whole screen is built from code when the scene starts.
 public class MainMenu : MonoBehaviour
 {
-    static readonly string[] SlotKeys = { "LMB", "RMB", "Q", "E" };      // keys of the first four slots; later slots are not bound yet
+    static readonly string[] SlotKeys = { "LMB", "RMB", "Q", "E", "R", "T", "G" };      // the key of each slot (the slot count comes from the catalog)
 
     GameCatalog catalog;
     Transform canvasRoot;
@@ -222,7 +222,9 @@ public class MainMenu : MonoBehaviour
 
         loadout = PlayerProfile.GetLoadout(catalog);
         int slots = loadout.Length;
-        const float cardW = 340f, gap = 30f;
+        const float gap = 20f;
+        float cardW = Mathf.Min(340f, (1760f - (slots - 1) * gap) / slots);      // narrower cards when there are more keys
+        bool narrow = cardW < 300f;
         float total = slots * cardW + (slots - 1) * gap;
 
         for (int i = 0; i < slots; i++)
@@ -237,14 +239,14 @@ public class MainMenu : MonoBehaviour
             if (own != null) Destroy(own.gameObject);
 
             string key = i < SlotKeys.Length ? SlotKeys[i] : "-";
-            var keyText = UIKit.Label(card.transform, "Key", key, 46, UIKit.Gold, TextAnchor.MiddleCenter, true);
+            var keyText = UIKit.Label(card.transform, "Key", key, narrow ? 40 : 46, UIKit.Gold, TextAnchor.MiddleCenter, true);
             UIKit.Place(keyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -45f), new Vector2(cardW - 20f, 60f));
 
-            var name = UIKit.Label(card.transform, "Name", "", 40, Color.white, TextAnchor.MiddleCenter, true);
+            var name = UIKit.Label(card.transform, "Name", "", narrow ? 30 : 40, Color.white, TextAnchor.MiddleCenter, true);
             UIKit.Place(name.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 90f), new Vector2(cardW - 30f, 110f));
             slotName.Add(name);
 
-            var info = UIKit.Label(card.transform, "Info", "", 24, UIKit.Dim, TextAnchor.UpperCenter);
+            var info = UIKit.Label(card.transform, "Info", "", narrow ? 19 : 24, UIKit.Dim, TextAnchor.UpperCenter);
             UIKit.Place(info.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(cardW - 40f, 150f));
             slotInfo.Add(info);
 

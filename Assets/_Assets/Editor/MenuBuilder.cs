@@ -55,7 +55,7 @@ public static class MenuBuilder
         }
         catalog.combos = combos.ToArray();
 
-        catalog.slotCount = 4;
+        catalog.slotCount = 7;
         catalog.defaultLoadout = new[] { "ArcaneBolt", "ScatterShot", "FireBurst", "MeteorStrike" };
         catalog.allowMulticast = true;
         catalog.multicastDelay = 0.15f;
