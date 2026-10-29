@@ -60,6 +60,8 @@ public class CastingCircleData : ScriptableObject
     [Tooltip("Each layer slowly tilts and wobbles by up to this many degrees, each on its own rhythm, so the layers shift against each other as the camera moves.")]
     [Range(0f, 25f)] public float tiltDegrees = 8f;
     public float tiltSpeed = 1.2f;
+    [Tooltip("Layers on the ground (Feet / Aim Point) stay flat. They only tilt when they are raised at least this high above the ground (set by a negative Offset z, in metres, before the spell's circle scale).")]
+    public float groundTiltMinHeight = 0.5f;
 
     [Header("When the cast is ready (the circle is complete)")]
     [Tooltip("The circle flashes and shifts toward this colour once it is complete.")]

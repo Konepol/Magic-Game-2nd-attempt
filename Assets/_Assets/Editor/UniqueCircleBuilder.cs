@@ -167,6 +167,17 @@ public static class UniqueCircleBuilder
             c.Ring(0.05f, 0.008f);
         });
 
+        Make("Bolt_Symbol", c =>
+        {
+            var pts = new[]
+            {
+                new Vector2(0.10f, 0.44f), new Vector2(-0.17f, 0.02f), new Vector2(-0.02f, 0.02f),
+                new Vector2(-0.11f, -0.44f), new Vector2(0.18f, -0.06f), new Vector2(0.03f, -0.06f),
+            };
+            c.FillPoly(pts);
+            c.Ring(0.47f, 0.008f);
+        });
+
         Make("Scatter", c =>
         {
             c.Ring(0.47f, 0.006f);
@@ -218,6 +229,7 @@ public static class UniqueCircleBuilder
             L("Bolt Ring", "Bolt_Ring", CircleAnchor.Front, 2.3f, 90f, 0.0f, 0.5f),
             L("Bolt Ring Counter", "Bolt_Ring", CircleAnchor.Front, 1.5f, -150f, 0.2f, 0.4f, CircleAppear.ScaleUp),
             L("Cross", "Cross", CircleAnchor.Front, 3.0f, 20f, 0.1f, 0.5f, CircleAppear.FadeIn, default, 0.5f),
+            L("Bolt Symbol", "Bolt_Symbol", CircleAnchor.Front, 2.0f, 0f, 0.05f, 0.4f, CircleAppear.ScaleUp),
             L("Side Bolt A", "Bolt_Ring", CircleAnchor.Front, 0.7f, 200f, 0.55f, 0.3f, CircleAppear.RadialWipe, new Vector3(1.5f, 0.9f, 0.05f)),
             L("Side Bolt B", "Bolt_Ring", CircleAnchor.Front, 0.7f, -200f, 0.65f, 0.3f, CircleAppear.RadialWipe, new Vector3(-1.5f, -0.9f, 0.05f)));
 
@@ -242,12 +254,16 @@ public static class UniqueCircleBuilder
             L("Hand Spikes", "Spikes", CircleAnchor.Front, 0.9f, -50f, 0.0f, 0.4f),
             L("Floor Squares", "Square_Runes", CircleAnchor.Feet, 2.5f, 15f, 0.3f, 0.5f, CircleAppear.ScaleUp));
 
-        var venom = Circle("Circle_Venom", 1.3f, Tilt(9f, 1.8f), Ready(new Color(0.8f, 1f, 0.5f), 0.6f),
+        var purple = new Color(0.55f, 0.12f, 0.95f);
+        var venom = Circle("Circle_Venom", 1.3f, Tilt(9f, 1.8f), Ready(new Color(0.85f, 0.65f, 1f), 0.6f),
             L("Fangs", "Fangs", CircleAnchor.Front, 2.2f, -35f, 0.0f, 0.6f),
             L("Fangs Counter", "Fangs", CircleAnchor.Front, 1.4f, 60f, 0.25f, 0.5f, CircleAppear.ScaleUp),
             L("Drops", "Dots_Ring", CircleAnchor.Front, 2.6f, 25f, 0.1f, 0.5f),
             L("Floor Fangs", "Fangs", CircleAnchor.Feet, 2.8f, -20f, 0.4f, 0.6f),
             L("Floor Scatter", "Scatter", CircleAnchor.Feet, 2.0f, 30f, 0.6f, 0.4f, CircleAppear.ScaleUp));
+
+        foreach (var layer in venom.layers) { layer.useSpellColor = false; layer.tint = purple; }       // venom is purple whatever the dart's colour
+        EditorUtility.SetDirty(venom);
 
         var radiant = Circle("Circle_Radiant", 1.4f, Tilt(5f, 1.0f), Ready(new Color(1f, 1f, 0.8f), 0.9f),
             L("Rays", "Rays", CircleAnchor.Front, 2.4f, 18f, 0.0f, 0.55f),
@@ -275,7 +291,8 @@ public static class UniqueCircleBuilder
             L("Flame Petals", "Flame_Petals", CircleAnchor.Front, 2.5f, 20f, 0.0f, 0.55f),
             L("Bolt Ring", "Bolt_Ring", CircleAnchor.Front, 1.9f, -120f, 0.15f, 0.5f),
             L("Cross", "Cross", CircleAnchor.Front, 3.0f, 30f, 0.2f, 0.5f, CircleAppear.FadeIn, default, 0.5f),
-            L("Lance Rays", "Rays", CircleAnchor.Front, 1.1f, 150f, 0.5f, 0.4f, CircleAppear.ScaleUp));
+            L("Lance Rays", "Rays", CircleAnchor.Front, 1.1f, 150f, 0.5f, 0.4f, CircleAppear.ScaleUp),
+            L("Bolt Symbol", "Bolt_Symbol", CircleAnchor.Front, 0.8f, 0f, 0.6f, 0.35f, CircleAppear.ScaleUp, new Vector3(0f, 0f, 0.05f)));
 
         var thunder = Circle("Circle_ThunderMeteor", 1.3f, Tilt(8f, 2.0f), Ready(new Color(0.95f, 0.95f, 1f), 0.8f),
             Aoe(L("Area Bolts", "Bolt_Ring", CircleAnchor.AimPoint, 1.0f, 40f, 0.0f, 0.5f)),
@@ -458,6 +475,27 @@ public static class UniqueCircleBuilder
                     float t = Mathf.Clamp01(Vector2.Dot(p - s, d) / len2);
                     float dist = (p - (s + d * t)).magnitude;
                     float cov = Mathf.Clamp01((half - dist) * N + 0.5f);
+                    if (cov > a[y * N + x]) a[y * N + x] = cov;
+                }
+        }
+
+        // a solid shape: inside the polygon is opaque, with a soft one-pixel edge
+        public void FillPoly(Vector2[] pts)
+        {
+            for (int y = 0; y < N; y++)
+                for (int x = 0; x < N; x++)
+                {
+                    var p = new Vector2((x + 0.5f) / N - 0.5f, (y + 0.5f) / N - 0.5f);
+                    bool inside = false;
+                    float edge = float.MaxValue;
+                    for (int i = 0, j = pts.Length - 1; i < pts.Length; j = i++)
+                    {
+                        if ((pts[i].y > p.y) != (pts[j].y > p.y) && p.x < (pts[j].x - pts[i].x) * (p.y - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x) inside = !inside;
+                        Vector2 d = pts[j] - pts[i];
+                        float t = Mathf.Clamp01(Vector2.Dot(p - pts[i], d) / Mathf.Max(d.sqrMagnitude, 1e-8f));
+                        edge = Mathf.Min(edge, (p - (pts[i] + d * t)).magnitude);
+                    }
+                    float cov = Mathf.Clamp01((inside ? 1f : -1f) * edge * N + 0.5f);
                     if (cov > a[y * N + x]) a[y * N + x] = cov;
                 }
         }

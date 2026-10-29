@@ -17,6 +17,7 @@ MonoBehaviour:
   groundLayerSpacing: 0.03
   tiltDegrees: 5
   tiltSpeed: 1.5
+  groundTiltMinHeight: 0.5
   readyColor: {r: 1, g: 0.95, b: 0.7, a: 1}
   readyColorBlend: 0.45
   readyFlash: 0.4

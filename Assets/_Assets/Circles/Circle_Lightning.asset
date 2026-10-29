@@ -17,6 +17,7 @@ MonoBehaviour:
   groundLayerSpacing: 0.03
   tiltDegrees: 14
   tiltSpeed: 3.2
+  groundTiltMinHeight: 0.5
   readyColor: {r: 0.9, g: 0.95, b: 1, a: 1}
   readyColorBlend: 0.45
   readyFlash: 0.7
@@ -61,6 +62,19 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 2
+  - name: Bolt Symbol
+    texture: {fileID: 2800000, guid: b3a3796e66abe2347bbcaa1e4918cd6c, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2
+    scaleToAoeRadius: 0
+    startAt: 0.05
+    drawTime: 0.4
+    appear: 1
   - name: Side Bolt A
     texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
     useSpellColor: 1

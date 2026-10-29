@@ -241,7 +241,9 @@ public class CastingCircle : MonoBehaviour
 
             // each layer wobbles on its own rhythm, which makes the layers shift against each other
             Quaternion wobble = Quaternion.identity;
-            if (data.tiltDegrees > 0.01f)
+            bool onGround = def.anchor != CircleAnchor.Front;
+            bool highEnough = !onGround || -def.offset.z * placeScale >= data.groundTiltMinHeight;      // flat circles stay on the floor unless raised
+            if (data.tiltDegrees > 0.01f && highEnough)
             {
                 float ph = l.index * 1.7f;
                 wobble = Quaternion.Euler(Mathf.Sin(Time.time * data.tiltSpeed + ph) * data.tiltDegrees,
