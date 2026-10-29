@@ -95,7 +95,7 @@ MonoBehaviour:
   tapWindow: 0.2
   interruptible: 1
   interruptDamage: 5
-  holdCircle: {fileID: 11400000, guid: 2d73929177bdfa94387df53194dce952, type: 2}
+  holdCircle: {fileID: 11400000, guid: 105c2365a442f164f90e446fec857350, type: 2}
   tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
   circleScale: 0.8
   tapCircleScale: 0.45

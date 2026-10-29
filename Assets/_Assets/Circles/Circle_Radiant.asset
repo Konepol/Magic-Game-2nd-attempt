@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_Radiant
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.4
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 5
+  tiltSpeed: 1
+  readyColor: {r: 1, g: 1, b: 0.8, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 0.9
+  readyPulse: 0
+  layers:
+  - name: Rays
+    texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 18
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.4
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.55
+    appear: 0
+  - name: Rays Counter
+    texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -30
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.7
+    scaleToAoeRadius: 0
+    startAt: 0.2
+    drawTime: 0.5
+    appear: 1
+  - name: Halo
+    texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 6
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.8
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 0
+  - name: Glow
+    texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.4
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.2
+    scaleToAoeRadius: 0
+    startAt: 0.3
+    drawTime: 0.5
+    appear: 2
+  - name: Side Rays A
+    texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 90
+    anchor: 0
+    offset: {x: 1.5, y: 0.8, z: 0.05}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0.6
+    drawTime: 0.3
+    appear: 1
+  - name: Side Rays B
+    texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -90
+    anchor: 0
+    offset: {x: -1.5, y: -0.8, z: 0.05}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0.65
+    drawTime: 0.3
+    appear: 1

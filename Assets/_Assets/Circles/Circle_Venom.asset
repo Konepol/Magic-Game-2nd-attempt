@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_Venom
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.3
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 9
+  tiltSpeed: 1.8
+  readyColor: {r: 0.8, g: 1, b: 0.5, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 0.6
+  readyPulse: 0
+  layers:
+  - name: Fangs
+    texture: {fileID: 2800000, guid: 282cb1c03d9e93e469d21b05f9dd948a, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -35
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.2
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.6
+    appear: 0
+  - name: Fangs Counter
+    texture: {fileID: 2800000, guid: 282cb1c03d9e93e469d21b05f9dd948a, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 60
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.4
+    scaleToAoeRadius: 0
+    startAt: 0.25
+    drawTime: 0.5
+    appear: 1
+  - name: Drops
+    texture: {fileID: 2800000, guid: a2f2fb2d1587dd648ac73b05d7285576, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 25
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.6
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 0
+  - name: Floor Fangs
+    texture: {fileID: 2800000, guid: 282cb1c03d9e93e469d21b05f9dd948a, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -20
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.8
+    scaleToAoeRadius: 0
+    startAt: 0.4
+    drawTime: 0.6
+    appear: 0
+  - name: Floor Scatter
+    texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 30
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 2
+    scaleToAoeRadius: 0
+    startAt: 0.6
+    drawTime: 0.4
+    appear: 1

@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_BlizzardLance
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.5
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 7
+  tiltSpeed: 1.6
+  readyColor: {r: 0.9, g: 1, b: 1, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 0.6
+  readyPulse: 0
+  layers:
+  - name: Snowflake
+    texture: {fileID: 2800000, guid: 0f95d08767d459f46a448719659d54ae, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 30
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.5
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.55
+    appear: 0
+  - name: Bolt Ring
+    texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -90
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.7
+    scaleToAoeRadius: 0
+    startAt: 0.15
+    drawTime: 0.5
+    appear: 0
+  - name: Spiral
+    texture: {fileID: 2800000, guid: 0e8e48b637e0f1f41a4983406a0a0ac5, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.6
+    rotationSpeed: 45
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 2
+  - name: Crystal Core
+    texture: {fileID: 2800000, guid: df4228a658e7c0d46b045482afec19b6, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 120
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.9
+    scaleToAoeRadius: 0
+    startAt: 0.5
+    drawTime: 0.35
+    appear: 1

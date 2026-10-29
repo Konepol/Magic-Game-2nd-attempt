@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_Lightning
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.4
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 14
+  tiltSpeed: 3.2
+  readyColor: {r: 0.9, g: 0.95, b: 1, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 0.7
+  readyPulse: 0
+  layers:
+  - name: Bolt Ring
+    texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 90
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.3
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.5
+    appear: 0
+  - name: Bolt Ring Counter
+    texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -150
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.5
+    scaleToAoeRadius: 0
+    startAt: 0.2
+    drawTime: 0.4
+    appear: 1
+  - name: Cross
+    texture: {fileID: 2800000, guid: ab2975de736950d4c8ec84bb85bc4608, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.5
+    rotationSpeed: 20
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 2
+  - name: Side Bolt A
+    texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 200
+    anchor: 0
+    offset: {x: 1.5, y: 0.9, z: 0.05}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0.55
+    drawTime: 0.3
+    appear: 0
+  - name: Side Bolt B
+    texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -200
+    anchor: 0
+    offset: {x: -1.5, y: -0.9, z: 0.05}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0.65
+    drawTime: 0.3
+    appear: 0

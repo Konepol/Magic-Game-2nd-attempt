@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
+  m_Name: Circle_CinderStorm
+  m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
+  frontDistance: 1.5
+  depthSpacing: 0.3
+  groundLayerSpacing: 0.03
+  tiltDegrees: 8
+  tiltSpeed: 2
+  readyColor: {r: 1, g: 0.75, b: 0.4, a: 1}
+  readyColorBlend: 0.45
+  readyFlash: 0.6
+  readyPulse: 0
+  layers:
+  - name: Scatter
+    texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 35
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.6
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.6
+    appear: 0
+  - name: Flame Petals
+    texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -40
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1.9
+    scaleToAoeRadius: 0
+    startAt: 0.15
+    drawTime: 0.6
+    appear: 0
+  - name: Rays
+    texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.5
+    rotationSpeed: 12
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.5
+    appear: 2
+  - name: Floor Scatter
+    texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: -25
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.2
+    scaleToAoeRadius: 0
+    startAt: 0.4
+    drawTime: 0.6
+    appear: 0
+  - name: Floor Petals
+    texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 30
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.2
+    scaleToAoeRadius: 0
+    startAt: 0.6
+    drawTime: 0.4
+    appear: 1
