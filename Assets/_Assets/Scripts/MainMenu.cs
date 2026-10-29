@@ -68,6 +68,19 @@ public class MainMenu : MonoBehaviour
 
     void Update()
     {
+        // the key prompt also takes the key itself: press the key of a slot to put the spell there (keys that are no slot do nothing)
+        if (keyPrompt != null && keyPrompt.gameObject.activeSelf && Keyboard.current != null && Time.frameCount > promptOpenFrame && loadout != null)
+            for (int k = 0; k < loadout.Length; k++)
+            {
+                string path = PlayerSettings.GetPath("spell" + k);
+                if (string.IsNullOrEmpty(path) || !path.StartsWith("<Keyboard>")) continue;      // mouse buttons are only clicked, so a click never picks by accident
+                if (!(UnityEngine.InputSystem.InputSystem.FindControl(path) is UnityEngine.InputSystem.Controls.ButtonControl key) || !key.wasPressedThisFrame) continue;
+                if (promptTaken != null && promptTaken.Contains(k)) return;
+                keyPrompt.gameObject.SetActive(false);
+                promptOnPick?.Invoke(k);
+                return;
+            }
+
         if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
         if (PlayerSettings.CaptureBusy) return;                 // that Esc only cancelled picking a key
 
@@ -537,10 +550,17 @@ public class MainMenu : MonoBehaviour
 
     // Asks which key something goes on and shows what each key holds right now. `taken` keys (already chosen for another spell in the
     // same combination) cannot be picked again. onPick runs with the chosen key.
+    HashSet<int> promptTaken;
+    System.Action<int> promptOnPick;
+    int promptOpenFrame;
+
     void OpenKeyPrompt(string title, string subtitle, SpellData spell, HashSet<int> taken, System.Action<int> onPick)
     {
+        promptTaken = taken;
+        promptOnPick = onPick;
+        promptOpenFrame = Time.frameCount;
         promptTitle.text = title;
-        promptSub.text = subtitle;
+        promptSub.text = subtitle + "  You can also press the key.";
         for (int i = promptCards.childCount - 1; i >= 0; i--) Destroy(promptCards.GetChild(i).gameObject);
 
         int keys = loadout.Length;
