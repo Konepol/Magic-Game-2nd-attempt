@@ -16,11 +16,11 @@ public class FusionPathsView
     }
 
     const float NodeW = 190f, NodeH = 62f, Pad = 18f, TitleH = 26f;
-    const float QueueScale = 1.6f;
+    const float QueueScale = 1.6f, FooterH = 30f;
 
     readonly PlayerSpellCaster caster;
     readonly RectTransform area, content;
-    readonly Text title;
+    readonly Text title, footer;
     string key = "";
 
     public FusionPathsView(Transform parent, PlayerSpellCaster caster)
@@ -38,6 +38,14 @@ public class FusionPathsView
         title.rectTransform.pivot = new Vector2(0f, 1f);
         title.rectTransform.anchoredPosition = new Vector2(14f, -8f);
         title.rectTransform.sizeDelta = new Vector2(400f, 28f);
+
+        footer = UIKit.Label(area, "Footer", "", 18, new Color(0.7f, 0.74f, 0.82f), TextAnchor.LowerCenter, true);
+        footer.supportRichText = true;
+        footer.rectTransform.anchorMin = new Vector2(0f, 0f);
+        footer.rectTransform.anchorMax = new Vector2(1f, 0f);
+        footer.rectTransform.pivot = new Vector2(0.5f, 0f);
+        footer.rectTransform.anchoredPosition = new Vector2(0f, 6f);
+        footer.rectTransform.sizeDelta = new Vector2(0f, 26f);
 
         content = UIKit.Child(area, "Content");
         UIKit.Stretch(content);
@@ -131,7 +139,8 @@ public class FusionPathsView
         float tall = NodeH + 14f * (most - 1);
         float ry = n == 0 ? 0f : Mathf.Max(chord * 0.8f, tall + 24f);
         float w = Mathf.Max(rootW, 2f * rx + NodeW) + 2f * Pad;
-        float h = 2f * ry + tall + 2f * Pad + TitleH;
+        float foot = queue ? FooterH : 0f;
+        float h = 2f * ry + tall + 2f * Pad + TitleH + foot;
         area.sizeDelta = new Vector2(w, h);
 
         // small in the corner while holding; big in the middle of the screen while queueing a combination
@@ -139,9 +148,10 @@ public class FusionPathsView
         area.pivot = queue ? new Vector2(0.5f, 0.5f) : Vector2.zero;
         area.anchoredPosition = queue ? new Vector2(0f, 60f) : new Vector2(20f, 20f);
         area.localScale = Vector3.one * (queue ? QueueScale : 1f);
-        title.text = queue ? "COMBINE      [" + PlayerSettings.LabelOf("combine") + "] cast     [" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "] cancel" : "FUSION PATHS";
+        title.text = queue ? "COMBINE" : "FUSION PATHS";
+        footer.text = queue ? "<color=#FFD15A>[" + PlayerSettings.LabelOf("combine") + "]</color> cast     <color=#FFD15A>[" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "]</color> cancel" : "";
 
-        Vector2 centre = new Vector2(w * 0.5f, (h - TitleH) * 0.5f);
+        Vector2 centre = new Vector2(w * 0.5f, foot + (h - TitleH - foot) * 0.5f);
         root.pos = centre;
         for (int i = 0; i < n; i++)
         {
