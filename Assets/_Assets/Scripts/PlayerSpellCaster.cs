@@ -270,6 +270,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             for (int i = 0; i < charging.Length; i++) charging[i] = false;
             DropAllCircles();             // charging mana also removes a combined spell that is being cast
+            entryInfos.Clear();           // and the cast bars above the player go with it
             SetAimRing(false, Vector3.zero, 0f, Color.white);
             return;
         }
@@ -1123,7 +1124,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     CastEntryInfo MakeInfo(int id, bool primary)
     {
         if (id == ComboId)
-            return new CastEntryInfo { name = ComboName, progress = ComboProgress, ready = ComboReady, primary = primary, isCombo = true };
+            return new CastEntryInfo { name = combo.spec.name, progress = ComboProgress, ready = ComboReady, primary = primary, isCombo = true };
 
         var sp = GetSpell(id);
         bool ready = IsReady(id);
