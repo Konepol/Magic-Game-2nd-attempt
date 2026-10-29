@@ -630,6 +630,21 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     }
 
     public bool ComboActive => combo != null;
+
+    // any spell (or the combined spell) is being chanted right now
+    public bool IsChanting
+    {
+        get
+        {
+            if (combo != null) return true;
+            for (int j = 0; charging != null && j < charging.Length; j++)
+                if (charging[j] && !ignoredPress[j]) return true;
+            return false;
+        }
+    }
+
+    // a spell was cast: true for a hold (chanted) cast, false for a tap
+    public event System.Action<bool> Casted;
     public float ComboCost => combo != null ? combo.spec.manaCost : 0f;
     public float ComboProgress => combo != null ? Mathf.Clamp01(combo.effHeld / Mathf.Max(combo.spec.castTime, 0.05f)) : 0f;
     public bool ComboReady => combo != null && ComboProgress >= 1f;
@@ -1399,6 +1414,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         cooldownEnd[slot] = Time.time + v.cooldown;
         bool wasHold = spell.hasHoldVariant && ReferenceEquals(v, spell.hold);
+        Casted?.Invoke(wasHold);
         castingUntil = Time.time + (wasHold ? spell.heldRecovery : spell.tapRecovery);
         facingUntil = Time.time + Mathf.Max(faceAimAfterCast, wasHold ? spell.heldRecovery : spell.tapRecovery);
         lastCastMovement = wasHold ? spell.heldMovement : spell.tapMovement;

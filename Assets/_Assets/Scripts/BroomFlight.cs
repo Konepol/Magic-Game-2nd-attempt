@@ -33,6 +33,13 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] float boostMultiplier = 1.8f;
     [SerializeField] float boostBlendSpeed = 4f;      // how fast the boost ramps up and down
 
+    [Header("Quick Dash (double-tap a direction)")]
+    [SerializeField] float dashSpeed = 32f;
+    [SerializeField] float dashDuration = 0.18f;
+    [SerializeField] float dashCooldown = 0.7f;
+    [SerializeField, Tooltip("Max seconds between the two taps.")]
+    float doubleTapWindow = 0.28f;
+
     [Header("Height Limit")]
     [SerializeField] float maxHeightAboveGround = 40f;
     [SerializeField] float softLimitZone = 5f;        // start slowing the climb this far below the limit
@@ -48,7 +55,9 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("Mana per second spent while flying.")]
     float flyDrain = 1.5f;
     [SerializeField, Tooltip("Extra mana per second spent while boosting.")]
-    float boostDrain = 18f;
+    float boostDrain = 8f;
+    [SerializeField, Tooltip("Mana spent on each quick dash.")]
+    float dashManaCost = 6f;
     [SerializeField, Range(0f, 1f), Tooltip("Natural mana regeneration while on the broom, as a share of normal. It slows down but never stops.")]
     float regenWhileFlying = 0.35f;
     [UnityEngine.Serialization.FormerlySerializedAs("boostRecoverThreshold")]
@@ -62,6 +71,18 @@ public class BroomFlight : MonoBehaviour
     [Header("Dismount")]
     [SerializeField, Range(0f, 1f)] float dismountCarry = 0.5f;   // fraction of the glide speed handed over
     [SerializeField] float maxCarrySpeed = 10f;
+
+    [Header("Tilt (visual only)")]
+    [SerializeField, Tooltip("Child that leans; defaults to the animator's transform. The root is never tilted so the controller stays upright.")]
+    Transform tiltPivot;
+    [SerializeField] float maxBank = 30f;
+    [SerializeField, Tooltip("Degrees of roll per degree/second of turning.")]
+    float bankPerYawRate = 0.25f;
+    [SerializeField, Tooltip("Nose up/down at full climb/descent speed.")]
+    float maxPitch = 20f;
+    [SerializeField, Tooltip("Extra nose-down lean at full forward speed.")]
+    float forwardLean = 10f;
+    [SerializeField] float tiltSmoothTime = 0.15f;
 
     [Header("Debug")]
     [SerializeField] bool debugLogs = true;
@@ -88,6 +109,48 @@ public class BroomFlight : MonoBehaviour
     bool exhausted;
     float fovAmount, prevFovAmount;
     float[] baseFov;
+    Quaternion tiltBaseRot = Quaternion.identity;
+    float bank, pitch, bankVel, pitchVel, prevYaw;
+    bool tilted;
+    int prevTapDir = -1, lastTapDir = -1;
+    float lastTapTime = -10f, dashTimer, dashCooldownLeft;
+    Vector3 dashDir;
+
+    // which of the four keys the stick/keys point at (0 up, 1 right, 2 down, 3 left), -1 when idle
+    static int TapDirection(Vector2 m)
+    {
+        if (m.sqrMagnitude < 0.25f) return -1;
+        if (Mathf.Abs(m.x) > Mathf.Abs(m.y)) return m.x > 0f ? 1 : 3;
+        return m.y > 0f ? 0 : 2;
+    }
+
+    // double-tap a direction (press, release, press within the window) to dash that way
+    void UpdateDash(Vector2 move, Vector3 wish, bool blocked)
+    {
+        dashCooldownLeft -= Time.deltaTime;
+        int dir = TapDirection(move);
+        bool pressed = dir != -1 && prevTapDir == -1;
+        prevTapDir = dir;
+        if (!pressed) return;
+
+        bool isDouble = dir == lastTapDir && Time.time - lastTapTime <= doubleTapWindow;
+        lastTapDir = dir;
+        lastTapTime = Time.time;
+        if (!isDouble || blocked || dashCooldownLeft > 0f) return;
+
+        if (mana == null || mana.Current <= dashManaCost + 0.5f)
+        {
+            if (mana != null) mana.NotifyInsufficient();
+            return;
+        }
+
+        mana.Drain(dashManaCost);
+        dashDir = wish.normalized;
+        dashTimer = dashDuration;
+        dashCooldownLeft = dashCooldown;
+        lastTapDir = -1;   // a third tap does not start another double
+        Log("DASH");
+    }
 
     void Log(string msg) { if (debugLogs) Debug.Log("[Broom] " + msg, this); }
 
@@ -104,6 +167,41 @@ public class BroomFlight : MonoBehaviour
 
         if (mainCamera == null) mainCamera = Camera.main;
         if (broomModel != null) broomModel.SetActive(false);
+
+        if (tiltPivot == null && playerAnimator != null) tiltPivot = playerAnimator.transform;
+        if (tiltPivot == transform) tiltPivot = null;
+        if (tiltPivot != null) tiltBaseRot = tiltPivot.localRotation;
+        prevYaw = transform.eulerAngles.y;
+    }
+
+    // lean into turns and climbs; runs after the animator so it sits on top of the pose
+    void LateUpdate()
+    {
+        float yaw = transform.eulerAngles.y;
+        float yawRate = Mathf.DeltaAngle(prevYaw, yaw) / Mathf.Max(Time.deltaTime, 0.0001f);
+        prevYaw = yaw;
+        if (tiltPivot == null) return;
+
+        float targetBank = 0f, targetPitch = 0f;
+        if (IsFlying)
+        {
+            targetBank = Mathf.Clamp(-yawRate * bankPerYawRate, -maxBank, maxBank);   // turning right rolls right (negative Z)
+            float climb = Mathf.Clamp(verticalVelocity / Mathf.Max(verticalSpeed, 0.01f), -1f, 1f);
+            float forward = Mathf.Clamp01(Vector3.Dot(horizontalVelocity, transform.forward) / Mathf.Max(maxSpeed, 0.01f));
+            targetPitch = -climb * maxPitch + forward * forwardLean;                  // negative X is nose up
+        }
+
+        bank = Mathf.SmoothDamp(bank, targetBank, ref bankVel, tiltSmoothTime);
+        pitch = Mathf.SmoothDamp(pitch, targetPitch, ref pitchVel, tiltSmoothTime);
+
+        if (!IsFlying && Mathf.Abs(bank) < 0.05f && Mathf.Abs(pitch) < 0.05f)
+        {
+            if (tilted) { tiltPivot.localRotation = tiltBaseRot; tilted = false; }   // settled: hand the pivot back untouched
+            return;
+        }
+
+        tilted = true;
+        tiltPivot.localRotation = tiltBaseRot * Quaternion.Euler(pitch, 0f, bank);
     }
 
     void ApplyKeyBinding() => PlayerSettings.Apply("broom", broomAction.action);
@@ -168,9 +266,7 @@ public class BroomFlight : MonoBehaviour
     public void Dismount()
     {
         Log("DISMOUNT");
-        horizontalVelocity = Vector3.zero;
-        verticalVelocity = 0f;
-        boostFactor = 1f;
+        dashTimer = 0f;
         Vector3 carry = Vector3.ClampMagnitude(horizontalVelocity * dismountCarry, maxCarrySpeed);
 
         horizontalVelocity = Vector3.zero;
@@ -240,7 +336,14 @@ public class BroomFlight : MonoBehaviour
         float targetBoost = boosting ? boostMultiplier : 1f;
         boostFactor = Mathf.MoveTowards(boostFactor, targetBoost, boostBlendSpeed * Time.deltaTime);
 
-        if (hasInput)
+        UpdateDash(move, wish, charging);
+        if (dashTimer > 0f)
+        {
+            horizontalVelocity = dashDir * dashSpeed;
+            dashTimer -= Time.deltaTime;
+            if (dashTimer <= 0f) horizontalVelocity = dashDir * maxSpeed;   // keep some momentum, then normal flight takes over
+        }
+        else if (hasInput)
         {
             Vector3 target = wish.normalized * (maxSpeed * boostFactor * castMul);
             horizontalVelocity = Vector3.MoveTowards(
@@ -330,7 +433,7 @@ public class BroomFlight : MonoBehaviour
     
     void UpdateFov()
     {
-        float target = IsFlying ? Mathf.InverseLerp(1f, boostMultiplier, boostFactor) : 0f;
+        float target = IsFlying ? Mathf.Max(Mathf.InverseLerp(1f, boostMultiplier, boostFactor), dashTimer > 0f ? 1f : 0f) : 0f;
         fovAmount = Mathf.MoveTowards(fovAmount, target, fovBlendSpeed * Time.deltaTime);
 
         if (Mathf.Approximately(fovAmount, prevFovAmount)) return;   // don't touch the lens when idle
