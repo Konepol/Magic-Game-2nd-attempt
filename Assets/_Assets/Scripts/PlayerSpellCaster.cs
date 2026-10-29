@@ -346,6 +346,17 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 // after the tap window the player has committed to a hold cast: the circle starts drawing and finishes with the cast time
                 if (held >= spell.tapWindow)
                 {
+                    // not enough mana for the spell: the chant and the circle break at once
+                    float baseCost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
+                    if (mana != null && !mana.CanAfford(baseCost))
+                    {
+                        charging[i] = false;
+                        latched[i] = false;
+                        mana.NotifyInsufficient();
+                        FizzleCast(i, "Not enough mana");
+                        continue;
+                    }
+
                     if (holdCircles[i] == null && spell.holdCircle != null)
                         holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale);
 
@@ -735,6 +746,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         var spec = pendingSpec;
         var set = pendingSlots;
 
+        if (mana != null && !mana.CanAfford(spec.manaCost))
+        {
+            mana.NotifyInsufficient();
+            CastFailed?.Invoke("Not enough mana");
+            return;
+        }
+
         // casts already going: the combined spell joins them (multicast) if everything allows it
         if (EntryCount > 0 && !CanMulticast(spec.result))
         {
@@ -941,6 +959,14 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         {
             combo.readyPlayed = true;
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
+        }
+
+        // not enough mana for the combined spell: its chant and circle break at once
+        if (mana != null && !mana.CanAfford(combo.spec.manaCost))
+        {
+            mana.NotifyInsufficient();
+            FizzleCombo("Not enough mana");
+            return;
         }
 
         // cast from the ready combined spell: hold B until it is ready, let go to fire it (too early and it fizzles)
