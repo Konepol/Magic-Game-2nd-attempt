@@ -171,8 +171,8 @@ public class OptionsMenu
         UIKit.Place((RectTransform)pathsToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(640f, 90f));
         pathsState = pathsToggle.GetComponentInChildren<Text>();
         Hint(pathsToggle.gameObject,
-            "While you hold a spell key, a diagram in the bottom-left shows the fusions it can lead to: " +
-            "each spell you add moves the group up and renames it to what it becomes. Paths that do not fit are cut at the edge of the box.");
+            "While you combine spells (press B, then the spells), a diagram in the middle of the screen shows every fusion you can still reach " +
+            "and which spells each one needs. Turn it off if you already know the recipes.");
 
         RefreshGameplay();
     }
