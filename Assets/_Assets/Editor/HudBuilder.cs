@@ -163,7 +163,6 @@ public static class HudBuilder
         AddLockIndicator();
         AddBarrierIndicator();
         AddCastLabel();
-        AddComboSlot();
         AddCastBars();
 
         // the HUD draws these now, so the caster's own on-screen versions are switched off

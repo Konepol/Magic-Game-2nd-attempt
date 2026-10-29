@@ -18,7 +18,7 @@ public class FusionPathsView
         public int depth;
     }
 
-    const float NodeW = 230f, NodeH = 72f, Pad = 24f, TitleH = 30f;
+    const float NodeW = 180f, NodeH = 58f, Pad = 18f, TitleH = 26f;
 
     readonly PlayerSpellCaster caster;
     readonly RectTransform area, content;
@@ -32,11 +32,11 @@ public class FusionPathsView
         area = box.rectTransform;
         area.anchorMin = area.anchorMax = Vector2.zero;
         area.pivot = Vector2.zero;
-        area.anchoredPosition = new Vector2(20f, 190f);        // above the combined-spell box in the corner
+        area.anchoredPosition = new Vector2(20f, 20f);
         area.sizeDelta = new Vector2(300f, 200f);
         area.gameObject.AddComponent<RectMask2D>();            // anything past the edge is cut
 
-        var title = UIKit.Label(area, "Title", "FUSION PATHS", 20, new Color(0.6f, 0.65f, 0.75f), TextAnchor.UpperLeft, true);
+        var title = UIKit.Label(area, "Title", "FUSION PATHS", 16, new Color(0.6f, 0.65f, 0.75f), TextAnchor.UpperLeft, true);
         title.rectTransform.anchorMin = new Vector2(0f, 1f);
         title.rectTransform.anchorMax = new Vector2(0f, 1f);
         title.rectTransform.pivot = new Vector2(0f, 1f);
@@ -95,9 +95,9 @@ public class FusionPathsView
 
         // the group sits in the middle and every spell that can join it is placed on a ring around it
         int n = root.children.Count;
-        float rootW = Mathf.Clamp(60f + 14f * RootTitle(root).Length, 200f, 420f);
+        float rootW = Mathf.Clamp(50f + 11f * RootTitle(root).Length, 160f, 340f);
         float chord = n > 1 ? (NodeW + 20f) / (2f * Mathf.Sin(Mathf.PI / n)) : 0f;
-        float rx = n == 0 ? 0f : Mathf.Max(chord, rootW * 0.5f + NodeW * 0.5f + 20f);
+        float rx = n == 0 ? 0f : Mathf.Max(chord, n > 2 ? rootW * 0.5f + NodeW * 0.5f + 20f : 0f);
         float ry = n == 0 ? 0f : Mathf.Max(chord * 0.8f, NodeH + 24f);
         float w = Mathf.Max(rootW, 2f * rx + NodeW) + 2f * Pad;
         float h = 2f * ry + NodeH + 2f * Pad + TitleH;
@@ -211,8 +211,8 @@ public class FusionPathsView
         var label = UIKit.Label(box.transform, "Text", text, 18, textColor, TextAnchor.MiddleCenter, true);
         label.supportRichText = true;
         label.resizeTextForBestFit = true;
-        label.resizeTextMinSize = 11;
-        label.resizeTextMaxSize = 17;
+        label.resizeTextMinSize = 9;
+        label.resizeTextMaxSize = 15;
         UIKit.Stretch(label.rectTransform);
         label.rectTransform.offsetMin = new Vector2(5f, 3f);
         label.rectTransform.offsetMax = new Vector2(-5f, -3f);

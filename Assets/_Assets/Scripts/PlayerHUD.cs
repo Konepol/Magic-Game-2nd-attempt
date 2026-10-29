@@ -114,7 +114,7 @@ public class PlayerHUD : MonoBehaviour
         ExtendSlots(caster != null ? caster.SlotCount : slots.Length);
 
         // combined spell names can be long ("Fusion: A + B + C"), so that text shrinks to fit its box
-        if (comboBox != null)
+        if ((comboBox != null && comboBox.border != null))
         {
             comboBox.nameText.resizeTextForBestFit = true;
             comboBox.nameText.resizeTextMinSize = 8;
@@ -204,7 +204,7 @@ public class PlayerHUD : MonoBehaviour
         if (broomBox != null) { broomBorder = broomBox.border.color; broomScale = broomBox.border.rectTransform.localScale; broomPlaced = broomBox.border.rectTransform.anchoredPosition; }
         if (lockBox != null) { lockBorder = lockBox.border.color; lockPlaced = lockBox.border.rectTransform.anchoredPosition; }
         if (barrierBox != null) { barrierBorder = barrierBox.border.color; barrierPlaced = barrierBox.border.rectTransform.anchoredPosition; }
-        if (comboBox != null) { comboBg = comboBox.bg.color; comboBox.border.gameObject.SetActive(false); }
+        if ((comboBox != null && comboBox.border != null)) { comboBg = comboBox.bg.color; comboBox.border.gameObject.SetActive(false); }
         manaBgBase = manaBg.color;
         manaFillBase = manaFill.color;
         healthFillBase = healthFill.color;
@@ -343,7 +343,7 @@ public class PlayerHUD : MonoBehaviour
     // the combined spell's box: only visible while two or more spells are being combined
     void UpdateCombo()
     {
-        if (comboBox == null || caster == null) return;
+        if (comboBox == null || comboBox.border == null || caster == null) return;
 
         bool active = caster.ComboActive;
         if (comboBox.border.gameObject.activeSelf != active) comboBox.border.gameObject.SetActive(active);
@@ -374,7 +374,7 @@ public class PlayerHUD : MonoBehaviour
 
     void PlaceComboBox()
     {
-        if (comboBox == null) return;
+        if (comboBox == null || comboBox.border == null) return;
         var rect = comboBox.border.rectTransform;
         rect.anchorMin = rect.anchorMax = Vector2.zero;
         rect.pivot = new Vector2(0.5f, 0.5f);
