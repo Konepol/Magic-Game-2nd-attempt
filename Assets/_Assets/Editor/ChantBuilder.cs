@@ -10,9 +10,9 @@ public static class ChantBuilder
     static readonly Dictionary<string, string[]> Chants = new Dictionary<string, string[]>
     {
         // only the big fusions (three or more spells) are chanted
-        { "TremorStorm", new[] { "Earth, star and shards combine", "Shake the ground to dust", "Tremor storm, arise!" } },
+        { "TremorStorm", new[] { "Earth, star and shards combine", "Shake the ground to dust", "Arise, and break the world!" } },
         { "PlagueStorm", new[] { "Venom and ember, rot and burn", "Let the plague bloom,", "and none be spared." } },
-        { "AbsoluteZero", new[] { "Frost, stone, light and star", "Four forces, one stillness", "All motion ends.", "Absolute zero." } },
+        { "AbsoluteZero", new[] { "Frost, stone, light and star", "Four forces, one stillness", "All motion ends." } },
         { "SunLance", new[] { "Dawn, and storm, and fire, unite", "Become the sun's own spear!" } },
     };
 

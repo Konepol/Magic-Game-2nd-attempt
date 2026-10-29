@@ -206,11 +206,11 @@ public class ChantDisplay : MonoBehaviour
                 r.rect.anchoredPosition = new Vector2(shake, r.y);
 
                 // it types itself out
-                int shown = Mathf.CeilToInt(r.full.Length * Mathf.Clamp01(rowAge / 0.5f));
+                int shown = r.isName ? r.full.Length : Mathf.CeilToInt(r.full.Length * Mathf.Clamp01(rowAge / 0.5f));      // the name is there at once
                 r.text.text = r.full.Substring(0, shown) + "<color=#00000000>" + r.full.Substring(shown) + "</color>";
 
                 Color col = r.isName ? new Color(1f, 0.85f, 0.4f) : c.end == End.Fail ? Color.Lerp(new Color(1f, 0.3f, 0.25f), Color.white, 0.2f) : Color.Lerp(c.color, Color.white, 0.55f);
-                col.a = Mathf.Clamp01(rowAge / 0.25f) * r.fade * fade * (c.end == End.Fail && Mathf.Sin(Time.time * 70f) < 0f ? 0.4f : 1f);
+                col.a = (r.isName ? 1f : Mathf.Clamp01(rowAge / 0.25f)) * r.fade * fade * (c.end == End.Fail && Mathf.Sin(Time.time * 70f) < 0f ? 0.4f : 1f);
                 r.text.color = col;
             }
         }
