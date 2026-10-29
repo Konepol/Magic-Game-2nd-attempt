@@ -62,6 +62,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     bool[] ignoredPress;     // a key press that was refused (cannot combine); ignored until the key is released
     bool[] readyPlayed;      // the "ready" sound has played for this hold
     float[] lastTapCircle;
+    float[] paid;            // mana already taken from the player while this slot is being cast (it is paid gradually)
     float[] effHeld;         // how long each hold has been held at full speed (multicasting slows it down)
     [Header("Multicasting")]
     [SerializeField] float multicastAngleStep = 42f;       // degrees between neighbouring casts on the ring around the player
@@ -184,6 +185,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         cooldownTotal = new float[n];
         pressTime = new float[n];
         effHeld = new float[n];
+        paid = new float[n];
         charging = new bool[n];
         holdCircles = new CastingCircle[n];
         tierCircles = new List<CastingCircle>[n];
@@ -346,15 +348,23 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 // after the tap window the player has committed to a hold cast: the circle starts drawing and finishes with the cast time
                 if (held >= spell.tapWindow)
                 {
-                    // not enough mana for the spell: the chant and the circle break at once
-                    float baseCost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
-                    if (mana != null && !mana.CanAfford(baseCost))
+                    // The mana is taken gradually while the spell is chanted and cast. If it runs out the chant and the circle break at once;
+                    // mana already taken is lost, and what was paid is counted when the spell fires.
+                    if (mana != null)
                     {
-                        charging[i] = false;
-                        latched[i] = false;
-                        mana.NotifyInsufficient();
-                        FizzleCast(i, "Not enough mana");
-                        continue;
+                        float baseCost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
+                        bool basePhase = held < castTime;
+                        float need = PayTarget(spell, held, hasHold) - paid[i];
+
+                        if ((paid[i] <= 0f && !mana.CanAfford(baseCost)) || (basePhase && need > 0f && !mana.CanAfford(need)))
+                        {
+                            charging[i] = false;
+                            latched[i] = false;
+                            mana.NotifyInsufficient();
+                            FizzleCast(i, "Not enough mana");
+                            continue;
+                        }
+                        if (need > 0f) paid[i] += mana.Drain(need);       // past the cast time (charge tiers) it takes what is there
                     }
 
                     if (holdCircles[i] == null && spell.holdCircle != null)
@@ -409,6 +419,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
                     else
                     {
+                        RefundPaid(i);                                       // the cost is taken again in full as it fires
                         // the strongest tier the mana can pay for
                         var fire = heldVariant;
                         int firedTier = 0;
@@ -471,6 +482,33 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         UpdateMulticastLayout();
 
         if (!aimingNow) SetAimRing(false, Vector3.zero, 0f, Color.white);
+    }
+
+    // how much of the spell's mana should have been paid after being held this long: the base cost over the cast time, then each charge tier's
+    // extra cost over the time to reach it
+    float PayTarget(SpellData spell, float held, bool hasHold)
+    {
+        float cost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
+        float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
+        if (held < castTime) return cost * Mathf.Clamp01((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
+        if (!hasHold) return cost;
+
+        float from = castTime, prev = cost;
+        for (int t = 0; t < spell.TierCount; t++)
+        {
+            float to = spell.extraTiers[t].time;
+            float tierCost = spell.VariantForTier(t + 1).manaCost;
+            if (held < to) return Mathf.Lerp(prev, tierCost, Mathf.Clamp01((held - from) / Mathf.Max(to - from, 0.05f)));
+            from = to;
+            prev = tierCost;
+        }
+        return prev;
+    }
+
+    void RefundPaid(int slot)
+    {
+        if (mana != null && paid[slot] > 0f) mana.Restore(paid[slot]);
+        paid[slot] = 0f;
     }
 
     // how many sentences of the spell's chant are showing after being held this long: the spell's own sentences over its cast time, then
@@ -569,6 +607,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         public float startTime;
         public float effHeld;
         public bool readyPlayed;
+        public float paid;                // mana taken so far while it is cast
         public bool heldByB;              // cast from the ready combined spell: B is held to cast it, like a normal hold spell
         public readonly List<CastingCircle> circles = new List<CastingCircle>();
     }
@@ -654,6 +693,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         charging[i] = true;
         pressTime[i] = Time.time;
         effHeld[i] = 0f;
+        paid[i] = 0f;
         readyPlayed[i] = false;
         tierReached[i] = 0;
         latched[i] = false;
@@ -961,12 +1001,17 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
         }
 
-        // not enough mana for the combined spell: its chant and circle break at once
-        if (mana != null && !mana.CanAfford(combo.spec.manaCost))
+        // the mana is taken gradually while it is cast; if it runs out the chant and the circle break at once
+        if (mana != null)
         {
-            mana.NotifyInsufficient();
-            FizzleCombo("Not enough mana");
-            return;
+            float need = combo.spec.manaCost * Mathf.Clamp01(p) - combo.paid;
+            if ((combo.paid <= 0f && !mana.CanAfford(combo.spec.manaCost)) || (need > 0f && !mana.CanAfford(need)))
+            {
+                mana.NotifyInsufficient();
+                FizzleCombo("Not enough mana");
+                return;
+            }
+            if (need > 0f) combo.paid += mana.Drain(need);
         }
 
         // cast from the ready combined spell: hold B until it is ready, let go to fire it (too early and it fizzles)
@@ -982,6 +1027,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         var cb = combo;
         var spec = cb.spec;
 
+        if (mana != null && cb.paid > 0f) { mana.Restore(cb.paid); cb.paid = 0f; }       // the cost is taken again in full as it fires
         bool ok = Cast(cb.slots[0], spec.variant, spec.result);       // the recipe's own cost is on its spell
         if (!ok) { FizzleCombo("Not enough mana"); return; }
 
