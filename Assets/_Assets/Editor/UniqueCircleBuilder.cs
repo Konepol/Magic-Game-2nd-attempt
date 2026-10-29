@@ -229,7 +229,6 @@ public static class UniqueCircleBuilder
             L("Bolt Ring", "Bolt_Ring", CircleAnchor.Front, 2.3f, 90f, 0.0f, 0.5f),
             L("Bolt Ring Counter", "Bolt_Ring", CircleAnchor.Front, 1.5f, -150f, 0.2f, 0.4f, CircleAppear.ScaleUp),
             L("Cross", "Cross", CircleAnchor.Front, 3.0f, 20f, 0.1f, 0.5f, CircleAppear.FadeIn, default, 0.5f),
-            L("Bolt Symbol", "Bolt_Symbol", CircleAnchor.Front, 2.0f, 0f, 0.05f, 0.4f, CircleAppear.ScaleUp),
             L("Side Bolt A", "Bolt_Ring", CircleAnchor.Front, 0.7f, 200f, 0.55f, 0.3f, CircleAppear.RadialWipe, new Vector3(1.5f, 0.9f, 0.05f)),
             L("Side Bolt B", "Bolt_Ring", CircleAnchor.Front, 0.7f, -200f, 0.65f, 0.3f, CircleAppear.RadialWipe, new Vector3(-1.5f, -0.9f, 0.05f)));
 
@@ -291,8 +290,7 @@ public static class UniqueCircleBuilder
             L("Flame Petals", "Flame_Petals", CircleAnchor.Front, 2.5f, 20f, 0.0f, 0.55f),
             L("Bolt Ring", "Bolt_Ring", CircleAnchor.Front, 1.9f, -120f, 0.15f, 0.5f),
             L("Cross", "Cross", CircleAnchor.Front, 3.0f, 30f, 0.2f, 0.5f, CircleAppear.FadeIn, default, 0.5f),
-            L("Lance Rays", "Rays", CircleAnchor.Front, 1.1f, 150f, 0.5f, 0.4f, CircleAppear.ScaleUp),
-            L("Bolt Symbol", "Bolt_Symbol", CircleAnchor.Front, 0.8f, 0f, 0.6f, 0.35f, CircleAppear.ScaleUp, new Vector3(0f, 0f, 0.05f)));
+            L("Lance Rays", "Rays", CircleAnchor.Front, 1.1f, 150f, 0.5f, 0.4f, CircleAppear.ScaleUp));
 
         var thunder = Circle("Circle_ThunderMeteor", 1.3f, Tilt(8f, 2.0f), Ready(new Color(0.95f, 0.95f, 1f), 0.8f),
             Aoe(L("Area Bolts", "Bolt_Ring", CircleAnchor.AimPoint, 1.0f, 40f, 0.0f, 0.5f)),
