@@ -11,6 +11,8 @@ Shader "Magic/ToonCharacter"
         _Softness ("Band Softness", Range(0.01, 0.5)) = 0.12
         _Bands ("Light Bands", Range(2, 4)) = 3
         _AmbientLift ("Ambient Lift", Range(0, 1)) = 0.35
+        _ShadowFloor ("Cast Shadow Brightness", Range(0, 1)) = 0.45
+        _ShadowNormalOffset ("Shadow Normal Offset", Range(0, 0.2)) = 0.06
 
         _RimColor ("Rim Colour", Color) = (0.75, 0.9, 1, 1)
         _RimPower ("Rim Power", Range(0.5, 8)) = 2.6
@@ -51,7 +53,7 @@ Shader "Magic/ToonCharacter"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _ShadeColor, _RimColor, _SparkleColor, _EmissionColor, _OutlineColor;
                 half _Softness, _Bands, _AmbientLift, _RimPower, _RimStrength;
-                half _SparkleScale, _SparkleSpeed, _SparkleStrength, _EmissionStrength, _OutlineWidth;
+                half _SparkleScale, _SparkleSpeed, _SparkleStrength, _EmissionStrength, _OutlineWidth, _ShadowFloor, _ShadowNormalOffset;
             CBUFFER_END
 
             struct Attributes
@@ -112,11 +114,14 @@ Shader "Magic/ToonCharacter"
             {
                 half3 n = normalize(i.normalWS);
                 half3 v = normalize(GetWorldSpaceViewDir(i.positionWS));
-                float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS);
+                // the shadow map is read a little off the surface (no blotchy self-shadowing on round shapes) and its edge is softened;
+                // a shadow only lowers the light to the middle band, so it reads as a soft toon shadow rather than a dark stain
+                float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS + n * _ShadowNormalOffset);
                 Light l = GetMainLight(shadowCoord);
+                half shadow = smoothstep(0.2, 0.8, l.shadowAttenuation);
 
                 half ndl = dot(n, l.direction) * 0.5 + 0.5;                          // wrap lighting keeps the shadow side soft
-                half lit = ndl * l.shadowAttenuation;
+                half lit = min(ndl, lerp(_ShadowFloor, 1.0, shadow));
 
                 // a few soft bands from shadow to light
                 half steps = max(_Bands - 1, 1);
@@ -158,7 +163,7 @@ Shader "Magic/ToonCharacter"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _ShadeColor, _RimColor, _SparkleColor, _EmissionColor, _OutlineColor;
                 half _Softness, _Bands, _AmbientLift, _RimPower, _RimStrength;
-                half _SparkleScale, _SparkleSpeed, _SparkleStrength, _EmissionStrength, _OutlineWidth;
+                half _SparkleScale, _SparkleSpeed, _SparkleStrength, _EmissionStrength, _OutlineWidth, _ShadowFloor, _ShadowNormalOffset;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
