@@ -149,7 +149,10 @@ public class FusionPathsView
         area.anchoredPosition = queue ? new Vector2(0f, 60f) : new Vector2(20f, 20f);
         area.localScale = Vector3.one * (queue ? QueueScale : 1f);
         title.text = queue ? "COMBINE" : "FUSION PATHS";
-        footer.text = queue ? "<color=#FFD15A>[" + PlayerSettings.LabelOf("combine") + "]</color> cast     <color=#FFD15A>[" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "]</color> cancel" : "";
+        // "cast" only while what is queued is a fusion that B can actually cast
+        string cancelHint = "<color=#FFD15A>[" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "]</color> cancel";
+        string castHint = root.result != null ? "<color=#FFD15A>[" + PlayerSettings.LabelOf("combine") + "]</color> cast     " : "";
+        footer.text = queue ? castHint + cancelHint : "";
 
         Vector2 centre = new Vector2(w * 0.5f, foot + (h - TitleH - foot) * 0.5f);
         root.pos = centre;
