@@ -76,6 +76,11 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float dismountCarry = 0.5f;   // fraction of the glide speed handed over
     [SerializeField] float maxCarrySpeed = 10f;
 
+    [Header("Speed Lines")]
+    [SerializeField] bool speedLines = true;
+    [SerializeField, Tooltip("Lines start once you are this much faster than normal flight.")]
+    float speedLinesStart = 1.15f;
+
     [Header("Tilt (visual only)")]
     [SerializeField, Tooltip("Child that leans; defaults to the animator's transform. The root is never tilted so the controller stays upright.")]
     Transform tiltPivot;
@@ -116,30 +121,33 @@ public class BroomFlight : MonoBehaviour
     Quaternion tiltBaseRot = Quaternion.identity;
     float bank, pitch, bankVel, pitchVel, prevYaw;
     bool tilted;
-    int prevTapDir = -1, lastTapDir = -1;
-    float lastTapTime = -10f, dashTimer, dashCooldownLeft;
+    SpeedLines lines;
+    // each direction (0 up, 1 right, 2 down, 3 left) is tracked on its own, so tapping one while holding another still counts
+    readonly bool[] prevHeld = new bool[4];
+    readonly float[] lastTapTimes = { -10f, -10f, -10f, -10f };
+    float dashTimer, dashCooldownLeft;
     Vector3 dashDir;
 
-    // which of the four keys the stick/keys point at (0 up, 1 right, 2 down, 3 left), -1 when idle
-    static int TapDirection(Vector2 m)
-    {
-        if (m.sqrMagnitude < 0.25f) return -1;
-        if (Mathf.Abs(m.x) > Mathf.Abs(m.y)) return m.x > 0f ? 1 : 3;
-        return m.y > 0f ? 0 : 2;
-    }
+    public bool IsDashing => dashTimer > 0f;
+    public Vector3 DashDirection => dashDir;
 
-    // double-tap a direction (press, release, press within the window) to dash that way
+    // double-tap a direction (press, release, press within the window) to dash along the current input;
+    // other direction keys may stay held the whole time
     void UpdateDash(Vector2 move, Vector3 wish, bool blocked)
     {
         dashCooldownLeft -= Time.deltaTime;
-        int dir = TapDirection(move);
-        bool pressed = dir != -1 && prevTapDir == -1;
-        prevTapDir = dir;
-        if (!pressed) return;
+        bool isDouble = false;
+        for (int d = 0; d < 4; d++)
+        {
+            float axis = d == 0 ? move.y : d == 1 ? move.x : d == 2 ? -move.y : -move.x;
+            bool held = axis > 0.5f;
+            bool pressed = held && !prevHeld[d];
+            prevHeld[d] = held;
+            if (!pressed) continue;
 
-        bool isDouble = dir == lastTapDir && Time.time - lastTapTime <= doubleTapWindow;
-        lastTapDir = dir;
-        lastTapTime = Time.time;
+            if (Time.time - lastTapTimes[d] <= doubleTapWindow) { isDouble = true; lastTapTimes[d] = -10f; }
+            else lastTapTimes[d] = Time.time;
+        }
         if (!isDouble || blocked || dashCooldownLeft > 0f) return;
 
         if (mana == null || mana.Current <= dashManaCost + 0.5f)
@@ -152,7 +160,6 @@ public class BroomFlight : MonoBehaviour
         dashDir = wish.normalized;
         dashTimer = dashDuration;
         dashCooldownLeft = dashCooldown;
-        lastTapDir = -1;   // a third tap does not start another double
         Log("DASH");
     }
 
@@ -176,6 +183,22 @@ public class BroomFlight : MonoBehaviour
         if (tiltPivot == transform) tiltPivot = null;
         if (tiltPivot != null) tiltBaseRot = tiltPivot.localRotation;
         prevYaw = transform.eulerAngles.y;
+
+        if (speedLines) lines = SpeedLines.Create();
+    }
+
+    void OnDestroy()
+    {
+        if (lines != null) Destroy(lines.gameObject);
+    }
+
+    // streaks fade in above normal flight speed and peak at dash speed
+    void UpdateSpeedLines()
+    {
+        if (lines == null) return;
+        Vector3 velocity = IsFlying ? horizontalVelocity + Vector3.up * verticalVelocity : Vector3.zero;
+        lines.SetState(Mathf.InverseLerp(maxSpeed * speedLinesStart, dashSpeed, velocity.magnitude),
+            transform.position + Vector3.up, velocity);
     }
 
     // lean into turns and climbs; runs after the animator so it sits on top of the pose
@@ -184,6 +207,7 @@ public class BroomFlight : MonoBehaviour
         float yaw = transform.eulerAngles.y;
         float yawRate = Mathf.DeltaAngle(prevYaw, yaw) / Mathf.Max(Time.deltaTime, 0.0001f);
         prevYaw = yaw;
+        UpdateSpeedLines();
         if (tiltPivot == null) return;
 
         float targetBank = 0f, targetPitch = 0f;

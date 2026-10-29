@@ -1662,6 +1662,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 313624066}
   m_CullTransparentMesh: 1
+--- !u!115 &389613994
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 7
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_Type: 0
+  m_ExecutionOrder: 0
+  m_ClassName: BroomDashLean
+  m_Namespace: 
+  m_AssemblyName: Assembly-CSharp
 --- !u!1 &486467507
 GameObject:
   m_ObjectHideFlags: 0
@@ -8592,6 +8607,8 @@ GameObject:
   - component: {fileID: 6982812146598649886}
   - component: {fileID: 6982812146598649888}
   - component: {fileID: 6982812146598649889}
+  - component: {fileID: 6982812146598649891}
+  - component: {fileID: 6982812146598649890}
   m_Layer: 8
   m_Name: PlayerArmature
   m_TagString: Player
@@ -9414,6 +9431,8 @@ MonoBehaviour:
   redirectRate: 60
   dismountCarry: 0.5
   maxCarrySpeed: 10
+  speedLines: 1
+  speedLinesStart: 1.15
   tiltPivot: {fileID: 0}
   maxBank: 30
   bankPerYawRate: 0.25
@@ -9547,6 +9566,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36863162b5b43ef4ba14388601c0b5d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCastAnimator
+--- !u!114 &6982812146598649890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081459036377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 389613994}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BroomDashLean
+  maxLean: 38
+  holdAfter: 0.35
+--- !u!114 &6982812146598649891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4416926081459036377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5065ae343d28ff4c9a2bc313af9b148, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WandAim
+  holdTime: 0.45
+  maxAngle: 80
 --- !u!4 &6983258931977558208
 Transform:
   m_ObjectHideFlags: 0

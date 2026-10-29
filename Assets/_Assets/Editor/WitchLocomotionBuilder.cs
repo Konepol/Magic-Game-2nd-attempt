@@ -39,14 +39,18 @@ public static class WitchLocomotionBuilder
 
         // the broom pose comes from the idle clip
         if (sources.TryGetValue("Idle", out var idle))
+        {
             made["Broom"] = Derive(idle, "Witch_BroomRide", BroomPose, 2.4f);
+            made["BroomDash"] = Derive(idle, "Witch_BroomDash", BroomDashPose, 1f);
+        }
 
         // ---------------- controller ----------------
         var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
         if (ctrl == null) { Debug.LogError("Witch locomotion: controller not found."); return; }
-        bool hasFlying = false;
-        foreach (var p in ctrl.parameters) if (p.name == "Flying") hasFlying = true;
+        bool hasFlying = false, hasDashing = false;
+        foreach (var p in ctrl.parameters) { if (p.name == "Flying") hasFlying = true; if (p.name == "Dashing") hasDashing = true; }
         if (!hasFlying) ctrl.AddParameter("Flying", AnimatorControllerParameterType.Bool);
+        if (!hasDashing) ctrl.AddParameter("Dashing", AnimatorControllerParameterType.Bool);
 
         var sm = ctrl.layers[0].stateMachine;
         foreach (var cs in sm.states)
@@ -93,6 +97,31 @@ public static class WitchLocomotionBuilder
             back.AddCondition(AnimatorConditionMode.IfNot, 0f, "Flying");
             back.hasExitTime = false;
             back.duration = 0.2f;
+        }
+
+        // the quick dash on the broom: stretched out along the broom, then back to riding
+        AnimatorState dash = null;
+        foreach (var cs in sm.states) if (cs.state.name == "BroomDash") dash = cs.state;
+        if (dash == null) dash = sm.AddState("BroomDash");
+        dash.motion = made.ContainsKey("BroomDash") ? made["BroomDash"] : null;
+        foreach (var t in ride.transitions) if (t.destinationState == dash) { ride.RemoveTransition(t); break; }
+        foreach (var t in dash.transitions) { dash.RemoveTransition(t); break; }
+        foreach (var t in sm.anyStateTransitions) if (t.destinationState == dash) { sm.RemoveAnyStateTransition(t); break; }
+
+        var toDash = ride.AddTransition(dash);
+        toDash.AddCondition(AnimatorConditionMode.If, 0f, "Dashing");
+        toDash.hasExitTime = false;
+        toDash.duration = 0.06f;
+        var fromDash = dash.AddTransition(ride);
+        fromDash.AddCondition(AnimatorConditionMode.IfNot, 0f, "Dashing");
+        fromDash.hasExitTime = false;
+        fromDash.duration = 0.18f;
+        if (blend != null)
+        {
+            var out2 = dash.AddTransition(blend);        // dismounting in the middle of a dash
+            out2.AddCondition(AnimatorConditionMode.IfNot, 0f, "Flying");
+            out2.hasExitTime = false;
+            out2.duration = 0.15f;
         }
 
         EditorUtility.SetDirty(ctrl);
@@ -184,6 +213,25 @@ public static class WitchLocomotionBuilder
             case "Spine Left-Right": return 0.03f * Mathf.Sin(w);
             case "Head Nod Down-Up": return -0.05f;
             case "Head Tilt Left-Right": return 0.1f * Mathf.Sin(w);
+        }
+        return v;
+    }
+
+    // stretched out along the broom for a dash: legs straight out behind, body flat, arm reaching ahead
+    static float BroomDashPose(string prop, float t, float p, float v, float mean)
+    {
+        switch (prop)
+        {
+            case "RootT.y": return 0.36f;
+            case "Left Upper Leg Front-Back": return v + 0.25f;
+            case "Right Upper Leg Front-Back": return v + 0.25f;
+            case "Left Lower Leg Stretch": return v;
+            case "Right Lower Leg Stretch": return v;
+            case "Left Arm Down-Up": return 0.1f;
+            case "Left Arm Front-Back": return 0.85f;
+            case "Left Forearm Stretch": return 0.0f;
+            case "Spine Front-Back": return 0.3f;
+            case "Head Nod Down-Up": return 0.2f;
         }
         return v;
     }

@@ -26,9 +26,9 @@ public static class WitchAnimationBuilder
         // ---------------- clips ----------------
         var hold = ArmClip("WandHold", 2.4f, true, names,
             (0f, WitchPoses.Hold), (1.2f, With(WitchPoses.Hold, 48, -0.32f, 51, 0.56f, 53, 0.18f)), (2.4f, WitchPoses.Hold));
-        var tap = ArmClip("WandTap", 0.7f, false, names,
-            (0f, WitchPoses.Hold), (0.1f, WitchPoses.PullBack), (0.22f, WitchPoses.Thrust),
-            (0.45f, With(WitchPoses.Hold, 48, -0.1f, 49, 0.55f, 51, 0.3f)), (0.7f, WitchPoses.Hold));
+        // a tap does not flick the wand: the arm is held out and WandAim turns the hand toward where the spell goes
+        var tap = ArmClip("WandTap", 0.6f, false, names,
+            (0f, WitchPoses.Hold), (0.1f, WitchPoses.Chant), (0.35f, WitchPoses.Chant), (0.6f, WitchPoses.Hold));
         var chant = ArmClip("WandChant", 1.4f, true, names,
             (0f, WitchPoses.Chant), (0.7f, With(WitchPoses.Chant, 48, 0.33f, 53, 0.15f)), (1.4f, WitchPoses.Chant));
         var release = ArmClip("WandRelease", 0.9f, false, names,
@@ -102,6 +102,8 @@ public static class WitchAnimationBuilder
             if (caster == null) continue;
             var root = caster.transform.root.gameObject;
             if (root.GetComponent<PlayerCastAnimator>() == null) root.AddComponent<PlayerCastAnimator>();
+            if (root.GetComponent<WandAim>() == null) root.AddComponent<WandAim>();
+            if (root.GetComponent<BroomDashLean>() == null && root.GetComponent<BroomFlight>() != null) root.AddComponent<BroomDashLean>();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
         }
