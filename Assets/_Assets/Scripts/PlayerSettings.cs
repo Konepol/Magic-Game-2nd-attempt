@@ -23,6 +23,7 @@ public static class PlayerSettings
         new Bind("spell4", "Spell slot 5", "<Keyboard>/r"),
         new Bind("spell5", "Spell slot 6", "<Keyboard>/t"),
         new Bind("spell6", "Spell slot 7", "<Keyboard>/g"),
+        new Bind("combine", "Combine spells (queue)", "<Keyboard>/b"),
         new Bind("charge", "Charge mana", "<Keyboard>/c"),
         new Bind("barrier", "Barrier", "<Keyboard>/f"),
         new Bind("broom", "Broom (mount / dismount)", "<Keyboard>/x"),

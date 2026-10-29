@@ -201,6 +201,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void ApplyKeyBindings()
     {
         for (int i = 0; i < skillActions.Length; i++) PlayerSettings.Apply("spell" + i, skillActions[i]);
+        PlayerSettings.Apply("combine", combineAction);
     }
 
     void OnEnable()
@@ -208,6 +209,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         PlayerSettings.Changed += ApplyKeyBindings;
         ApplyKeyBindings();
         foreach (var a in skillActions) a.Enable();
+        combineAction.Enable();
         switchWeaponAction.Enable();
         if (health != null) health.Damaged += OnDamaged;
     }
@@ -216,6 +218,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         PlayerSettings.Changed -= ApplyKeyBindings;
         foreach (var a in skillActions) a.Disable();
+        combineAction.Disable();
+        queueing = false;
+        queued.Clear();
         switchWeaponAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
         SetAimRing(false, Vector3.zero, 0f, Color.white);
@@ -259,8 +264,20 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         // charging mana takes over: no casting or aiming until it stops
         if (mana != null && mana.IsCharging)
         {
+            queueing = false;
+            queued.Clear();
             for (int i = 0; i < charging.Length; i++) charging[i] = false;
             DropAllCircles();
+            SetAimRing(false, Vector3.zero, 0f, Color.white);
+            return;
+        }
+
+        if (combineAction.WasPressedThisFrame()) ToggleQueue();
+        if (queueing)
+        {
+            UpdateQueue();
+            UpdateCombo();
+            UpdateMulticastLayout();
             SetAimRing(false, Vector3.zero, 0f, Color.white);
             return;
         }
@@ -535,6 +552,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         public float startTime;
         public float effHeld;
         public bool readyPlayed;
+        public bool queued;               // built with B: it casts by itself once it is ready
         public readonly List<CastingCircle> circles = new List<CastingCircle>();
     }
 
@@ -635,41 +653,103 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         latched[i] = false;
     }
 
-    // a hold spell key was pressed: start it, join a recipe with the casts already going, or cast it alongside them
+    // ---------- combining with B: press B, press the spells to combine, press B again ----------
+
+    readonly InputAction combineAction = new InputAction("Combine", InputActionType.Button, "<Keyboard>/b");
+    bool queueing;
+    readonly List<int> queued = new List<int>();
+
+    public bool Queueing => queueing;
+    public IReadOnlyList<int> QueuedSlots => queued;
+    public bool IsQueued(int slot) => queued.Contains(slot);
+
+    // can this spell join the queue? It must be ready and still lead to a fusion made only of spells that are equipped
+    public bool CanQueue(int slot)
+    {
+        var sp = GetSpell(slot);
+        if (sp == null || !sp.hasHoldVariant || queued.Contains(slot) || Time.time < cooldownEnd[slot] || weapon == null || weapon.combos == null) return false;
+
+        var set = new List<SpellData>();
+        foreach (int q in queued) set.Add(GetSpell(q));
+        set.Add(sp);
+
+        foreach (var recipe in weapon.combos)
+        {
+            if (recipe == null || recipe.result == null || recipe.ingredients == null) continue;
+
+            bool all = true;
+            foreach (var x in set) if (System.Array.IndexOf(recipe.ingredients, x) < 0) all = false;
+            if (!all) continue;
+
+            bool equipped = true;
+            foreach (var ing in recipe.ingredients)
+            {
+                bool found = false;
+                for (int j = 0; j < cooldownEnd.Length; j++) if (GetSpell(j) == ing) found = true;
+                if (!found) equipped = false;
+            }
+            if (equipped) return true;
+        }
+        return false;
+    }
+
+    void ToggleQueue()
+    {
+        if (!queueing)
+        {
+            if (combo != null) return;
+            for (int j = 0; j < charging.Length; j++) if (charging[j]) return;       // finish what is being cast first
+            queueing = true;
+            queued.Clear();
+            if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.5f);
+            return;
+        }
+
+        queueing = false;
+        if (queued.Count == 0) return;
+
+        var spec = queued.Count >= 2 ? BuildRecipeSpec(queued) : null;
+        var set = new List<int>(queued);
+        queued.Clear();
+
+        if (spec == null) { CastFailed?.Invoke("Can't combine"); return; }
+
+        foreach (int j in set)
+        {
+            pressTime[j] = Time.time;
+            effHeld[j] = 0f;
+            readyPlayed[j] = false;
+            tierReached[j] = 0;
+            latched[j] = false;
+        }
+        FormCombo(set, spec);
+        combo.queued = true;
+    }
+
+    void UpdateQueue()
+    {
+        for (int i = 0; i < cooldownEnd.Length; i++)
+        {
+            var action = ActionFor(i);
+            if (action == null || !action.WasPressedThisFrame()) continue;
+            if (!CanQueue(i)) continue;
+
+            queued.Add(i);
+            if (muzzle != null) SpellFX.Sparks(muzzle.position, GetSpell(i).hold.effectColor);
+        }
+    }
+
+    // a hold spell key was pressed: start it, or cast it alongside the others (multicast) if everything involved allows it
     void OnHoldPressed(int i, SpellData spell)
     {
-        var units = new List<List<int>>();                    // each running single cast, and the current combination as one block
-        int comboUnit = -1;
-        for (int j = 0; j < charging.Length; j++)
-            if (j != i && charging[j] && !inCombo[j] && !ignoredPress[j]) units.Add(new List<int> { j });
-        if (combo != null) { comboUnit = units.Count; units.Add(new List<int>(combo.slots)); }
-
-        if (units.Count == 0) { StartHold(i); return; }
+        if (EntryCount == 0) { StartHold(i); return; }
 
         pressTime[i] = Time.time;
-
-        // 1) a recipe made of the new spell plus some of what is already being cast (the biggest match wins)
-        ComboSpec bestSpec = null;
-        List<int> bestSet = null;
-        for (int mask = (1 << units.Count) - 1; mask > 0; mask--)
-        {
-            if (comboUnit >= 0 && (mask & (1 << comboUnit)) == 0) continue;      // only one combination at a time, and it must stay whole
-
-            var set = new List<int> { i };
-            for (int k = 0; k < units.Count; k++)
-                if ((mask & (1 << k)) != 0) set.AddRange(units[k]);
-
-            var spec = BuildRecipeSpec(set);
-            if (spec != null && (bestSet == null || set.Count > bestSet.Count)) { bestSpec = spec; bestSet = set; }
-        }
-        if (bestSpec != null) { FormCombo(bestSet, bestSpec); return; }
-
-        // 2) no recipe: cast it alongside the others (multicast), if everything involved allows it
         if (CanMulticast(spell)) { StartHold(i); return; }
 
-        // 3) cannot combine and cannot multicast: the cast already going carries on, and this one does not cast
+        // cannot cast together: the cast already going carries on, and this one does not cast
         ignoredPress[i] = true;
-        CastFailed?.Invoke("Can't combine");
+        CastFailed?.Invoke("Can't cast together");
     }
 
     bool CanMulticast(SpellData incoming)
@@ -790,6 +870,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             combo.readyPlayed = true;
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
         }
+
+        // a queued combination needs no keys held: it fires once it is ready
+        if (combo.queued) { if (ready) FireCombo(); return; }
 
         // chord hold off: the combined cast is decided as soon as any one key is let go
         if (!PlayerSettings.ChordHold)

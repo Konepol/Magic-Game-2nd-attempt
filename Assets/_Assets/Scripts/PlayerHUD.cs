@@ -305,6 +305,12 @@ public class PlayerHUD : MonoBehaviour
             Color border = baseBorder[i];
             if (caster.IsCharging(i))
                 border = spell.hasHoldVariant && caster.GetCharge(i) >= 1f ? readyColor : chargingColor;
+            // combining: queued spells glow, spells that cannot join the fusion are dimmed
+            if (caster.Queueing)
+            {
+                if (caster.IsQueued(i)) border = readyColor;
+                else if (!caster.CanQueue(i)) { s.bg.color = baseBg[i] * new Color(0.4f, 0.4f, 0.4f, 1f); border = baseBorder[i] * new Color(0.5f, 0.5f, 0.5f, 1f); }
+            }
             s.border.color = border;
         }
     }
