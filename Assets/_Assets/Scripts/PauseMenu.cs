@@ -177,12 +177,13 @@ public class PauseMenu : MonoBehaviour
         var caster = FindAnyObjectByType<PlayerSpellCaster>();
         var lines = new List<string>();
         var keyOf = new Dictionary<string, string>();
+        var slotOf = new Dictionary<string, int>();
         if (caster != null)
             for (int i = 0; i < caster.SlotCount; i++)
             {
                 var spell = caster.GetSpellAt(i);
                 string key = caster.GetKeyLabel(i);
-                if (spell != null) keyOf[spell.name] = key;
+                if (spell != null) { keyOf[spell.name] = key; slotOf[spell.name] = i; }
                 lines.Add("<color=#FFD15A>" + key + "</color>   " + (spell != null ? spell.displayName : "<color=#808080>empty</color>"));
             }
         loadoutText.text = string.Join("\n", lines);
@@ -193,12 +194,15 @@ public class PauseMenu : MonoBehaviour
             {
                 if (c == null || c.result == null || c.ingredients == null) continue;
                 var keys = new List<string>();
+                var order = new List<int>();
                 bool all = true;
                 foreach (var ing in c.ingredients)
                 {
                     if (ing == null) continue;
-                    if (keyOf.TryGetValue(ing.name, out var k)) keys.Add(k); else all = false;
+                    if (slotOf.TryGetValue(ing.name, out int sl)) order.Add(sl); else all = false;
                 }
+                order.Sort();                                       // in the order of the spell keys
+                foreach (int sl in order) keys.Add(caster.GetKeyLabel(sl));
                 if (all) fusions.Add("<color=#FFD15A>" + c.result.displayName + "</color>   <color=#9FD8FF>" + string.Join(" + ", keys) + "</color>");
             }
         fusionText.text = fusions.Count > 0 ? string.Join("\n", fusions) : "<color=#808080>none with these spells</color>";

@@ -94,6 +94,7 @@ public class FusionPathsView
     {
         for (int i = content.childCount - 1; i >= 0; i--) Object.Destroy(content.GetChild(i).gameObject);
 
+        held.Sort((x, y) => SlotOf(x).CompareTo(SlotOf(y)));
         var root = new Node { set = held };
         var ring = new List<Node>();
 
@@ -117,12 +118,13 @@ public class FusionPathsView
                 missing.Add(ing);
             }
             if (!attainable) continue;
+            missing.Sort((x, y) => SlotOf(x).CompareTo(SlotOf(y)));          // in the order of the player's spell keys
 
             if (missing.Count == 0) { root.result = combo.result.displayName; continue; }
             ring.Add(new Node { result = combo.result.displayName, missing = missing });
         }
 
-        ring.Sort((a, b) => a.missing.Count != b.missing.Count ? a.missing.Count.CompareTo(b.missing.Count) : string.CompareOrdinal(a.result, b.result));
+        ring.Sort((a, b) => a.missing.Count != b.missing.Count ? a.missing.Count.CompareTo(b.missing.Count) : SlotOf(a.missing[0]).CompareTo(SlotOf(b.missing[0])));
 
         // held spells: nothing to show without a fusion ahead; queueing always shows the middle
         if (ring.Count == 0 && !queue) { area.gameObject.SetActive(false); return; }
