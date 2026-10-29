@@ -266,8 +266,18 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         {
             queueing = false;
             queued.Clear();
-            for (int i = 0; i < charging.Length; i++) charging[i] = false;
-            DropAllCircles();
+
+            // a combination that is already casting is not cancelled by charging mana: its bar just waits
+            if (combo != null)
+            {
+                for (int i = 0; i < charging.Length; i++)
+                    if (!inCombo[i]) { charging[i] = false; DropCircle(i); }
+            }
+            else
+            {
+                for (int i = 0; i < charging.Length; i++) charging[i] = false;
+                DropAllCircles();
+            }
             SetAimRing(false, Vector3.zero, 0f, Color.white);
             return;
         }
@@ -871,56 +881,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
         }
 
-        // a queued combination needs no keys held: it fires once it is ready
-        if (combo.queued) { if (ready) FireCombo(); return; }
-
-        // chord hold off: the combined cast is decided as soon as any one key is let go
-        if (!PlayerSettings.ChordHold)
-        {
-            bool anyUp = false;
-            foreach (int j in combo.slots)
-            {
-                latched[j] = false;
-                var action = ActionFor(j);
-                if (action == null || !action.IsPressed()) anyUp = true;
-            }
-            if (!anyUp) return;
-            if (ready) FireCombo(); else FizzleCombo("Fizzled");
-            return;
-        }
-
-        bool anyDown = false, anyReleasedNow = false;
-        foreach (int j in combo.slots)
-        {
-            var action = ActionFor(j);
-            if (action == null) { anyReleasedNow = true; continue; }
-            if (action.IsPressed()) anyDown = true;
-            if (action.WasReleasedThisFrame()) anyReleasedNow = true;
-        }
-
-        if (!ready)
-        {
-            // still charging: a key let go while another is down keeps counting as held; if every key is up it has failed
-            if (anyDown)
-            {
-                foreach (int j in combo.slots)
-                {
-                    var action = ActionFor(j);
-                    if (action == null || !action.IsPressed()) latched[j] = true;
-                }
-                return;
-            }
-            foreach (int j in combo.slots) latched[j] = false;
-            FizzleCombo("Fizzled");
-            return;
-        }
-
-        // ready: letting go of a key decides it, as it always did
-        if (!anyDown || anyReleasedNow)
-        {
-            foreach (int j in combo.slots) latched[j] = false;
-            FireCombo();
-        }
+        // a combination built with B needs no keys held: it fires once it is ready
+        if (ready) FireCombo();
     }
 
     void FireCombo()

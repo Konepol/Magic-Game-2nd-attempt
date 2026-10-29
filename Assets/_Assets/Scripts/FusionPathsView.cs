@@ -15,7 +15,7 @@ public class FusionPathsView
         public Vector2 pos;
     }
 
-    const float NodeW = 210f, NodeH = 62f, Pad = 18f, TitleH = 26f;
+    const float NodeW = 190f, NodeH = 62f, Pad = 18f, TitleH = 26f;
     const float QueueScale = 1.6f;
 
     readonly PlayerSpellCaster caster;
@@ -135,9 +135,12 @@ public class FusionPathsView
         // the group sits in the middle, the fusions on an ellipse around it, spaced so nothing overlaps
         float chord = n > 1 ? (NodeW + 20f) / (2f * Mathf.Sin(Mathf.PI / n)) : 0f;
         float rx = n == 0 ? 0f : Mathf.Max(chord, n > 2 ? rootW * 0.5f + NodeW * 0.5f + 20f : 0f);
-        float ry = n == 0 ? 0f : Mathf.Max(chord * 0.8f, NodeH + 24f);
+        int most = 1;
+        foreach (var r in ring) most = Mathf.Max(most, r.missing.Count);
+        float tall = NodeH + 14f * (most - 1);
+        float ry = n == 0 ? 0f : Mathf.Max(chord * 0.8f, tall + 24f);
         float w = Mathf.Max(rootW, 2f * rx + NodeW) + 2f * Pad;
-        float h = 2f * ry + NodeH + 2f * Pad + TitleH;
+        float h = 2f * ry + tall + 2f * Pad + TitleH;
         area.sizeDelta = new Vector2(w, h);
 
         // small in the corner while holding; big in the middle of the screen while queueing a combination
@@ -161,7 +164,7 @@ public class FusionPathsView
             var parts = new List<string>();
             foreach (var m in node.missing)
                 parts.Add("<color=#9FD8FF>[" + caster.GetKeyLabel(SlotOf(m)) + "]</color> " + m.displayName);
-            DrawNode(node.pos, NodeW, NodeH, "<b><color=#FFD15A>" + node.result + "</color></b>\n" + string.Join("  ", parts),
+            DrawNode(node.pos, NodeW, NodeH + 14f * Mathf.Max(0, node.missing.Count - 1), "<b><color=#FFD15A>" + node.result + "</color></b>\n" + string.Join("\n", parts),
                 new Color(0.12f, 0.17f, 0.26f, 0.95f), Color.white);
         }
 
