@@ -21,6 +21,7 @@ public class ChantDisplay : MonoBehaviour
         public RectTransform rect;
         public string full;
         public float born, y;
+        public bool isName;              // the spell's own name, the last line of its chant
         public float fade = 1f;          // how visible it is now: the newest row is clear, the one before it half faded, the one before that gone
     }
 
@@ -32,6 +33,7 @@ public class ChantDisplay : MonoBehaviour
         public readonly List<Row> rows = new List<Row>();
         public Color color;
         public float start, endTime;
+        public bool hasName;
         public int lineIndex;            // how many sentences have been started (rows that faded out are removed, so the row count cannot be used)
         public End end = End.Running;
     }
@@ -61,7 +63,7 @@ public class ChantDisplay : MonoBehaviour
         Instance.ShowInternal(key, lines, Mathf.Min(reveal, lines.Length), color);
     }
 
-    public static void Finish(int key) { if (instance != null) instance.EndInternal(key, End.Finish); }     // the spell was released
+    public static void Finish(int key, string spellName = null) { if (instance != null) instance.EndInternal(key, End.Finish, spellName); }     // the spell was released; its name closes the chant
     public static void Fail(int key) { if (instance != null) instance.EndInternal(key, End.Fail); }         // the cast broke
     public static void Drop(int key) { if (instance != null) instance.EndInternal(key, End.Drop); }         // abandoned quietly
 
@@ -121,9 +123,19 @@ public class ChantDisplay : MonoBehaviour
         return new Row { text = t, rect = rect, full = line, born = Time.time, y = -LineHeight * 0.6f };
     }
 
-    void EndInternal(int key, End how)
+    void EndInternal(int key, End how, string spellName = null)
     {
         if (!chants.TryGetValue(key, out var c) || c.end != End.Running) return;
+
+        // the chant ends on the name of the spell
+        if (how == End.Finish && !string.IsNullOrEmpty(spellName) && c.lineIndex > 0)
+        {
+            var row = NewRow(c, spellName);
+            row.isName = true;
+            row.text.fontSize = 52;
+            c.rows.Add(row);
+            c.hasName = true;
+        }
         c.end = how;
         c.endTime = Time.time;
     }
@@ -157,10 +169,10 @@ public class ChantDisplay : MonoBehaviour
             if (c.end != End.Running)
             {
                 float e = Time.time - c.endTime;
-                float length = c.end == End.Finish ? 0.9f : c.end == End.Fail ? 0.5f : 0.25f;
+                float length = c.end == End.Finish ? (c.hasName ? 1.8f : 0.9f) : c.end == End.Fail ? 0.5f : 0.25f;
                 if (e >= length) { finished.Add(c.key); continue; }
-                fade = 1f - e / length;
-                if (c.end == End.Finish) extraRise = e * 320f;
+                fade = c.hasName ? 1f - Mathf.Max(0f, e - 1f) / (length - 1f) : 1f - e / length;      // the name stays clear for a moment
+                if (c.end == End.Finish) extraRise = e * (c.hasName ? 90f : 320f);
                 if (c.end == End.Fail) shake = Mathf.Sin(e * 90f) * 10f;
             }
 
@@ -197,7 +209,7 @@ public class ChantDisplay : MonoBehaviour
                 int shown = Mathf.CeilToInt(r.full.Length * Mathf.Clamp01(rowAge / 0.5f));
                 r.text.text = r.full.Substring(0, shown) + "<color=#00000000>" + r.full.Substring(shown) + "</color>";
 
-                Color col = c.end == End.Fail ? Color.Lerp(new Color(1f, 0.3f, 0.25f), Color.white, 0.2f) : Color.Lerp(c.color, Color.white, 0.55f);
+                Color col = r.isName ? new Color(1f, 0.85f, 0.4f) : c.end == End.Fail ? Color.Lerp(new Color(1f, 0.3f, 0.25f), Color.white, 0.2f) : Color.Lerp(c.color, Color.white, 0.55f);
                 col.a = Mathf.Clamp01(rowAge / 0.25f) * r.fade * fade * (c.end == End.Fail && Mathf.Sin(Time.time * 70f) < 0f ? 0.4f : 1f);
                 r.text.color = col;
             }

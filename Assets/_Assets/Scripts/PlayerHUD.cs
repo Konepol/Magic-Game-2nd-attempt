@@ -547,7 +547,7 @@ public class PlayerHUD : MonoBehaviour
             }
             if (castBarLabel != null && k < castBarLabel.Length && castBarLabel[k] != null)
             {
-                castBarLabel[k].text = e.name;
+                castBarLabel[k].text = e.chanted ? "" : e.name;
                 castBarLabel[k].color = e.ready ? readyColor : (e.primary || n == 1 ? Color.white : new Color(1f, 1f, 1f, 0.8f));
             }
         }

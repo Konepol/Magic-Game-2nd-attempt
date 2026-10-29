@@ -604,6 +604,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         public bool ready;
         public bool primary;      // the one at the centre of the aim
         public bool isCombo;
+        public bool chanted;      // its name closes the chant above the head, so the bar does not repeat it
     }
 
     readonly List<CastEntryInfo> entryInfos = new List<CastEntryInfo>();
@@ -956,7 +957,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         lastCastMovement = spec.heldMovement;
 
         foreach (var c in cb.circles) if (c != null) c.FadeOut(0.4f);
-        ChantDisplay.Finish(ComboId);
+        ChantDisplay.Finish(ComboId, spec.name);
         combo = null;
     }
 
@@ -1124,7 +1125,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     CastEntryInfo MakeInfo(int id, bool primary)
     {
         if (id == ComboId)
-            return new CastEntryInfo { name = combo.spec.name, progress = ComboProgress, ready = ComboReady, primary = primary, isCombo = true };
+            return new CastEntryInfo { name = combo.spec.name, progress = ComboProgress, ready = ComboReady, primary = primary, isCombo = true, chanted = combo.spec.result != null && combo.spec.result.chant != null && combo.spec.result.chant.Length > 0 };
 
         var sp = GetSpell(id);
         bool ready = IsReady(id);
@@ -1147,6 +1148,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             name = ready ? sp.TierName(tier) : sp.displayName,
             progress = progress,
             ready = ready, primary = primary, isCombo = false,
+            chanted = sp.chant != null && sp.chant.Length > 0,
         };
     }
 
@@ -1180,7 +1182,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         if (!success) { FizzleCast(slot, "Not enough mana"); return; }
 
-        ChantDisplay.Finish(slot);
+        ChantDisplay.Finish(slot, GetSpell(slot) != null ? GetSpell(slot).TierName(tier) : null);
         if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.35f);
         holdCircles[slot] = null;
 
