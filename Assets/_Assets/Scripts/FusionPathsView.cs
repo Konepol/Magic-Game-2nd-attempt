@@ -11,7 +11,7 @@ public class FusionPathsView
     {
         public SpellData spell;               // the spell added on the way here (null for the root)
         public List<SpellData> set;           // everything combined at this node
-        public int order = -1;
+        public bool hasMore;                  // more steps above, not drawn
         public string result;                 // the fusion this chain finishes (null if it goes on)
         public readonly List<Node> children = new List<Node>();
         public float x;                       // 0..1 across the area
@@ -90,6 +90,7 @@ public class FusionPathsView
         var root = new Node { set = new List<SpellData>(held) };
         root.result = ResultOf(root.set);
         Grow(root);
+        Prune(root);
 
         if (root.children.Count == 0 && root.result == null) { area.gameObject.SetActive(false); return; }
 
@@ -151,6 +152,15 @@ public class FusionPathsView
             node.children.Add(child);
             Grow(child);
         }
+    }
+
+    // only three rows above the held spell are drawn; a node with more beyond them gets an arrow pointing up instead
+    const int MaxRows = 3;
+
+    static void Prune(Node node)
+    {
+        if (node.depth >= MaxRows) { node.hasMore = node.children.Count > 0; node.children.Clear(); return; }
+        foreach (var c in node.children) Prune(c);
     }
 
     static void Place(Node node, ref int leaf, Dictionary<int, int> perLayer)
@@ -247,6 +257,12 @@ public class FusionPathsView
         UIKit.Stretch(label.rectTransform);
         label.rectTransform.offsetMin = new Vector2(5f, 3f);
         label.rectTransform.offsetMax = new Vector2(-5f, -3f);
+
+        if (node.hasMore)
+        {
+            Vector2 top = p + new Vector2(0f, NodeH * 0.5f);
+            Line(top, top + new Vector2(0f, 26f));
+        }
 
         foreach (var c in node.children) DrawNode(c, held, nodeW, false);
     }
