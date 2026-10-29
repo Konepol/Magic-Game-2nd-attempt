@@ -101,10 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
-  chant:
-  - Storm above, hear my call
-  - Lend me your spear
-  - Pierce the dark.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

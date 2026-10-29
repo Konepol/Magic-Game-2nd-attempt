@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 0
-  chant:
-  - Flame and arcane, be one
-  - Burn through the sky!
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

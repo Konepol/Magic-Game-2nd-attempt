@@ -101,10 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Cataclysm
   multicastable: 1
-  chant:
-  - Stars that sleep beyond the veil
-  - Break your silence
-  - Fall upon this earth!
+  chant: []
   tapDoesNothing: 1
   extraTiers:
   - displayName: Apocalypse

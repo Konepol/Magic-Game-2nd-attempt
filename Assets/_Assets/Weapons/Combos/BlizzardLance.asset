@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
-  chant:
-  - Storm and frost, bind the wind
-  - Pierce with winter's fang.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Deadly Venom
   multicastable: 1
-  chant:
-  - Silent thorn, drink the dark
-  - Sting, and spread.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

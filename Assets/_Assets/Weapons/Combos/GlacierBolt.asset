@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
-  chant:
-  - Ice and mana, freeze the air
-  - Glacier, fall.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

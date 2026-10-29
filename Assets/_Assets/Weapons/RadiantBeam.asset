@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Radiant Lance
   multicastable: 1
-  chant:
-  - Light of the dawn, gather
-  - Pierce every shadow.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

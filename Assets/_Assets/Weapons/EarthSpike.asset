@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Quake
   multicastable: 1
-  chant:
-  - Stone beneath, rise and strike
-  - Shatter all that stands.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

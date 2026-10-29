@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Hurricane Blade
   multicastable: 1
-  chant:
-  - Wind, sharpen your edge
-  - Cut without a sound.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

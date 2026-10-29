@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: 
   multicastable: 1
-  chant:
-  - Wind and flame, spin as one
-  - Cyclone, devour!
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

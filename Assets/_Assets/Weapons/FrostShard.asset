@@ -101,9 +101,7 @@ MonoBehaviour:
   tapCircleScale: 0.45
   holdDisplayName: Glacial Spray
   multicastable: 1
-  chant:
-  - Cold of the deepest winter
-  - Pierce, and still.
+  chant: []
   tapDoesNothing: 0
   extraTiers: []
   autoRepeatWhenHeld: 0

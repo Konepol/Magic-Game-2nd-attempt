@@ -89,15 +89,18 @@ public class FusionPathsView
         var root = new Node { set = new List<SpellData>(held) };
         root.result = ResultOf(root.set);
         Grow(root);
+        root.children.RemoveAll(c => c.result == null || SlotOf(c.spell) < 0);      // only real fusions you can make with the spells you carry
 
-        if (root.children.Count == 0 && root.result == null) { area.gameObject.SetActive(false); return; }
+        if (root.children.Count == 0) { area.gameObject.SetActive(false); return; }
 
         // the group sits in the middle and every spell that can join it is placed on a ring around it
         int n = root.children.Count;
         float rootW = Mathf.Clamp(60f + 14f * RootTitle(root).Length, 200f, 420f);
-        float ring = n == 0 ? 0f : Mathf.Max(150f, n * (NodeW + 14f) / (2f * Mathf.PI));
-        float w = n == 0 ? rootW + 2f * Pad : Mathf.Max(rootW, 2f * ring + NodeW) + 2f * Pad;
-        float h = n == 0 ? NodeH + 2f * Pad + TitleH : 2f * ring + NodeH + 2f * Pad + TitleH;
+        float chord = n > 1 ? (NodeW + 20f) / (2f * Mathf.Sin(Mathf.PI / n)) : 0f;
+        float rx = n == 0 ? 0f : Mathf.Max(chord, rootW * 0.5f + NodeW * 0.5f + 20f);
+        float ry = n == 0 ? 0f : Mathf.Max(chord * 0.8f, NodeH + 24f);
+        float w = Mathf.Max(rootW, 2f * rx + NodeW) + 2f * Pad;
+        float h = 2f * ry + NodeH + 2f * Pad + TitleH;
         area.sizeDelta = new Vector2(w, h);
 
         Vector2 centre = new Vector2(w * 0.5f, (h - TitleH) * 0.5f);
@@ -105,11 +108,17 @@ public class FusionPathsView
         for (int i = 0; i < n; i++)
         {
             float angle = Mathf.PI * 0.5f - i * 2f * Mathf.PI / n;        // first one at the top, then clockwise
-            root.children[i].pos = centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * ring;
+            root.children[i].pos = centre + new Vector2(Mathf.Cos(angle) * rx, Mathf.Sin(angle) * ry);
         }
 
         DrawNode(root, held, rootW, true);
         area.gameObject.SetActive(true);
+    }
+
+    int SlotOf(SpellData spell)
+    {
+        for (int i = 0; i < caster.SlotCount; i++) if (caster.GetSpellAt(i) == spell) return i;
+        return -1;
     }
 
     string RootTitle(Node node)
@@ -181,8 +190,7 @@ public class FusionPathsView
         }
         else
         {
-            int slot = -1;
-            for (int i = 0; i < caster.SlotCount; i++) if (caster.GetSpellAt(i) == node.spell) slot = i;
+            int slot = SlotOf(node.spell);
             string add = slot >= 0
                 ? "<color=#9FD8FF>+ [" + caster.GetKeyLabel(slot) + "]</color> " + node.spell.displayName
                 : "<color=#808080>+ " + node.spell.displayName + " (no key)</color>";
@@ -195,6 +203,9 @@ public class FusionPathsView
         rt.anchorMin = rt.anchorMax = Vector2.zero;
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = p;
+        var bob = box.gameObject.AddComponent<FloatAround>();
+        bob.home = p;
+        bob.phase = p.x * 0.013f + p.y * 0.021f;
         rt.sizeDelta = new Vector2(width, NodeH);
 
         var label = UIKit.Label(box.transform, "Text", text, 18, textColor, TextAnchor.MiddleCenter, true);
@@ -207,5 +218,18 @@ public class FusionPathsView
         label.rectTransform.offsetMax = new Vector2(-5f, -3f);
 
         foreach (var c in node.children) DrawNode(c, held, NodeW, false);
+    }
+}
+
+// Lets a node drift a little around its place, like it is hovering.
+public class FloatAround : MonoBehaviour
+{
+    public Vector2 home;
+    public float phase;
+
+    void Update()
+    {
+        float t = Time.unscaledTime * 1.6f + phase;
+        ((RectTransform)transform).anchoredPosition = home + new Vector2(Mathf.Sin(t * 0.8f), Mathf.Sin(t)) * 5f;
     }
 }
