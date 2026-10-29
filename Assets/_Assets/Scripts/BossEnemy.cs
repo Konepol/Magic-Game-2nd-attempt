@@ -41,7 +41,8 @@ public class BossEnemy : MonoBehaviour
     NavMeshAgent agent;
     Transform player;
     Health playerHealth;
-    Transform visual, head, armL, armR;
+    Transform visual, head, armL, armR, legL, legR;
+    float legPhase;
     readonly List<Material> glowMats = new List<Material>();
     Material stoneMat;
     GameObject fxRoot;
@@ -148,8 +149,47 @@ public class BossEnemy : MonoBehaviour
         return go.transform;
     }
 
+    // the toon model made by Tools > Magic > Build Boss Model: it keeps the same pivots (Head, ArmL, ArmR) the fight animation drives
+    bool BuildFromModel()
+    {
+        var prefab = Resources.Load<GameObject>("Boss/WardenModel");
+        if (prefab == null) return false;
+
+        visual = Instantiate(prefab, transform).transform;
+        visual.name = "Visual";
+        visual.localPosition = Vector3.zero;
+        visual.localRotation = Quaternion.identity;
+
+        head = FindPart("Head"); armL = FindPart("ArmL"); armR = FindPart("ArmR"); legL = FindPart("LegL"); legR = FindPart("LegR");
+
+        // the glowing parts get their own materials, so their colour can follow the fight phase
+        foreach (var r in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            var mats = r.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++)
+                if (mats[i] != null && mats[i].name.StartsWith("Boss_Glow"))
+                {
+                    var inst = new Material(mats[i]);
+                    mats[i] = inst;
+                    glowMats.Add(inst);
+                }
+            r.sharedMaterials = mats;
+        }
+        SetPhaseColor(1);
+        return head != null && armL != null && armR != null;
+    }
+
+    Transform FindPart(string partName)
+    {
+        foreach (var t in visual.GetComponentsInChildren<Transform>(true)) if (t.name == partName) return t;
+        return null;
+    }
+
     void BuildBody()
     {
+        if (BuildFromModel()) return;
+        if (visual != null) Destroy(visual.gameObject);
+
         stoneMat = Stone(new Color(0.34f, 0.32f, 0.3f));
         var dark = stoneMat;
         var glow = Glow(PhaseColors[0]);
@@ -191,7 +231,12 @@ public class BossEnemy : MonoBehaviour
     void SetPhaseColor(int phase)
     {
         var c = PhaseColors[Mathf.Clamp(phase - 1, 0, PhaseColors.Length - 1)];
-        foreach (var m in glowMats) if (m != null) SpellVisuals.SetColor(m, c);
+        foreach (var m in glowMats)
+        {
+            if (m == null) continue;
+            if (m.HasProperty("_EmissionStrength")) { m.SetColor("_EmissionColor", c); m.SetColor("_OutlineColor", c * 0.4f); }
+            else SpellVisuals.SetColor(m, c);
+        }
     }
 
     void LateUpdate()
@@ -208,6 +253,17 @@ public class BossEnemy : MonoBehaviour
         armR.localRotation = Quaternion.Euler(-armRaiseShown * 170f - swing, 0f, -sway * 0.4f + 4f);
         visual.localPosition = new Vector3(0f, liftShown + Mathf.Sin(Time.time * 1.6f) * 0.08f, 0f);
         head.localRotation = Quaternion.Euler(Mathf.Lerp(0f, -12f, headGlow), 0f, 0f);
+
+        // the legs swing while it walks
+        if (legL != null && legR != null)
+        {
+            float speed = agent != null && agent.isOnNavMesh ? agent.velocity.magnitude : 0f;
+            float w = Mathf.Clamp01(speed / 2.5f);
+            legPhase += Time.deltaTime * (2f + speed * 1.1f);
+            legL.localRotation = Quaternion.Euler(Mathf.Sin(legPhase) * 28f * w, 0f, 0f);
+            legR.localRotation = Quaternion.Euler(-Mathf.Sin(legPhase) * 28f * w, 0f, 0f);
+            visual.localPosition += Vector3.up * Mathf.Abs(Mathf.Sin(legPhase)) * 0.18f * w;
+        }
     }
 
     // ---------- boss bar and warnings ----------

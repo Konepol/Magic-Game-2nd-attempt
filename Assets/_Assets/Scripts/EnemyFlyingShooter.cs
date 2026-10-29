@@ -67,6 +67,8 @@ public class EnemyFlyingShooter : MonoBehaviour
     [SerializeField] float markerSize = 0.8f;
 
     State state = State.Idle;
+
+    public string StateName => state.ToString();
     Health health;
     float halfHeight = 0.5f;
     bool flying;

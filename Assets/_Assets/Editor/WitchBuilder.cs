@@ -249,7 +249,7 @@ public static class WitchBuilder
     // ------------------------------------------------------------------------------------------------------------------
     // a tiny mesh builder: parts are added in world space (or the wand's space) and bound to one bone each
 
-    class MeshBuilder
+    public class MeshBuilder
     {
         readonly Transform space;                   // vertices are stored relative to this transform
         readonly List<Transform> bones;
@@ -421,6 +421,31 @@ public static class WitchBuilder
             }
             Grid(start, segs + 1, rings + 1);
         }
+
+        // a rounded box: a superellipsoid, in the local space (sharpness 2 = ellipsoid, 4+ = nearly a box)
+        public void BoxLocal(Vector3 center, Vector3 half, Color c, float sparkle, float sharpness = 4f)
+        {
+            int start = verts.Count;
+            const int segs = 20, rings = 14;
+            float e = 2f / sharpness;
+            for (int y = 0; y <= rings; y++)
+            {
+                float ph = y / (float)rings * Mathf.PI;
+                for (int x = 0; x <= segs; x++)
+                {
+                    float th = x / (float)segs * Mathf.PI * 2f;
+                    float sx = Mathf.Sin(ph) * Mathf.Cos(th), sy = Mathf.Cos(ph), sz = Mathf.Sin(ph) * Mathf.Sin(th);
+                    var u = new Vector3(SgnPow(sx, e), SgnPow(sy, e), SgnPow(sz, e));
+                    Vector3 lp = center + new Vector3(u.x * half.x, u.y * half.y, u.z * half.z);
+                    var ln = new Vector3(SgnPow(u.x, sharpness - 1f) / half.x, SgnPow(u.y, sharpness - 1f) / half.y, SgnPow(u.z, sharpness - 1f) / half.z);
+                    if (ln.sqrMagnitude < 1e-8f) ln = new Vector3(sx / half.x, sy / half.y, sz / half.z);
+                    Add(W(lp), space.TransformDirection(ln), c, sparkle, null);
+                }
+            }
+            Grid(start, segs + 1, rings + 1);
+        }
+
+        static float SgnPow(float v, float p) => Mathf.Sign(v) * Mathf.Pow(Mathf.Abs(v), p);
 
         public void StarLocal(Vector3 center, Vector3 upLocal, Vector3 faceLocal, float outer, float thickness, Color c, float sparkle)
         {

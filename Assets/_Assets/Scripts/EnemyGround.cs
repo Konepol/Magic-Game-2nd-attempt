@@ -59,6 +59,8 @@ public class EnemyGround : MonoBehaviour
     [SerializeField] float tackleRecovery = 1.5f;      // stands still and open after the charge
 
     State state = State.Idle;
+
+    public string StateName => state.ToString();
     NavMeshAgent agent;
     Health health;
     Health targetHealth;
