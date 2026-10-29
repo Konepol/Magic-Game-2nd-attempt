@@ -288,7 +288,7 @@ public static class HudBuilder
         EditorSceneManager.MarkSceneDirty(hudGo.scene);
     }
 
-    // Adds the combined-spell box above the health bar. It starts hidden and only shows while spells are being combined.
+    // Adds the combined-spell box in the bottom-left corner of the screen. It starts hidden and only shows while spells are being combined.
     // It leaves everything else you have edited alone.
     [MenuItem("Tools/Magic/Add Combo Slot To HUD")]
     public static void AddComboSlot()
@@ -307,14 +307,15 @@ public static class HudBuilder
         white = EnsureWhiteSprite();
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-        // centred above the health bar
-        var bar = hudGo.transform.Find("HealthBar") as RectTransform;
-        float scale = 0.9f;
-        float y = bar != null ? bar.anchoredPosition.y + bar.sizeDelta.y * 0.5f + 96f * scale * 0.5f + 16f : 260f;
+        float scale = 1.1f;
 
-        var box = BuildSlot(hudGo.transform, "ComboIndicator", new Vector2(0f, y), 96f);
+        var box = BuildSlot(hudGo.transform, "ComboIndicator", Vector2.zero, 96f);
         Undo.RegisterCreatedObjectUndo(box.border.gameObject, "Add Combo Slot");
-        box.border.rectTransform.localScale = Vector3.one * scale;
+        var rect = box.border.rectTransform;
+        rect.anchorMin = rect.anchorMax = Vector2.zero;          // bottom-left of the screen
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(100f, 100f);
+        rect.localScale = Vector3.one * scale;
         box.nameText.text = "Combined Spell";
         box.keyText.text = "Q+E";
         box.costText.text = "60";

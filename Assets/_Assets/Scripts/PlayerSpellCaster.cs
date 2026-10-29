@@ -541,6 +541,24 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     ComboState combo;
 
     // read-only info for the HUD: the recipe box above the health bar
+    // for the fusion paths shown above the spell bar
+    public IReadOnlyList<SpellCombo> Combos => weapon != null && weapon.combos != null ? weapon.combos : (IReadOnlyList<SpellCombo>)System.Array.Empty<SpellCombo>();
+
+    public bool IsHeld(int slot) => charging != null && slot >= 0 && slot < charging.Length && charging[slot] && !ignoredPress[slot];
+
+    // the slot of the spell whose key was pressed last among those being held (-1 if none)
+    public int NewestHeldSlot
+    {
+        get
+        {
+            int best = -1;
+            float latest = -1f;
+            for (int j = 0; charging != null && j < charging.Length; j++)
+                if (IsHeld(j) && GetSpell(j) != null && pressTime[j] >= latest) { best = j; latest = pressTime[j]; }
+            return best;
+        }
+    }
+
     public bool ComboActive => combo != null;
     public float ComboCost => combo != null ? combo.spec.manaCost : 0f;
     public float ComboProgress => combo != null ? Mathf.Clamp01(combo.effHeld / Mathf.Max(combo.spec.castTime, 0.05f)) : 0f;
