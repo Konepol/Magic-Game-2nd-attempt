@@ -39,6 +39,10 @@ public class PlayerBarrier : MonoBehaviour
     float breakLockout = 3f;
 
     public bool IsUp => barrier != null;
+    public float LockoutRemaining => Mathf.Max(0f, lockoutUntil - Time.time);
+    public int PanelsUp => barrier != null ? barrier.PanelsUp : 0;
+    public int PanelsTotal => barrier != null ? barrier.PanelsTotal : 0;
+    public string KeyLabel => raiseAction.bindings.Count > 0 ? raiseAction.bindings[0].ToDisplayString() : "F";
 
     Mana mana;
     Health health;

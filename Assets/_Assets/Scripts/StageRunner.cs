@@ -11,6 +11,7 @@ using UnityEngine.UI;
 public class StageRunner : MonoBehaviour
 {
     [SerializeField] WaveSpawner spawner;
+    [SerializeField, Tooltip("Boss stages: the stage is cleared when this boss is defeated (instead of the waves).")] BossEnemy boss;
     [SerializeField] string enemyTag = "Enemy";
     [SerializeField] float resultsDelay = 1.5f;           // a moment to see the last enemy fall before the results appear
 
@@ -21,14 +22,28 @@ public class StageRunner : MonoBehaviour
     float damageDealt, damageTaken;
     readonly Dictionary<string, int> kills = new Dictionary<string, int>();
     int totalKills;
-    float clearTime;
+    float clearTime, clearedAt;
     bool cleared, shown;
     float showAt;
 
+    // read by the pause menu
+    public float Elapsed => cleared ? clearTime
+        : boss != null ? (boss.FightStartedAt >= 0f ? Time.time - boss.FightStartedAt : 0f)
+        : (spawner != null && spawner.StartedAt >= 0f ? Time.time - spawner.StartedAt : 0f);
+    public float DamageDealt => damageDealt;
+    public float DamageTaken => damageTaken;
+    public int TotalKills => totalKills;
+    public IReadOnlyDictionary<string, int> Kills => kills;
+    public bool ResultsShown => shown;
+    public bool PlayerDead => playerHealth != null && playerHealth.IsDead;
+
     void Awake()
     {
+        if (GetComponent<PauseMenu>() == null) gameObject.AddComponent<PauseMenu>();
         catalog = GameCatalog.Load();
         if (spawner == null) spawner = FindAnyObjectByType<WaveSpawner>();
+        if (boss == null) boss = FindAnyObjectByType<BossEnemy>();
+        GroundingAura.Clear();
 
         // the stage may have been opened straight from the editor instead of through the menu
         string scene = SceneManager.GetActiveScene().name;
@@ -43,6 +58,7 @@ public class StageRunner : MonoBehaviour
         Health.AnyDamageApplied += OnDamage;
         Health.AnyDied += OnDied;
         if (spawner != null) spawner.Cleared += OnCleared;
+        if (boss != null) boss.Defeated += OnCleared;
     }
 
     void OnDisable()
@@ -50,6 +66,7 @@ public class StageRunner : MonoBehaviour
         Health.AnyDamageApplied -= OnDamage;
         Health.AnyDied -= OnDied;
         if (spawner != null) spawner.Cleared -= OnCleared;
+        if (boss != null) boss.Defeated -= OnCleared;
     }
 
     void Start()
@@ -69,7 +86,8 @@ public class StageRunner : MonoBehaviour
 
     void OnDied(Health h)
     {
-        if (cleared || h == null || !h.CompareTag(enemyTag)) return;
+        // the boss reports its defeat just before this event, so a kill right after the clear still counts
+        if ((cleared && Time.time - clearedAt > 0.5f) || h == null || !h.CompareTag(enemyTag)) return;
         string type = Nice(h.gameObject.name);
         kills[type] = kills.TryGetValue(type, out int n) ? n + 1 : 1;
         totalKills++;
@@ -85,7 +103,9 @@ public class StageRunner : MonoBehaviour
     {
         if (cleared) return;
         cleared = true;
-        clearTime = spawner != null && spawner.StartedAt >= 0f ? Time.time - spawner.StartedAt : Time.timeSinceLevelLoad;
+        clearedAt = Time.time;
+        clearTime = boss != null && boss.FightStartedAt >= 0f ? Time.time - boss.FightStartedAt
+                  : spawner != null && spawner.StartedAt >= 0f ? Time.time - spawner.StartedAt : Time.timeSinceLevelLoad;
         showAt = Time.unscaledTime + resultsDelay;
     }
 

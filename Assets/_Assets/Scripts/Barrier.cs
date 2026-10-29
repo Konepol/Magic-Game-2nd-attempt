@@ -28,11 +28,13 @@ public class Barrier : MonoBehaviour
     bool broken;
 
     // the player's barrier is a cluster of hexagon panels; each can be cracked, and some can be switched off (see SetCoverage)
-    enum TileState { Up, Broken, Absent }     // Broken = a hole left by a hit, fixed first when mana comes back; Absent = not grown yet
+    enum TileState { Up, Absent }             // Absent = broken or not grown yet; a spare panel waiting to be used
 
     class Tile
     {
         public TileState state = TileState.Up;
+        public int slot;                     // the place it stands in (an index into slots); it glides to that place
+        public int rank;                     // how many standing panels are nearer the middle (worked out every frame)
         public Transform root;
         public Renderer fill;
         public LineRenderer edge;
@@ -48,7 +50,10 @@ public class Barrier : MonoBehaviour
         public Material frontMat, backMat;
     }
 
-    List<Tile> tiles;                  // nearest the middle first
+    List<Tile> tiles;                  // every panel there is, in the order of the places below (nearest the middle first)
+    Tile[] occupant;                   // who stands in each place (null = empty)
+    Vector3[] slots;                   // the places a panel can stand, nearest the middle first
+    int[][] outward;                   // for each place: the neighbouring places further from the middle, the most "straight out" first
     float coverage = 1f;
     float lastMana;                    // to notice mana spent on spells and mana coming back
     float pendingLoss, pendingSpend, pendingGain;     // fractions of a panel not yet turned into a whole one
@@ -60,6 +65,8 @@ public class Barrier : MonoBehaviour
 
     public Health Health => health;
     public event System.Action Broken;
+    public int PanelsUp => tiles != null ? UpCount() : 0;
+    public int PanelsTotal => tiles != null ? tiles.Count : 0;
 
     // true if a shot with this damage tag (the attacker's target tag) is stopped by this barrier
     public bool Blocks(string attackerDamageTag) => attackerDamageTag == protectsTag;
@@ -210,12 +217,43 @@ public class Barrier : MonoBehaviour
 
         tiles.Sort((p, q) => p.root.localPosition.sqrMagnitude.CompareTo(q.root.localPosition.sqrMagnitude));
 
+        slots = new Vector3[tiles.Count];
+        for (int i = 0; i < tiles.Count; i++) slots[i] = tiles[i].root.localPosition;
+
+        // for every place, the places next to it that lie further out; when a panel breaks, the one straight outside it steps in
+        outward = new int[slots.Length][];
+        float neighbour = h * 1.2f;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            var list = new List<int>();
+            for (int j = 0; j < slots.Length; j++)
+            {
+                if (j == i) continue;
+                if ((slots[j] - slots[i]).magnitude > neighbour) continue;
+                if (slots[j].magnitude <= slots[i].magnitude + 0.01f) continue;
+                list.Add(j);
+            }
+            Vector3 radial = slots[i].sqrMagnitude > 0.0001f ? slots[i].normalized : Vector3.zero;
+            int from = i;
+            list.Sort((a, b) =>
+            {
+                float da = radial == Vector3.zero ? 0f : Vector3.Dot((slots[a] - slots[from]).normalized, radial);
+                float db = radial == Vector3.zero ? 0f : Vector3.Dot((slots[b] - slots[from]).normalized, radial);
+                return db.CompareTo(da);
+            });
+            outward[i] = list.ToArray();
+        }
+
         // as many panels as the mana supports, starting from the middle
         int up = Mathf.Clamp(Mathf.CeilToInt(tiles.Count * manaSource.Current / Mathf.Max(manaSource.Max, 1f)), 1, tiles.Count);
+        occupant = new Tile[tiles.Count];
         for (int i = 0; i < tiles.Count; i++)
         {
-            tiles[i].state = i < up ? TileState.Up : TileState.Absent;
-            tiles[i].scale = i < up ? 1f : 0f;
+            bool standing = i < up;
+            tiles[i].slot = i;
+            tiles[i].state = standing ? TileState.Up : TileState.Absent;
+            tiles[i].scale = standing ? 1f : 0f;
+            if (standing) occupant[i] = tiles[i];
         }
         lastMana = manaSource.Current;
     }
@@ -266,11 +304,11 @@ public class Barrier : MonoBehaviour
     int UpCount()
     {
         int n = 0;
-        foreach (var t in tiles) if (t.state == TileState.Up) n++;
+        if (occupant != null) foreach (var t in occupant) if (t != null) n++;
         return n;
     }
 
-    // mana spent on spells takes panels from the outside; mana coming back fixes the holes first, then adds panels from the middle out
+    // mana spent on spells takes panels from the outside edge; mana coming back adds panels at the outside edge
     void TrackMana()
     {
         float cur = manaSource.Current;
@@ -280,8 +318,8 @@ public class Barrier : MonoBehaviour
         if (panels > 0f)
         {
             pendingGain += panels;
-            while (pendingGain >= 1f && GrowOrRepair()) pendingGain -= 1f;
-            if (pendingGain >= 1f) pendingGain = 0f;               // nothing left to fix or add
+            while (pendingGain >= 1f && Grow()) pendingGain -= 1f;
+            if (pendingGain >= 1f) pendingGain = 0f;               // nothing left to add
         }
         else if (panels < 0f)
         {
@@ -291,49 +329,82 @@ public class Barrier : MonoBehaviour
         }
     }
 
-    bool GrowOrRepair()
+    // a new panel appears in the free place nearest the middle
+    bool Grow()
     {
-        for (int pass = 0; pass < 2; pass++)
-        {
-            var wanted = pass == 0 ? TileState.Broken : TileState.Absent;
-            foreach (var t in tiles)               // nearest the middle first
-                if (t.state == wanted)
-                {
-                    t.state = TileState.Up;
-                    t.flashUntil = Time.time + 0.2f;
-                    ClearCracks(t);
-                    return true;
-                }
-        }
+        int place = -1;
+        for (int i = 0; i < occupant.Length; i++) if (occupant[i] == null) { place = i; break; }
+        if (place < 0) return false;
+
+        foreach (var t in tiles)
+            if (t.state == TileState.Absent)
+            {
+                t.state = TileState.Up;
+                t.slot = place;
+                occupant[place] = t;
+                t.root.localPosition = slots[place];
+                t.scale = 0f;
+                t.flashUntil = Time.time + 0.2f;
+                ClearCracks(t);
+                return true;
+            }
         return false;
     }
 
     bool DropOutermost()
     {
         if (UpCount() <= 1) return false;
-        for (int i = tiles.Count - 1; i >= 0; i--)
-            if (tiles[i].state == TileState.Up) { tiles[i].state = TileState.Absent; return true; }
+        for (int i = occupant.Length - 1; i >= 0; i--)
+            if (occupant[i] != null)
+            {
+                occupant[i].state = TileState.Absent;
+                occupant[i] = null;
+                return true;
+            }
         return false;
     }
 
-    // the panel nearest the hit breaks and leaves a hole
+    // the panel nearest the hit breaks and is gone
     bool BreakNearestTile(Vector3 point)
     {
         if (UpCount() <= 1) return false;
 
         Tile best = null;
         float bestDist = float.MaxValue;
-        foreach (var t in tiles)
+        foreach (var t in occupant)
         {
-            if (t.state != TileState.Up) continue;
+            if (t == null) continue;
             float d = (t.root.position - point).sqrMagnitude;
             if (d < bestDist) { bestDist = d; best = t; }
         }
         if (best == null) return false;
 
-        best.state = TileState.Broken;
+        int place = best.slot;
+        best.state = TileState.Absent;
+        best.scale = 0f;
+        occupant[place] = null;
         SpellFX.Shatter(best.root.position, baseColor);
+
+        CloseGap(place);
         return true;
+    }
+
+    // The barrier closes up around a gap: the panel straight outside it steps into the gap, then the panel outside that one steps into
+    // the place it left, and so on out to the edge. A broken panel on the outer edge has nothing outside it, so nothing moves.
+    void CloseGap(int place)
+    {
+        for (int guard = 0; guard < occupant.Length; guard++)
+        {
+            int next = -1;
+            foreach (int n in outward[place])
+                if (occupant[n] != null) { next = n; break; }     // the list is ordered most "straight out" first
+            if (next < 0) return;
+
+            occupant[place] = occupant[next];
+            occupant[place].slot = place;
+            occupant[next] = null;
+            place = next;
+        }
     }
 
     void ClearCracks(Tile t)
@@ -352,16 +423,22 @@ public class Barrier : MonoBehaviour
         TrackMana();
 
         float k = 1f - Mathf.Exp(-14f * Time.deltaTime);
+        float glide = 1f - Mathf.Exp(-9f * Time.deltaTime);
         int activeUp = Mathf.Max(1, Mathf.CeilToInt(UpCount() * coverage));     // fewer shown while charging
-        int seen = 0;
+
+        int count = 0;
+        foreach (var t in occupant) if (t != null) t.rank = count++;     // places are ordered from the middle outward
 
         for (int i = 0; i < tiles.Count; i++)
         {
             var t = tiles[i];
-            bool on = false;
-            if (t.state == TileState.Up) { on = seen < activeUp; seen++; }
+            bool on = t.state == TileState.Up && t.rank < activeUp;
 
-            t.scale = Mathf.Lerp(t.scale, on ? 1f : 0f, t.state == TileState.Broken ? 1f : k);      // a broken panel is gone at once
+            // a standing panel glides to its place (it moves in when the panel nearer the middle beside it is gone)
+            if (t.state == TileState.Up)
+                t.root.localPosition = Vector3.Lerp(t.root.localPosition, slots[t.slot], glide);
+
+            t.scale = Mathf.Lerp(t.scale, on ? 1f : 0f, k);
 
             bool visible = t.scale > 0.02f;
             t.fill.enabled = visible;

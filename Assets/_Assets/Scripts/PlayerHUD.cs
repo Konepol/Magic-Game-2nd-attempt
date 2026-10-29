@@ -43,6 +43,7 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Slot[] slots;
     [SerializeField] Slot broomBox;
     [SerializeField] Slot lockBox;                     // lock-on indicator (optional)
+    [SerializeField] Slot barrierBox;                  // barrier indicator (optional)
     [SerializeField] Slot comboBox;                    // combined spell, hidden until two or more spells are combined (optional)
     [SerializeField] Image manaBg, manaFill;
     [SerializeField] Text manaText;
@@ -64,7 +65,9 @@ public class PlayerHUD : MonoBehaviour
     WaveSpawner waves;
     BroomFlight broom;
     TargetLockOn lockOn;
-    Color lockBorder;
+    Color lockBorder, barrierBorder;
+    Vector2 barrierPlaced;
+    PlayerBarrier barrier;
     Color comboBg;
 
     // what you set in the editor, remembered as the "normal" look
@@ -101,6 +104,7 @@ public class PlayerHUD : MonoBehaviour
         {
             health = playerGo.GetComponentInParent<Health>();
             broom = playerGo.GetComponentInParent<BroomFlight>();
+            barrier = playerGo.GetComponentInParent<PlayerBarrier>();
         }
         waves = FindAnyObjectByType<WaveSpawner>();
         lockOn = FindAnyObjectByType<TargetLockOn>();
@@ -119,6 +123,7 @@ public class PlayerHUD : MonoBehaviour
 
         if (broomBox != null && broom != null) broomBox.keyText.text = broom.MountKeyLabel;
         if (lockBox != null && lockOn != null) lockBox.keyText.text = lockOn.LockKeyLabel;
+        if (barrierBox != null && barrier != null) barrierBox.keyText.text = barrier.KeyLabel;
 
         if (health != null) health.Damaged += OnPlayerDamaged;
         if (caster != null) caster.CastFailed += OnCastFailed;
@@ -196,6 +201,7 @@ public class PlayerHUD : MonoBehaviour
 
         if (broomBox != null) { broomBorder = broomBox.border.color; broomScale = broomBox.border.rectTransform.localScale; broomPlaced = broomBox.border.rectTransform.anchoredPosition; }
         if (lockBox != null) { lockBorder = lockBox.border.color; lockPlaced = lockBox.border.rectTransform.anchoredPosition; }
+        if (barrierBox != null) { barrierBorder = barrierBox.border.color; barrierPlaced = barrierBox.border.rectTransform.anchoredPosition; }
         if (comboBox != null) { comboBg = comboBox.bg.color; comboBox.border.gameObject.SetActive(false); }
         manaBgBase = manaBg.color;
         manaFillBase = manaFill.color;
@@ -246,6 +252,7 @@ public class PlayerHUD : MonoBehaviour
         float extra = Mathf.Max(0, used - baseCount) * Mathf.Abs(step) * 0.5f;
         if (broomBox != null) broomBox.border.rectTransform.anchoredPosition = new Vector2(broomPlaced.x - extra, broomPlaced.y);
         if (lockBox != null) lockBox.border.rectTransform.anchoredPosition = new Vector2(lockPlaced.x + extra, lockPlaced.y);
+        if (barrierBox != null) barrierBox.border.rectTransform.anchoredPosition = new Vector2(barrierPlaced.x + extra, barrierPlaced.y);
 
         int k = 0;
         for (int i = 0; i < slots.Length; i++)
@@ -302,6 +309,7 @@ public class PlayerHUD : MonoBehaviour
     void UpdateIndicators()
     {
         UpdateLockIndicator();
+        UpdateBarrierIndicator();
         if (broomBox == null || broom == null) return;
 
         bool flying = broom.IsFlying;
@@ -309,7 +317,13 @@ public class PlayerHUD : MonoBehaviour
         // broom: no energy bar (the mounting is free). After running dry it is locked until the mana is back up: the box shows that progress.
         if (broomBox.cooldown.enabled) broomBox.cooldown.enabled = false;
         bool locked = !flying && !broom.CanMount;
-        if (locked)
+        if (!flying && GroundingAura.Active)
+        {
+            broomBox.costText.text = "GROUNDED";
+            broomBox.costText.color = new Color(1f, 0.5f, 0.45f);
+            broomBox.border.color = warningColor;
+        }
+        else if (locked)
         {
             broomBox.costText.text = Mathf.FloorToInt(broom.ManaNow) + "/" + Mathf.CeilToInt(broom.RemountThreshold);
             broomBox.costText.color = new Color(1f, 0.5f, 0.45f);
@@ -344,6 +358,36 @@ public class PlayerHUD : MonoBehaviour
     }
 
     // lock-on: "NONE" while nothing is locked, the target's name while locked
+    // barrier box: READY, UP with the panels still standing, or BROKEN with the time left before it can be raised again
+    void UpdateBarrierIndicator()
+    {
+        if (barrierBox == null || barrier == null) return;
+
+        if (barrierBox.cooldown.enabled) barrierBox.cooldown.enabled = false;
+
+        if (barrier.IsUp)
+        {
+            barrierBox.nameText.text = "BARRIER";
+            barrierBox.costText.text = "UP " + barrier.PanelsUp + "/" + barrier.PanelsTotal;
+            barrierBox.costText.color = Color.white;
+            barrierBox.border.color = chargingColor;
+        }
+        else if (barrier.LockoutRemaining > 0f)
+        {
+            barrierBox.nameText.text = "BROKEN";
+            barrierBox.costText.text = barrier.LockoutRemaining.ToString("0.0") + "s";
+            barrierBox.costText.color = new Color(1f, 0.5f, 0.45f);
+            barrierBox.border.color = warningColor;
+        }
+        else
+        {
+            barrierBox.nameText.text = "BARRIER";
+            barrierBox.costText.text = "READY";
+            barrierBox.costText.color = new Color(0.6f, 1f, 0.7f);
+            barrierBox.border.color = barrierBorder;
+        }
+    }
+
     void UpdateLockIndicator()
     {
         if (lockBox == null || lockOn == null) return;

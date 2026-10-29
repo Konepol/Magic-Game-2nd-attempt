@@ -37,3 +37,6 @@ MonoBehaviour:
   - displayName: Stage 1
     description: Survive five waves of enemies.
     sceneName: Scene1
+  - displayName: Stage 2
+    description: Face the Warden of Ruins in a crumbling courtyard.
+    sceneName: Scene2

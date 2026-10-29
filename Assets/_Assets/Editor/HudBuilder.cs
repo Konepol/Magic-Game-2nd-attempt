@@ -161,6 +161,7 @@ public static class HudBuilder
         so.FindProperty("chargeFill").objectReferenceValue = chargeFill;
         so.ApplyModifiedProperties();
         AddLockIndicator();
+        AddBarrierIndicator();
         AddCastLabel();
         AddComboSlot();
         AddCastBars();
@@ -212,6 +213,42 @@ public static class HudBuilder
 
         var so = new SerializedObject(hud);
         AssignSlot(so.FindProperty("lockBox"), lockBox);
+        so.ApplyModifiedProperties();
+        EditorSceneManager.MarkSceneDirty(hudGo.scene);
+    }
+
+    // Adds the barrier box next to the lock-on box of an already built HUD, leaving everything else you have edited alone.
+    [MenuItem("Tools/Magic/Add Barrier Indicator To HUD")]
+    public static void AddBarrierIndicator()
+    {
+        var hudGo = GameObject.Find("GUIs/HUD");
+        var hud = hudGo != null ? hudGo.GetComponent<PlayerHUD>() : null;
+        if (hud == null)
+        {
+            Debug.LogError("Add Barrier Indicator: build the HUD first (Tools > Magic > Build HUD).");
+            return;
+        }
+
+        var existing = hudGo.transform.Find("BarrierIndicator");
+        if (existing != null) Undo.DestroyObjectImmediate(existing.gameObject);
+
+        white = EnsureWhiteSprite();
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        var lockT = hudGo.transform.Find("LockIndicator") as RectTransform;
+        Vector2 pos = lockT != null ? lockT.anchoredPosition + new Vector2(112f, 0f) : new Vector2(412f, 76f);
+        Vector3 scale = lockT != null ? lockT.localScale : Vector3.one * 0.85f;
+
+        var box = BuildSlot(hudGo.transform, "BarrierIndicator", pos, 96f);
+        Undo.RegisterCreatedObjectUndo(box.border.gameObject, "Add Barrier Indicator");
+        box.border.rectTransform.localScale = scale;
+        box.nameText.text = "BARRIER";
+        box.keyText.text = "F";
+        box.costText.text = "READY";
+        box.cooldown.color = new Color(0.4f, 0.8f, 1f, 0.4f);
+
+        var so = new SerializedObject(hud);
+        AssignSlot(so.FindProperty("barrierBox"), box);
         so.ApplyModifiedProperties();
         EditorSceneManager.MarkSceneDirty(hudGo.scene);
     }

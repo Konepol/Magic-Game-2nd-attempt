@@ -126,6 +126,12 @@ public class BroomFlight : MonoBehaviour
     {
         if (IsFlying) { Dismount(); return; }
 
+        if (GroundingAura.Active)
+        {
+            Log("Grounded: the broom will not carry you right now");
+            return;
+        }
+
         if (!CanMount)
         {
             Log("Broom locked until mana reaches " + remountThreshold.ToString("F0"));
@@ -191,6 +197,8 @@ public class BroomFlight : MonoBehaviour
     void Update()
     {
         UpdateFov();
+
+        if (IsFlying && GroundingAura.Active) Dismount();       // the boss's grounding aura throws you off
 
         if (!IsFlying) { UpdateManaUse(false); return; }
 

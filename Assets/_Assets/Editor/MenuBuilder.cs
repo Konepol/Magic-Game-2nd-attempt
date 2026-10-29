@@ -121,11 +121,13 @@ public static class MenuBuilder
         EditorSceneManager.SaveScene(scene, MenuScenePath);
 
         // menu first, then the stage
-        EditorBuildSettings.scenes = new[]
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>
         {
             new EditorBuildSettingsScene(MenuScenePath, true),
             new EditorBuildSettingsScene(StageScenePath, true),
         };
+        if (File.Exists("Assets/Scenes/Scene2.unity")) scenes.Add(new EditorBuildSettingsScene("Assets/Scenes/Scene2.unity", true));
+        EditorBuildSettings.scenes = scenes.ToArray();
 
         if (!string.IsNullOrEmpty(previous) && previous != MenuScenePath) EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
         Debug.Log("Main menu scene built at " + MenuScenePath + " and added to the build settings (menu first).");
