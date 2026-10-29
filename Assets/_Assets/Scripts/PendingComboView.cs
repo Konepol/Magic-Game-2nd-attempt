@@ -19,7 +19,7 @@ public class PendingComboView
         box.anchorMin = box.anchorMax = new Vector2(0.5f, 0f);
         box.pivot = new Vector2(0.5f, 0f);
         box.anchoredPosition = new Vector2(0f, 250f);
-        box.sizeDelta = new Vector2(380f, 92f);
+        box.sizeDelta = new Vector2(470f, 92f);
 
         nameText = UIKit.Label(box, "Name", "", 30, new Color(1f, 0.82f, 0.35f), TextAnchor.MiddleCenter, true);
         nameText.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -59,7 +59,7 @@ public class PendingComboView
         if (!show) return;
 
         nameText.text = caster.PendingName;
-        hintText.text = "Hold <color=#FFD15A>[" + PlayerSettings.LabelOf("combine") + "]</color> to cast   <color=#9FD8FF>" + Mathf.RoundToInt(caster.PendingCost) + "</color>";
+        hintText.text = "Hold <color=#FFD15A>[" + PlayerSettings.LabelOf("combine") + "]</color> to cast   <color=#9FD8FF>" + Mathf.RoundToInt(caster.PendingCost) + "</color>   <color=#808080>[" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "] cancel</color>";
 
         float left = caster.PendingLeft01;
         fill.anchorMax = new Vector2(left, 1f);

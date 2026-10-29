@@ -139,7 +139,7 @@ public class FusionPathsView
         area.pivot = queue ? new Vector2(0.5f, 0.5f) : Vector2.zero;
         area.anchoredPosition = queue ? new Vector2(0f, 60f) : new Vector2(20f, 20f);
         area.localScale = Vector3.one * (queue ? QueueScale : 1f);
-        title.text = queue ? "COMBINE" : "FUSION PATHS";
+        title.text = queue ? "COMBINE      [" + PlayerSettings.LabelOf("combine") + "] cast     [" + PlayerSettings.LabelOf("barrier") + "]+[" + PlayerSettings.LabelOf("combine") + "] cancel" : "FUSION PATHS";
 
         Vector2 centre = new Vector2(w * 0.5f, (h - TitleH) * 0.5f);
         root.pos = centre;

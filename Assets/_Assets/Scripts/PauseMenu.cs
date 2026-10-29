@@ -12,7 +12,7 @@ public class PauseMenu : MonoBehaviour
     StageRunner runner;
     GameCatalog catalog;
     GameObject root;
-    Text statsText, loadoutText;
+    Text statsText, loadoutText, fusionText;
     RectTransform optionsRoot;
     OptionsMenu options;
     bool paused;
@@ -140,9 +140,18 @@ public class PauseMenu : MonoBehaviour
 
         var loadoutHead = UIKit.Label(info.transform, "LoadoutHead", "YOUR SPELLS", 24, UIKit.Dim, TextAnchor.MiddleLeft, true);
         UIKit.Place(loadoutHead.rectTransform, new Vector2(0f, 1f), new Vector2(150f, -318f), new Vector2(260f, 36f));
-        loadoutText = UIKit.Label(info.transform, "Loadout", "", 28, Color.white, TextAnchor.UpperLeft);
+        loadoutText = UIKit.Label(info.transform, "Loadout", "", 26, Color.white, TextAnchor.UpperLeft);
         loadoutText.supportRichText = true;
-        UIKit.Place(loadoutText.rectTransform, new Vector2(0f, 1f), new Vector2(380f, -470f), new Vector2(720f, 260f));
+        UIKit.Place(loadoutText.rectTransform, new Vector2(0f, 1f), new Vector2(190f, -475f), new Vector2(330f, 260f));
+
+        var fusionHead = UIKit.Label(info.transform, "FusionHead", "FUSIONS  (B, then the spells)", 24, UIKit.Dim, TextAnchor.MiddleLeft, true);
+        UIKit.Place(fusionHead.rectTransform, new Vector2(0f, 1f), new Vector2(520f, -318f), new Vector2(460f, 36f));
+        fusionText = UIKit.Label(info.transform, "Fusions", "", 24, Color.white, TextAnchor.UpperLeft);
+        fusionText.supportRichText = true;
+        fusionText.resizeTextForBestFit = true;
+        fusionText.resizeTextMinSize = 13;
+        fusionText.resizeTextMaxSize = 24;
+        UIKit.Place(fusionText.rectTransform, new Vector2(0f, 1f), new Vector2(555f, -480f), new Vector2(470f, 270f));
     }
 
     void Refresh()
@@ -164,31 +173,35 @@ public class PauseMenu : MonoBehaviour
             statsText.text = text;
         }
 
-        // the spells on each key, and the combinations those allow
+        // the spells on each key, and the fusions those allow
         var caster = FindAnyObjectByType<PlayerSpellCaster>();
         var lines = new List<string>();
-        var equipped = new HashSet<string>();
+        var keyOf = new Dictionary<string, string>();
         if (caster != null)
             for (int i = 0; i < caster.SlotCount; i++)
             {
                 var spell = caster.GetSpellAt(i);
                 string key = caster.GetKeyLabel(i);
-                if (spell != null) equipped.Add(spell.name);
+                if (spell != null) keyOf[spell.name] = key;
                 lines.Add("<color=#FFD15A>" + key + "</color>   " + (spell != null ? spell.displayName : "<color=#808080>empty</color>"));
             }
+        loadoutText.text = string.Join("\n", lines);
 
-        var combos = new List<string>();
+        var fusions = new List<string>();
         if (catalog != null && catalog.combos != null)
             foreach (var c in catalog.combos)
             {
                 if (c == null || c.result == null || c.ingredients == null) continue;
+                var keys = new List<string>();
                 bool all = true;
-                foreach (var ing in c.ingredients) if (ing != null && !equipped.Contains(ing.name)) all = false;
-                if (all) combos.Add(c.result.displayName);
+                foreach (var ing in c.ingredients)
+                {
+                    if (ing == null) continue;
+                    if (keyOf.TryGetValue(ing.name, out var k)) keys.Add(k); else all = false;
+                }
+                if (all) fusions.Add("<color=#FFD15A>" + c.result.displayName + "</color>   <color=#9FD8FF>" + string.Join(" + ", keys) + "</color>");
             }
-
-        loadoutText.text = string.Join("\n", lines) + "\n\n<color=#B0B0B0>Combinations:</color>  "
-                         + (combos.Count > 0 ? string.Join(",  ", combos) : "<color=#808080>none with these spells</color>");
+        fusionText.text = fusions.Count > 0 ? string.Join("\n", fusions) : "<color=#808080>none with these spells</color>";
     }
 
     void OpenOptions()

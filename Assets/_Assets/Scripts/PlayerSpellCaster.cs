@@ -202,6 +202,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         for (int i = 0; i < skillActions.Length; i++) PlayerSettings.Apply("spell" + i, skillActions[i]);
         PlayerSettings.Apply("combine", combineAction);
+        PlayerSettings.Apply("barrier", cancelAction);
     }
 
     void OnEnable()
@@ -210,6 +211,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         ApplyKeyBindings();
         foreach (var a in skillActions) a.Enable();
         combineAction.Enable();
+        cancelAction.Enable();
         switchWeaponAction.Enable();
         if (health != null) health.Damaged += OnDamaged;
     }
@@ -219,6 +221,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         PlayerSettings.Changed -= ApplyKeyBindings;
         foreach (var a in skillActions) a.Disable();
         combineAction.Disable();
+        cancelAction.Disable();
         queueing = false;
         queued.Clear();
         ClearPending();
@@ -278,7 +281,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (pendingSpec != null && Time.time >= pendingUntil) ClearPending();
         if (combineAction.WasPressedThisFrame())
         {
-            if (pendingSpec != null) StartPendingCast();
+            if (cancelAction.IsPressed()) CancelCombine();          // F + B: the barrier keeps working, F is only read here
+            else if (pendingSpec != null) StartPendingCast();
             else ToggleQueue();
         }
         if (queueing)
@@ -647,6 +651,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     // ---------- combining with B: press B, press the spells to combine, press B again ----------
 
     readonly InputAction combineAction = new InputAction("Combine", InputActionType.Button, "<Keyboard>/b");
+    readonly InputAction cancelAction = new InputAction("CancelCombine", InputActionType.Button, "<Keyboard>/f");      // the barrier key, held with B to cancel
     bool queueing;
     readonly List<int> queued = new List<int>();
 
@@ -765,17 +770,27 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         FinishQueue();
     }
 
-    // the queue is done (B pressed again, or nothing more can be added): what was queued becomes a combined spell, if it is a recipe
+    // F + B: drops the spells being queued and the ready combined spell (what is already being cast is not touched)
+    void CancelCombine()
+    {
+        if (!queueing && pendingSpec == null) return;
+        queueing = false;
+        queued.Clear();
+        ClearPending();
+    }
+
+    // B was pressed while queueing: an empty queue just closes it; spells that make a recipe become the combined spell; otherwise it stays
+    // open so a wrong selection is not lost by accident (F + B cancels)
     void FinishQueue()
     {
-        queueing = false;
-        if (queued.Count == 0) return;
+        if (queued.Count == 0) { queueing = false; return; }
 
         var spec = queued.Count >= 2 ? BuildRecipeSpec(queued) : null;
+        if (spec == null) { CastFailed?.Invoke("Can't combine"); return; }
+
+        queueing = false;
         var set = new List<int>(queued);
         queued.Clear();
-
-        if (spec == null) { CastFailed?.Invoke("Can't combine"); return; }
         SetPending(set, spec);
     }
 
