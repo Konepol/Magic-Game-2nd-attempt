@@ -44,6 +44,7 @@ public class CreatureAnimator : MonoBehaviour
         flyer = GetComponent<EnemyFlyingShooter>();
         lastPos = transform.position;
         seed = Random.value * 10f;
+        ShadowSettings.Attach(gameObject, 0.6f * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z));
     }
 
     void OnEnable()

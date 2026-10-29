@@ -85,6 +85,7 @@ public class BossEnemy : MonoBehaviour
 
         BuildBody();
         BuildBar();
+        ShadowSettings.Attach(gameObject, 3.6f);
         fxRoot = new GameObject("BossFx");
     }
 

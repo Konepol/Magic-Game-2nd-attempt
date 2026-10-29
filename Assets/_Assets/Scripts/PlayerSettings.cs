@@ -52,6 +52,17 @@ public static class PlayerSettings
         }
     }
 
+    // shadows: 0 Normal (soft real shadows), 1 Low (blob shadows), 2 Off
+    public static int ShadowQuality
+    {
+        get => PlayerPrefs.GetInt("shadowQuality", 0);
+        set
+        {
+            PlayerPrefs.SetInt("shadowQuality", Mathf.Clamp(value, 0, 2));
+            Changed?.Invoke();
+        }
+    }
+
     // ---------- key bindings ----------
 
     static string Key(string id) => "bind_" + id;

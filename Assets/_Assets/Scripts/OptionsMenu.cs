@@ -171,8 +171,8 @@ public class OptionsMenu
 
     // ---------- gameplay ----------
 
-    Text pathsState, hintText;
-    Button pathsToggle;
+    Text pathsState, hintText, shadowState;
+    Button pathsToggle, shadowButton;
     const string HintIdle = "Hover over an option to see what it does.";
 
     void BuildGameplay(RectTransform page)
@@ -186,6 +186,14 @@ public class OptionsMenu
         Hint(pathsToggle.gameObject,
             "While you combine spells (press B, then the spells), a diagram in the middle of the screen shows every fusion you can still reach " +
             "and which spells each one needs. Turn it off if you already know the recipes.");
+
+        shadowButton = UIKit.MakeButton(page, "", new Vector2(640f, 90f), () => { PlayerSettings.ShadowQuality = (PlayerSettings.ShadowQuality + 1) % 3; RefreshGameplay(); }, 34);
+        UIKit.Place((RectTransform)shadowButton.transform, new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(640f, 90f));
+        shadowState = shadowButton.GetComponentInChildren<Text>();
+        Hint(shadowButton.gameObject,
+            "Normal: soft shadows from the sun on everything.\n" +
+            "Low: a soft round shadow under each character instead (easier on slower computers, and easy to read in busy fights).\n" +
+            "Off: no shadows.");
 
         RefreshGameplay();
     }
@@ -203,6 +211,9 @@ public class OptionsMenu
         bool paths = PlayerSettings.FusionPaths;
         pathsState.text = "Fusion paths: " + (paths ? "ON" : "OFF");
         UIKit.SetChosen(pathsToggle, paths);
+
+        shadowState.text = "Shadows: " + ShadowSettings.Label(ShadowSettings.Current);
+        UIKit.SetChosen(shadowButton, ShadowSettings.Current == ShadowSettings.Quality.Normal);
 
         if (hintText != null) hintText.text = HintIdle;
     }
