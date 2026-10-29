@@ -221,6 +221,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         combineAction.Disable();
         queueing = false;
         queued.Clear();
+        ClearPending();
         switchWeaponAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
         SetAimRing(false, Vector3.zero, 0f, Color.white);
@@ -267,22 +268,18 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             queueing = false;
             queued.Clear();
 
-            // a combination that is already casting is not cancelled by charging mana: its bar just waits
-            if (combo != null)
-            {
-                for (int i = 0; i < charging.Length; i++)
-                    if (!inCombo[i]) { charging[i] = false; DropCircle(i); }
-            }
-            else
-            {
-                for (int i = 0; i < charging.Length; i++) charging[i] = false;
-                DropAllCircles();
-            }
+            for (int i = 0; i < charging.Length; i++) charging[i] = false;
+            DropAllCircles();             // charging mana also removes a combined spell that is being cast
             SetAimRing(false, Vector3.zero, 0f, Color.white);
             return;
         }
 
-        if (combineAction.WasPressedThisFrame()) ToggleQueue();
+        if (pendingSpec != null && Time.time >= pendingUntil) ClearPending();
+        if (combineAction.WasPressedThisFrame())
+        {
+            if (pendingSpec != null) StartPendingCast();
+            else ToggleQueue();
+        }
         if (queueing)
         {
             UpdateQueue();
@@ -320,10 +317,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             {
                 if (action.WasPressedThisFrame())
                 {
-                    if (latched[i]) latched[i] = false;               // pressed again while it was only counting as held
-                    else if (Time.time >= cooldownEnd[i])
+                    if (Time.time >= cooldownEnd[i])
                     {
-                        // hold spells can join a cast that is already being held, forming a combination
+                        // hold spells can join the casts already being held (multicast)
                         if (hasHold) OnHoldPressed(i, spell);
                         else StartHold(i);
 
@@ -378,12 +374,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
                 }
 
-                // Chords can be built one key at a time: a key let go while another key of the chord is still down, and before its spell is
-                // ready, keeps counting as held (so E+R, let go of E, press T is still E+R+T) and everything resolves when the last key comes up.
-                // Once a spell is ready, letting go of its key fires it as before, even while other spells are still being held (multicasting).
                 bool released = action.WasReleasedThisFrame();
-                if (released && PlayerSettings.ChordHold && !complete && realHeld >= spell.tapWindow && OtherChordKeyDown(i)) { latched[i] = true; released = false; }
-                else if (latched[i] && (!PlayerSettings.ChordHold || !OtherChordKeyDown(i))) { latched[i] = false; released = true; }
 
                 if (released)
                 {
@@ -562,7 +553,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         public float startTime;
         public float effHeld;
         public bool readyPlayed;
-        public bool queued;               // built with B: it casts by itself once it is ready
+        public bool heldByB;              // cast from the ready combined spell: B is held to cast it, like a normal hold spell
         public readonly List<CastingCircle> circles = new List<CastingCircle>();
     }
 
@@ -641,18 +632,6 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     // every extra cast adds a fraction to every cast time
     float MulticastFactor => 1f + (weapon != null ? weapon.multicastDelay : 0.3f) * Mathf.Max(0, EntryCount - 1);
 
-    // is a key of some other cast in the chord physically down right now?
-    bool OtherChordKeyDown(int i)
-    {
-        for (int j = 0; j < charging.Length; j++)
-        {
-            if (j == i || !charging[j] || ignoredPress[j]) continue;
-            var a = ActionFor(j);
-            if (a != null && a.IsPressed()) return true;
-        }
-        return false;
-    }
-
     void StartHold(int i)
     {
         charging[i] = true;
@@ -673,34 +652,89 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public IReadOnlyList<int> QueuedSlots => queued;
     public bool IsQueued(int slot) => queued.Contains(slot);
 
+    bool Equipped(SpellData spell)
+    {
+        for (int j = 0; j < cooldownEnd.Length; j++) if (GetSpell(j) == spell) return true;
+        return false;
+    }
+
+    // a recipe that contains every spell in the set and is made only of equipped spells
+    bool RecipeFits(SpellCombo recipe, List<SpellData> set, bool strictlyBigger)
+    {
+        if (recipe == null || recipe.result == null || recipe.ingredients == null) return false;
+        foreach (var x in set) if (System.Array.IndexOf(recipe.ingredients, x) < 0) return false;
+        if (strictlyBigger && recipe.ingredients.Length <= set.Count) return false;
+        foreach (var ing in recipe.ingredients) if (!Equipped(ing)) return false;
+        return true;
+    }
+
+    List<SpellData> QueuedSpells(int extraSlot = -1)
+    {
+        var set = new List<SpellData>();
+        foreach (int q in queued) set.Add(GetSpell(q));
+        if (extraSlot >= 0) set.Add(GetSpell(extraSlot));
+        return set;
+    }
+
     // can this spell join the queue? It must be ready and still lead to a fusion made only of spells that are equipped
     public bool CanQueue(int slot)
     {
         var sp = GetSpell(slot);
         if (sp == null || !sp.hasHoldVariant || queued.Contains(slot) || Time.time < cooldownEnd[slot] || weapon == null || weapon.combos == null) return false;
 
-        var set = new List<SpellData>();
-        foreach (int q in queued) set.Add(GetSpell(q));
-        set.Add(sp);
-
-        foreach (var recipe in weapon.combos)
-        {
-            if (recipe == null || recipe.result == null || recipe.ingredients == null) continue;
-
-            bool all = true;
-            foreach (var x in set) if (System.Array.IndexOf(recipe.ingredients, x) < 0) all = false;
-            if (!all) continue;
-
-            bool equipped = true;
-            foreach (var ing in recipe.ingredients)
-            {
-                bool found = false;
-                for (int j = 0; j < cooldownEnd.Length; j++) if (GetSpell(j) == ing) found = true;
-                if (!found) equipped = false;
-            }
-            if (equipped) return true;
-        }
+        var set = QueuedSpells(slot);
+        foreach (var recipe in weapon.combos) if (RecipeFits(recipe, set, false)) return true;
         return false;
+    }
+
+    // ---- the ready combined spell: it waits a while to be cast by holding B ----
+
+    const float PendingTime = 15f;
+    ComboSpec pendingSpec;
+    List<int> pendingSlots;
+    float pendingUntil;
+
+    public bool HasPending => pendingSpec != null;
+    public string PendingName => pendingSpec != null ? pendingSpec.name : "";
+    public float PendingCost => pendingSpec != null ? pendingSpec.manaCost : 0f;
+    public float PendingLeft01 => pendingSpec != null ? Mathf.Clamp01((pendingUntil - Time.time) / PendingTime) : 0f;
+    public Color PendingColor => pendingSpec != null ? pendingSpec.color : Color.white;
+
+    void ClearPending()
+    {
+        pendingSpec = null;
+        pendingSlots = null;
+    }
+
+    void SetPending(List<int> set, ComboSpec spec)
+    {
+        pendingSpec = spec;
+        pendingSlots = set;
+        pendingUntil = Time.time + PendingTime;
+        if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.8f);
+    }
+
+    // B pressed with a combined spell waiting: start casting it, and its time limit goes away
+    void StartPendingCast()
+    {
+        if (combo != null) return;
+        foreach (int j in pendingSlots)
+            if (GetSpell(j) == null || charging[j]) return;
+
+        var spec = pendingSpec;
+        var set = pendingSlots;
+        ClearPending();
+
+        foreach (int j in set)
+        {
+            pressTime[j] = Time.time;
+            effHeld[j] = 0f;
+            readyPlayed[j] = false;
+            tierReached[j] = 0;
+            latched[j] = false;
+        }
+        FormCombo(set, spec);
+        combo.heldByB = true;
     }
 
     void ToggleQueue()
@@ -715,6 +749,12 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             return;
         }
 
+        FinishQueue();
+    }
+
+    // the queue is done (B pressed again, or nothing more can be added): what was queued becomes a combined spell, if it is a recipe
+    void FinishQueue()
+    {
         queueing = false;
         if (queued.Count == 0) return;
 
@@ -723,17 +763,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         queued.Clear();
 
         if (spec == null) { CastFailed?.Invoke("Can't combine"); return; }
-
-        foreach (int j in set)
-        {
-            pressTime[j] = Time.time;
-            effHeld[j] = 0f;
-            readyPlayed[j] = false;
-            tierReached[j] = 0;
-            latched[j] = false;
-        }
-        FormCombo(set, spec);
-        combo.queued = true;
+        SetPending(set, spec);
     }
 
     void UpdateQueue()
@@ -746,6 +776,15 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             queued.Add(i);
             if (muzzle != null) SpellFX.Sparks(muzzle.position, GetSpell(i).hold.effectColor);
+
+            // a recipe with no bigger recipe beyond it completes by itself
+            if (queued.Count >= 2 && BuildRecipeSpec(queued) != null)
+            {
+                bool more = false;
+                var set = QueuedSpells();
+                foreach (var recipe in weapon.combos) if (RecipeFits(recipe, set, true)) more = true;
+                if (!more) { FinishQueue(); return; }
+            }
         }
     }
 
@@ -881,8 +920,12 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
         }
 
-        // a combination built with B needs no keys held: it fires once it is ready
-        if (ready) FireCombo();
+        // cast from the ready combined spell: hold B until it is ready, let go to fire it (too early and it fizzles)
+        if (combo.heldByB && !combineAction.IsPressed())
+        {
+            if (ready) FireCombo();
+            else FizzleCombo("Fizzled");
+        }
     }
 
     void FireCombo()

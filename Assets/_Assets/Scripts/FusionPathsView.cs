@@ -59,15 +59,6 @@ public class FusionPathsView
             {
                 foreach (int slot in caster.QueuedSlots) { var sp = caster.GetSpellAt(slot); if (sp != null) held.Add(sp); }
             }
-            else if (!caster.ComboActive)
-            {
-                for (int i = 0; i < caster.SlotCount; i++)
-                {
-                    var sp = caster.GetSpellAt(i);
-                    if (sp != null && caster.IsHeld(i)) held.Add(sp);
-                }
-            }
-
             for (int i = 0; i < caster.SlotCount; i++)
             {
                 var sp = caster.GetSpellAt(i);
@@ -76,7 +67,7 @@ public class FusionPathsView
             foreach (var hs in held) sig.Append((char)42).Append(hs.name);
         }
 
-        if (!PlayerSettings.FusionPaths || (!queue && held.Count == 0))
+        if (!PlayerSettings.FusionPaths || !queue)
         {
             if (area.gameObject.activeSelf) area.gameObject.SetActive(false);
             key = "";

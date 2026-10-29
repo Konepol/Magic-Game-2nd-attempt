@@ -51,18 +51,6 @@ public static class PlayerSettings
         }
     }
 
-    // On: a spell key that is let go while another key of the chord is still down, and before its spell is ready, keeps counting as held,
-    // so chords can be built one key at a time on keyboards that cannot hold many keys at once. Off: a key counts only while it is down.
-    public static bool ChordHold
-    {
-        get => PlayerPrefs.GetInt("chordHold", 1) == 1;
-        set
-        {
-            PlayerPrefs.SetInt("chordHold", value ? 1 : 0);
-            Changed?.Invoke();
-        }
-    }
-
     // ---------- key bindings ----------
 
     static string Key(string id) => "bind_" + id;

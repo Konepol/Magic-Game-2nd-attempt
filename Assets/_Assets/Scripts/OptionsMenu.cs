@@ -16,9 +16,6 @@ public class OptionsMenu
     string capturingId;
     Text bindHint;
 
-    Text holdState;
-    Button holdToggle;
-
     static readonly string[] PageNames = { "Audio", "Key bindings", "Gameplay" };
 
     public static OptionsMenu Build(RectTransform parent, System.Action back)
@@ -170,17 +167,8 @@ public class OptionsMenu
         hintText = UIKit.Label(page, "Hint", HintIdle, 30, UIKit.Dim, TextAnchor.UpperCenter);
         UIKit.Place(hintText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 170f), new Vector2(1300f, 230f));
 
-        holdToggle = UIKit.MakeButton(page, "", new Vector2(640f, 90f), () => { PlayerSettings.ChordHold = !PlayerSettings.ChordHold; RefreshGameplay(); }, 34);
-        UIKit.Place((RectTransform)holdToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(640f, 90f));
-        holdState = holdToggle.GetComponentInChildren<Text>();
-        Hint(holdToggle.gameObject,
-            "Some keyboards cannot register many keys held at the same time.\n" +
-            "ON: let go of a spell key while another key is still down (and before its spell is ready) and it still counts as held. " +
-            "E + R, let go of E, then press T is cast as E + R + T, all cast when the last key comes up.\n" +
-            "OFF: a spell only counts while its key is physically down.");
-
         pathsToggle = UIKit.MakeButton(page, "", new Vector2(640f, 90f), () => { PlayerSettings.FusionPaths = !PlayerSettings.FusionPaths; RefreshGameplay(); }, 34);
-        UIKit.Place((RectTransform)pathsToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(640f, 90f));
+        UIKit.Place((RectTransform)pathsToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(640f, 90f));
         pathsState = pathsToggle.GetComponentInChildren<Text>();
         Hint(pathsToggle.gameObject,
             "While you hold a spell key, a diagram in the bottom-left shows the fusions it can lead to: " +
@@ -199,10 +187,6 @@ public class OptionsMenu
 
     void RefreshGameplay()
     {
-        bool hold = PlayerSettings.ChordHold;
-        holdState.text = "Chord hold: " + (hold ? "ON" : "OFF");
-        UIKit.SetChosen(holdToggle, hold);
-
         bool paths = PlayerSettings.FusionPaths;
         pathsState.text = "Fusion paths: " + (paths ? "ON" : "OFF");
         UIKit.SetChosen(pathsToggle, paths);
