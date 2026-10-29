@@ -13,7 +13,8 @@ public class PauseMenu : MonoBehaviour
     GameCatalog catalog;
     GameObject root;
     Text statsText, loadoutText;
-    Text volumeText;
+    RectTransform optionsRoot;
+    OptionsMenu options;
     bool paused;
 
     // what was switched off while paused, so it can be switched back on
@@ -33,6 +34,9 @@ public class PauseMenu : MonoBehaviour
     void Update()
     {
         if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (PlayerSettings.CaptureBusy) return;                 // that Esc only cancelled picking a key
+
+        if (optionsRoot != null && optionsRoot.gameObject.activeSelf) { CloseOptions(); return; }
 
         if (paused) Resume();
         else if (runner == null || (!runner.ResultsShown && !runner.PlayerDead)) Pause();
@@ -79,6 +83,7 @@ public class PauseMenu : MonoBehaviour
     {
         paused = false;
         Time.timeScale = 1f;
+        if (optionsRoot != null) optionsRoot.gameObject.SetActive(false);
         if (root != null) root.SetActive(false);
 
         if (playerInput != null && inputWasOn) playerInput.enabled = true;
@@ -109,25 +114,20 @@ public class PauseMenu : MonoBehaviour
         UIKit.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -75f), new Vector2(1300f, 110f));
 
         // left: the buttons and the volume
-        string[] names = { "Resume", "Restart Stage", "Quit to Main Menu" };
-        System.Action[] actions = { Resume, Restart, QuitToMenu };
+        string[] names = { "Resume", "Restart Stage", "Options", "Quit to Main Menu" };
+        System.Action[] actions = { Resume, Restart, OpenOptions, QuitToMenu };
         for (int i = 0; i < names.Length; i++)
         {
             var b = UIKit.MakeButton(panel.transform, names[i], new Vector2(480f, 84f), actions[i], 32);
             UIKit.Place((RectTransform)b.transform, new Vector2(0f, 1f), new Vector2(330f, -230f - i * 104f), new Vector2(480f, 84f));
         }
 
-        var volumeLabel = UIKit.Label(panel.transform, "VolumeLabel", "Master Volume", 30, Color.white, TextAnchor.MiddleLeft, true);
-        UIKit.Place(volumeLabel.rectTransform, new Vector2(0f, 0f), new Vector2(230f, 205f), new Vector2(300f, 44f));
-        volumeText = UIKit.Label(panel.transform, "VolumeValue", "", 30, UIKit.Accent, TextAnchor.MiddleRight, true);
-        UIKit.Place(volumeText.rectTransform, new Vector2(0f, 0f), new Vector2(480f, 205f), new Vector2(180f, 44f));
-        var slider = UIKit.MakeSlider(panel.transform, new Vector2(480f, 30f), PlayerProfile.Volume, v =>
-        {
-            PlayerProfile.Volume = v;
-            volumeText.text = Mathf.RoundToInt(v * 100f) + "%";
-        });
-        UIKit.Place((RectTransform)slider.transform, new Vector2(0f, 0f), new Vector2(330f, 150f), new Vector2(480f, 30f));
-        volumeText.text = Mathf.RoundToInt(PlayerProfile.Volume * 100f) + "%";
+        // the options open over the pause screen
+        var overlay = UIKit.Box(canvas.transform, "OptionsOverlay", new Color(0.03f, 0.04f, 0.08f, 1f));
+        UIKit.Stretch(overlay.rectTransform);
+        optionsRoot = overlay.rectTransform;
+        options = OptionsMenu.Build(optionsRoot, CloseOptions);
+        optionsRoot.gameObject.SetActive(false);
 
         // right: what has happened so far, and what you are carrying
         var info = UIKit.Box(panel.transform, "Info", new Color(0.04f, 0.06f, 0.1f, 1f));
@@ -190,6 +190,14 @@ public class PauseMenu : MonoBehaviour
         loadoutText.text = string.Join("\n", lines) + "\n\n<color=#B0B0B0>Combinations:</color>  "
                          + (combos.Count > 0 ? string.Join(",  ", combos) : "<color=#808080>none with these spells</color>");
     }
+
+    void OpenOptions()
+    {
+        options.Open();
+        optionsRoot.gameObject.SetActive(true);
+    }
+
+    void CloseOptions() => optionsRoot.gameObject.SetActive(false);
 
     void Restart()
     {

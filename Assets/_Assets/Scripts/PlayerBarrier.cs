@@ -42,7 +42,7 @@ public class PlayerBarrier : MonoBehaviour
     public float LockoutRemaining => Mathf.Max(0f, lockoutUntil - Time.time);
     public int PanelsUp => barrier != null ? barrier.PanelsUp : 0;
     public int PanelsTotal => barrier != null ? barrier.PanelsTotal : 0;
-    public string KeyLabel => raiseAction.bindings.Count > 0 ? raiseAction.bindings[0].ToDisplayString() : "F";
+    public string KeyLabel => PlayerSettings.LabelOf(raiseAction);
 
     Mana mana;
     Health health;
@@ -58,10 +58,18 @@ public class PlayerBarrier : MonoBehaviour
         caster = GetComponentInChildren<PlayerSpellCaster>();
     }
 
-    void OnEnable() => raiseAction.Enable();
+    void ApplyKeyBinding() => PlayerSettings.Apply("barrier", raiseAction);
+
+    void OnEnable()
+    {
+        PlayerSettings.Changed += ApplyKeyBinding;
+        ApplyKeyBinding();
+        raiseAction.Enable();
+    }
 
     void OnDisable()
     {
+        PlayerSettings.Changed -= ApplyKeyBinding;
         raiseAction.Disable();
         Lower();
     }

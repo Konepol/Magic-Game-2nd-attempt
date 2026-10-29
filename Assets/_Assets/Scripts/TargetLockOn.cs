@@ -39,9 +39,7 @@ public class TargetLockOn : MonoBehaviour
     public bool IsLocked => CurrentTarget != null;
 
     public string LockKeyLabel =>
-        lockOnAction != null && lockOnAction.action != null && lockOnAction.action.bindings.Count > 0
-            ? lockOnAction.action.bindings[0].ToDisplayString()
-            : "V";
+        lockOnAction != null && lockOnAction.action != null ? PlayerSettings.LabelOf(lockOnAction.action) : "V";
     public Vector3 AimPoint => CurrentTarget != null ? PointOn(CurrentTarget) : Vector3.zero;
 
     // a point on the target worked out from its own bounds, so big and small enemies are aimed at the same relative spot
@@ -100,12 +98,20 @@ public class TargetLockOn : MonoBehaviour
             Warn("lockOnAction is null, input will NOT work");
             return;
         }
+        PlayerSettings.Changed += ApplyKeyBinding;
+        ApplyKeyBinding();
         lockOnAction.action.performed += OnLockOnPressed;
         lockOnAction.action.Enable();
     }
 
+    void ApplyKeyBinding()
+    {
+        if (lockOnAction != null && lockOnAction.action != null) PlayerSettings.Apply("lock", lockOnAction.action);
+    }
+
     void OnDisable()
     {
+        PlayerSettings.Changed -= ApplyKeyBinding;
         if (lockOnAction != null && lockOnAction.action != null)
             lockOnAction.action.performed -= OnLockOnPressed;
     }

@@ -8,7 +8,6 @@ using UnityEngine.UI;
 // The whole screen is built from code when the scene starts.
 public class MainMenu : MonoBehaviour
 {
-    static readonly string[] SlotKeys = { "LMB", "RMB", "Q", "E", "R", "T", "G" };      // the key of each slot (the slot count comes from the catalog)
 
     GameCatalog catalog;
     Transform canvasRoot;
@@ -35,7 +34,8 @@ public class MainMenu : MonoBehaviour
     RectTransform comboRows;
 
     // options
-    Text volumeText;
+    OptionsMenu options;
+    readonly List<Text> slotKeyText = new List<Text>();
 
     void Awake()
     {
@@ -69,6 +69,7 @@ public class MainMenu : MonoBehaviour
     void Update()
     {
         if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (PlayerSettings.CaptureBusy) return;                 // that Esc only cancelled picking a key
 
         // Esc closes the prompt first, then the book or the list, then goes back to the main menu
         if (keyPrompt.gameObject.activeSelf) keyPrompt.gameObject.SetActive(false);
@@ -82,6 +83,7 @@ public class MainMenu : MonoBehaviour
         foreach (var p in new[] { mainPanel, stagePanel, customizePanel, optionsPanel })
             if (p != null) p.gameObject.SetActive(p == panel);
         CloseOverlays();
+        if (panel == optionsPanel && options != null) options.Open();
     }
 
     void CloseOverlays()
@@ -238,8 +240,8 @@ public class MainMenu : MonoBehaviour
             var own = card.transform.Find("Text");
             if (own != null) Destroy(own.gameObject);
 
-            string key = i < SlotKeys.Length ? SlotKeys[i] : "-";
-            var keyText = UIKit.Label(card.transform, "Key", key, narrow ? 40 : 46, UIKit.Gold, TextAnchor.MiddleCenter, true);
+            var keyText = UIKit.Label(card.transform, "Key", KeyLabel(i), narrow ? 40 : 46, UIKit.Gold, TextAnchor.MiddleCenter, true);
+            slotKeyText.Add(keyText);
             UIKit.Place(keyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -45f), new Vector2(cardW - 20f, 60f));
 
             var name = UIKit.Label(card.transform, "Name", "", narrow ? 30 : 40, Color.white, TextAnchor.MiddleCenter, true);
@@ -274,6 +276,7 @@ public class MainMenu : MonoBehaviour
         loadout = PlayerProfile.GetLoadout(catalog);
         for (int i = 0; i < loadout.Length; i++)
         {
+            if (i < slotKeyText.Count) slotKeyText[i].text = KeyLabel(i);
             var spell = catalog.FindSpell(loadout[i]);
             slotName[i].text = spell != null ? spell.displayName : "(empty)";
             slotName[i].color = spell != null ? Color.white : UIKit.Dim;
@@ -323,7 +326,7 @@ public class MainMenu : MonoBehaviour
         return text;
     }
 
-    string KeyLabel(int slot) => slot < SlotKeys.Length ? SlotKeys[slot] : "slot " + (slot + 1);
+    string KeyLabel(int slot) => PlayerSettings.LabelOf("spell" + slot) is string label && label != "-" ? label : "slot " + (slot + 1);
 
     // ---------- equipping ----------
 
@@ -674,24 +677,7 @@ public class MainMenu : MonoBehaviour
     RectTransform BuildOptions(Transform parent)
     {
         var p = Panel(parent, "Options");
-        var head = UIKit.Label(p, "Header", "OPTIONS", 80, UIKit.Gold, TextAnchor.MiddleCenter, true);
-        UIKit.Place(head.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(1200f, 110f));
-
-        var label = UIKit.Label(p, "VolumeLabel", "Master Volume", 40, Color.white, TextAnchor.MiddleLeft, true);
-        UIKit.Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-150f, 60f), new Vector2(600f, 60f));
-
-        volumeText = UIKit.Label(p, "VolumeValue", "", 40, UIKit.Accent, TextAnchor.MiddleRight, true);
-        UIKit.Place(volumeText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(330f, 60f), new Vector2(240f, 60f));
-
-        var slider = UIKit.MakeSlider(p, new Vector2(900f, 34f), PlayerProfile.Volume, v =>
-        {
-            PlayerProfile.Volume = v;
-            volumeText.text = Mathf.RoundToInt(v * 100f) + "%";
-        });
-        UIKit.Place((RectTransform)slider.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(900f, 34f));
-        volumeText.text = Mathf.RoundToInt(PlayerProfile.Volume * 100f) + "%";
-
-        BackButton(p);
+        options = OptionsMenu.Build(p, () => Show(mainPanel));
         return p;
     }
 }

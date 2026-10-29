@@ -197,8 +197,16 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
     InputAction ActionFor(int slot) => slot >= 0 && slot < skillActions.Length ? skillActions[slot] : null;
 
+    // the keys the player chose in Options
+    void ApplyKeyBindings()
+    {
+        for (int i = 0; i < skillActions.Length; i++) PlayerSettings.Apply("spell" + i, skillActions[i]);
+    }
+
     void OnEnable()
     {
+        PlayerSettings.Changed += ApplyKeyBindings;
+        ApplyKeyBindings();
         foreach (var a in skillActions) a.Enable();
         switchWeaponAction.Enable();
         if (health != null) health.Damaged += OnDamaged;
@@ -206,6 +214,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
     void OnDisable()
     {
+        PlayerSettings.Changed -= ApplyKeyBindings;
         foreach (var a in skillActions) a.Disable();
         switchWeaponAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
@@ -234,7 +243,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         var a = ActionFor(slot);
         if (a == null) return "-";                       // past the last key: its binding is not decided yet
-        return a.bindings.Count > 0 ? a.bindings[0].ToDisplayString() : "";
+        return PlayerSettings.LabelOf(a);
     }
 
     SpellData GetSpell(int slot) => weapon != null ? weapon.GetSpell(slot) : null;
@@ -346,8 +355,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 // ready, keeps counting as held (so E+R, let go of E, press T is still E+R+T) and everything resolves when the last key comes up.
                 // Once a spell is ready, letting go of its key fires it as before, even while other spells are still being held (multicasting).
                 bool released = action.WasReleasedThisFrame();
-                if (released && !complete && realHeld >= spell.tapWindow && OtherChordKeyDown(i)) { latched[i] = true; released = false; }
-                else if (latched[i] && !OtherChordKeyDown(i)) { latched[i] = false; released = true; }
+                if (released && PlayerSettings.ChordHold && !complete && realHeld >= spell.tapWindow && OtherChordKeyDown(i)) { latched[i] = true; released = false; }
+                else if (latched[i] && (!PlayerSettings.ChordHold || !OtherChordKeyDown(i))) { latched[i] = false; released = true; }
 
                 if (released)
                 {
@@ -762,6 +771,21 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         {
             combo.readyPlayed = true;
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.9f);
+        }
+
+        // chord hold off: the combined cast is decided as soon as any one key is let go
+        if (!PlayerSettings.ChordHold)
+        {
+            bool anyUp = false;
+            foreach (int j in combo.slots)
+            {
+                latched[j] = false;
+                var action = ActionFor(j);
+                if (action == null || !action.IsPressed()) anyUp = true;
+            }
+            if (!anyUp) return;
+            if (ready) FireCombo(); else FizzleCombo("Fizzled");
+            return;
         }
 
         bool anyDown = false, anyReleasedNow = false;

@@ -49,7 +49,7 @@ public class Mana : MonoBehaviour
     public float ChargeRateMultiplier { get; set; } = 1f;
 
     public string ChargeKeyLabel =>
-        chargeAction.bindings.Count > 0 ? chargeAction.bindings[0].ToDisplayString() : "R";
+        PlayerSettings.LabelOf(chargeAction);
 
     public event Action<float, float> Changed;        // current, max
     public event Action Insufficient;                  // a cast was refused for lack of mana
@@ -66,8 +66,12 @@ public class Mana : MonoBehaviour
         health = GetComponent<Health>();
     }
 
+    void ApplyKeyBinding() => PlayerSettings.Apply("charge", chargeAction);
+
     void OnEnable()
     {
+        PlayerSettings.Changed += ApplyKeyBinding;
+        ApplyKeyBinding();
         chargeAction.Enable();
         if (health != null) health.Damaged += OnDamaged;
     }
@@ -76,6 +80,7 @@ public class Mana : MonoBehaviour
     {
         regenScales.Clear();
         ChargeRateMultiplier = 1f;
+        PlayerSettings.Changed -= ApplyKeyBinding;
         chargeAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
         IsCharging = false;

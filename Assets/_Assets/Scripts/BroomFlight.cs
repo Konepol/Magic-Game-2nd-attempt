@@ -75,9 +75,7 @@ public class BroomFlight : MonoBehaviour
     public float ManaNow => mana != null ? mana.Current : 0f;
     public bool IsBoosting => IsFlying && boostFactor > 1.05f;
     public string MountKeyLabel =>
-        broomAction != null && broomAction.action != null && broomAction.action.bindings.Count > 0
-            ? broomAction.action.bindings[0].ToDisplayString()
-            : "X";
+        broomAction != null && broomAction.action != null ? PlayerSettings.LabelOf(broomAction.action) : "X";
 
     CharacterController controller;
     PlayerThirdPersonController tpc;
@@ -108,8 +106,12 @@ public class BroomFlight : MonoBehaviour
         if (broomModel != null) broomModel.SetActive(false);
     }
 
+    void ApplyKeyBinding() => PlayerSettings.Apply("broom", broomAction.action);
+
     void OnEnable()
     {
+        PlayerSettings.Changed += ApplyKeyBinding;
+        ApplyKeyBinding();
         broomAction.action.performed += OnBroomPressed;
         broomAction.action.Enable();
         ascendAction.action.Enable();
@@ -118,6 +120,7 @@ public class BroomFlight : MonoBehaviour
 
     void OnDisable()
     {
+        PlayerSettings.Changed -= ApplyKeyBinding;
         broomAction.action.performed -= OnBroomPressed;
         if (mana != null) mana.SetRegenScale(this, 1f);
     }

@@ -121,9 +121,8 @@ public class PlayerHUD : MonoBehaviour
             comboBox.nameText.resizeTextMaxSize = 15;
         }
 
-        if (broomBox != null && broom != null) broomBox.keyText.text = broom.MountKeyLabel;
-        if (lockBox != null && lockOn != null) lockBox.keyText.text = lockOn.LockKeyLabel;
-        if (barrierBox != null && barrier != null) barrierBox.keyText.text = barrier.KeyLabel;
+        RefreshKeyLabels();
+        PlayerSettings.Changed += RefreshKeyLabels;
 
         if (health != null) health.Damaged += OnPlayerDamaged;
         if (caster != null) caster.CastFailed += OnCastFailed;
@@ -132,6 +131,7 @@ public class PlayerHUD : MonoBehaviour
 
     void OnDestroy()
     {
+        PlayerSettings.Changed -= RefreshKeyLabels;
         if (health != null) health.Damaged -= OnPlayerDamaged;
         if (caster != null) caster.CastFailed -= OnCastFailed;
         if (mana != null) mana.Insufficient -= OnInsufficient;
@@ -358,6 +358,14 @@ public class PlayerHUD : MonoBehaviour
     }
 
     // lock-on: "NONE" while nothing is locked, the target's name while locked
+    // the key shown in the corner of the broom, lock and barrier boxes (the spell slots read theirs every frame)
+    void RefreshKeyLabels()
+    {
+        if (broomBox != null && broom != null) broomBox.keyText.text = broom.MountKeyLabel;
+        if (lockBox != null && lockOn != null) lockBox.keyText.text = lockOn.LockKeyLabel;
+        if (barrierBox != null && barrier != null) barrierBox.keyText.text = barrier.KeyLabel;
+    }
+
     // barrier box: READY, UP with the panels still standing, or BROKEN with the time left before it can be raised again
     void UpdateBarrierIndicator()
     {
