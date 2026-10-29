@@ -466,17 +466,16 @@ public class MainMenu : MonoBehaviour
         {
             spellMenuTitle.text = "SPELL FOR " + KeyLabel(bookSlot).ToUpper();
             string now = SpellNameOn(bookSlot);
-            spellMenuHint.text = "Now on this key: " + (now.Length > 0 ? now : "nothing") + ".  Click a spell to put it here.";
+            spellMenuHint.text = "Now on this key: " + (now.Length > 0 ? now : "nothing") + ".  Click a spell to put it here.  X takes a spell off its key.";
         }
         else
         {
             spellMenuTitle.text = "SPELL BOOK";
-            spellMenuHint.text = "Click a spell, then choose the key for it.";
+            spellMenuHint.text = "Click a spell, then choose the key for it.  X takes a spell off its key.";
         }
 
         for (int i = spellRows.childCount - 1; i >= 0; i--) Destroy(spellRows.GetChild(i).gameObject);
 
-        if (bookSlot >= 0) SpellRow(null);
         if (catalog != null && catalog.spells != null)
             foreach (var spell in catalog.spells)
                 if (spell != null) SpellRow(spell);
@@ -519,7 +518,20 @@ public class MainMenu : MonoBehaviour
 
         string where = "";
         for (int i = 0; i < loadout.Length; i++) if (loadout[i] == spell.name) where = KeyLabel(i);
-        Cell(row.transform, "Equipped", where, 30, UIKit.Gold, 1290f, 250f, true);
+        Cell(row.transform, "Equipped", where, 30, UIKit.Gold, 1290f, 200f, true);
+
+        // an X at the side of a spell that is on a key takes it off that key
+        int at = System.Array.IndexOf(loadout, spell.name);
+        if (at >= 0)
+        {
+            var x = UIKit.MakeButton(row.transform, "X", new Vector2(64f, 64f), () =>
+            {
+                loadout[at] = "";
+                SaveLoadout();
+                RefreshSpellMenu();
+            }, 34);
+            UIKit.Place((RectTransform)x.transform, new Vector2(1f, 0.5f), new Vector2(-48f, 0f), new Vector2(64f, 64f));
+        }
     }
 
     static void Cell(Transform row, string name, string text, int size, Color color, float left, float width, bool bold)
