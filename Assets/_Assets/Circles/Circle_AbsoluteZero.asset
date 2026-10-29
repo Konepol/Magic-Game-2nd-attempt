@@ -25,8 +25,8 @@ MonoBehaviour:
   layers:
   - name: Area Snowflake
     texture: {fileID: 2800000, guid: 0f95d08767d459f46a448719659d54ae, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.6, g: 0.9, b: 1, a: 1}
     opacity: 1
     rotationSpeed: 5
     anchor: 2
@@ -38,8 +38,8 @@ MonoBehaviour:
     appear: 0
   - name: Area Crystal
     texture: {fileID: 2800000, guid: df4228a658e7c0d46b045482afec19b6, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.85, g: 0.65, b: 0.3, a: 1}
     opacity: 1
     rotationSpeed: -9
     anchor: 2
@@ -51,8 +51,8 @@ MonoBehaviour:
     appear: 0
   - name: Area Hexagram
     texture: {fileID: 2800000, guid: 9d36f1b1893357846a7010893aaecd07, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.9, b: 0.45, a: 1}
     opacity: 1
     rotationSpeed: 14
     anchor: 2
@@ -64,8 +64,8 @@ MonoBehaviour:
     appear: 0
   - name: Area Glow
     texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.35, b: 0.2, a: 1}
     opacity: 0.3
     rotationSpeed: 0
     anchor: 2
@@ -77,8 +77,8 @@ MonoBehaviour:
     appear: 2
   - name: Hand Snowflake
     texture: {fileID: 2800000, guid: 0f95d08767d459f46a448719659d54ae, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.6, g: 0.9, b: 1, a: 1}
     opacity: 1
     rotationSpeed: 12
     anchor: 0
@@ -90,8 +90,8 @@ MonoBehaviour:
     appear: 0
   - name: Hand Rings
     texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.85, g: 0.65, b: 0.3, a: 1}
     opacity: 1
     rotationSpeed: -6
     anchor: 0
@@ -103,8 +103,8 @@ MonoBehaviour:
     appear: 0
   - name: Floor Crystal
     texture: {fileID: 2800000, guid: df4228a658e7c0d46b045482afec19b6, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.9, b: 0.45, a: 1}
     opacity: 1
     rotationSpeed: -8
     anchor: 1

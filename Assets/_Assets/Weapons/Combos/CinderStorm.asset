@@ -100,7 +100,7 @@ MonoBehaviour:
   circleScale: 0.8
   tapCircleScale: 0.45
   holdDisplayName: 
-  multicastable: 0
+  multicastable: 1
   chant: []
   tapDoesNothing: 0
   extraTiers: []

@@ -351,6 +351,15 @@ public static class UniqueCircleBuilder
             L("Halo", "Ring_Double", CircleAnchor.Front, 3.2f, -5f, 0.1f, 0.5f),
             L("Glow", "Glow", CircleAnchor.Front, 3.6f, 0f, 0.4f, 0.5f, CircleAppear.FadeIn, default, 0.4f));
 
+        // the ultimate spells (three or more elements) are drawn in the colours of every element they are made from
+        var fireC = new Color(1f, 0.55f, 0.2f); var frostC = new Color(0.6f, 0.9f, 1f); var earthC = new Color(0.85f, 0.65f, 0.3f);
+        var goldC = new Color(1f, 0.9f, 0.45f); var boltC = new Color(0.55f, 0.7f, 1f); var venomC = new Color(0.6f, 0.2f, 0.95f);
+        var meteorC = new Color(1f, 0.35f, 0.2f); var shardC = new Color(0.95f, 0.95f, 1f);
+        Mix(tremor, earthC, meteorC, shardC);
+        Mix(plague, venomC, fireC, shardC);
+        Mix(zero, frostC, earthC, goldC, meteorC);
+        Mix(sun, goldC, boltC, fireC);
+
         // ---------- assign ----------
         Assign(WeaponDir, "ScatterShot", scatter);
         Assign(WeaponDir, "FireBurst", fire);
@@ -402,6 +411,17 @@ public static class UniqueCircleBuilder
             name = name, texture = t, anchor = anchor, size = size, rotationSpeed = rot,
             startAt = startAt, drawTime = drawTime, appear = appear, offset = offset, opacity = opacity,
         };
+    }
+
+    // layers take the colours in turn, whatever the spell's own colour is
+    static void Mix(CastingCircleData circle, params Color[] colors)
+    {
+        for (int i = 0; i < circle.layers.Length; i++)
+        {
+            circle.layers[i].useSpellColor = false;
+            circle.layers[i].tint = colors[i % colors.Length];
+        }
+        EditorUtility.SetDirty(circle);
     }
 
     static CircleLayer Aoe(CircleLayer l) { l.scaleToAoeRadius = true; return l; }

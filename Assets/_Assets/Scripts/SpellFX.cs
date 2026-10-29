@@ -166,12 +166,12 @@ public static class SpellFX
         var custom = lib != null ? lib.Get(sfx) : null;
         if (custom != null)
         {
-            PlayClip(custom, pos, volume * lib.volume, 1f + UnityEngine.Random.Range(-lib.pitchVariation, lib.pitchVariation));
+            PlayClip(custom, pos, volume * lib.volume * PlayerProfile.EffectVolume, 1f + UnityEngine.Random.Range(-lib.pitchVariation, lib.pitchVariation));
             return;
         }
 
         if (clips[i] == null) clips[i] = Generate(sfx);
-        AudioSource.PlayClipAtPoint(clips[i], pos, volume);
+        AudioSource.PlayClipAtPoint(clips[i], pos, volume * PlayerProfile.EffectVolume);
     }
 
     static void PlayClip(AudioClip clip, Vector3 pos, float volume, float pitch)

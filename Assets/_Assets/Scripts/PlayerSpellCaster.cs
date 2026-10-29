@@ -287,14 +287,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             else if (pendingSpec != null) StartPendingCast();
             else ToggleQueue();
         }
-        if (queueing)
-        {
-            UpdateQueue();
-            UpdateCombo();
-            UpdateMulticastLayout();
-            SetAimRing(false, Vector3.zero, 0f, Color.white);
-            return;
-        }
+        if (queueing) UpdateQueue();          // the casts already going keep running while spells are queued
 
         bool aimingNow = false;
         float multicastFactor = MulticastFactor;      // casting several spells at once makes each one slower
@@ -309,6 +302,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             // part of a combined cast: the combination runs this key
             if (inCombo[i]) continue;
+
+            // queueing a combination: the keys pick spells for it, they do not cast (casts already going carry on)
+            if (queueing && !charging[i]) continue;
 
             // a press that was refused (nothing to combine with) stays ignored until the key is let go
             if (ignoredPress[i])
@@ -742,7 +738,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public bool CanQueue(int slot)
     {
         var sp = GetSpell(slot);
-        if (sp == null || !sp.hasHoldVariant || queued.Contains(slot) || Time.time < cooldownEnd[slot] || weapon == null || weapon.combos == null) return false;
+        if (sp == null || !sp.hasHoldVariant || charging[slot] || queued.Contains(slot) || Time.time < cooldownEnd[slot] || weapon == null || weapon.combos == null) return false;
 
         var set = QueuedSpells(slot);
         foreach (var recipe in weapon.combos) if (RecipeFits(recipe, set, false)) return true;
@@ -818,7 +814,6 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (!queueing)
         {
             if (combo != null) return;
-            for (int j = 0; j < charging.Length; j++) if (charging[j]) return;       // finish what is being cast first
             queueing = true;
             queued.Clear();
             if (muzzle != null) SpellFX.Play(Sfx.Ready, muzzle.position, 0.5f);

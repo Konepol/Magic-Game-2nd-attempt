@@ -9,8 +9,8 @@ public class OptionsMenu
     readonly RectTransform[] pages = new RectTransform[3];
     readonly Button[] tabs = new Button[3];
 
-    Text volumeText;
-    Slider volumeSlider;
+    Text volumeText, effectText, songText;
+    Slider volumeSlider, effectSlider, songSlider;
 
     readonly Dictionary<string, Text> keyLabels = new Dictionary<string, Text>();
     string capturingId;
@@ -58,6 +58,10 @@ public class OptionsMenu
         Cancel();
         volumeSlider.SetValueWithoutNotify(PlayerProfile.Volume);
         volumeText.text = Mathf.RoundToInt(PlayerProfile.Volume * 100f) + "%";
+        effectSlider.SetValueWithoutNotify(PlayerProfile.EffectVolume);
+        effectText.text = Mathf.RoundToInt(PlayerProfile.EffectVolume * 100f) + "%";
+        songSlider.SetValueWithoutNotify(PlayerProfile.SongVolume);
+        songText.text = Mathf.RoundToInt(PlayerProfile.SongVolume * 100f) + "%";
         RefreshBindings();
         RefreshGameplay();
         ShowPage(0);
@@ -77,19 +81,28 @@ public class OptionsMenu
 
     void BuildAudio(RectTransform page)
     {
-        var label = UIKit.Label(page, "VolumeLabel", "Master Volume", 40, Color.white, TextAnchor.MiddleLeft, true);
-        UIKit.Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-150f, 70f), new Vector2(600f, 60f));
+        volumeSlider = VolumeRow(page, "Master Volume", 180f, PlayerProfile.Volume, v => PlayerProfile.Volume = v, out volumeText, false);
+        effectSlider = VolumeRow(page, "Effects", 20f, PlayerProfile.EffectVolume, v => PlayerProfile.EffectVolume = v, out effectText, false);
+        songSlider = VolumeRow(page, "Songs  (coming in version 1)", -140f, PlayerProfile.SongVolume, v => PlayerProfile.SongVolume = v, out songText, true);
+    }
 
-        volumeText = UIKit.Label(page, "VolumeValue", "", 40, UIKit.Accent, TextAnchor.MiddleRight, true);
-        UIKit.Place(volumeText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(330f, 70f), new Vector2(240f, 60f));
+    // a label, a slider and the percentage, one above the other rows
+    Slider VolumeRow(RectTransform page, string title, float y, float start, System.Action<float> set, out Text valueText, bool dim)
+    {
+        var label = UIKit.Label(page, "Label_" + title, title, 40, dim ? UIKit.Dim : Color.white, TextAnchor.MiddleLeft, true);
+        UIKit.Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-150f, y + 60f), new Vector2(800f, 60f));
 
-        volumeSlider = UIKit.MakeSlider(page, new Vector2(900f, 34f), PlayerProfile.Volume, v =>
+        var value = UIKit.Label(page, "Value_" + title, Mathf.RoundToInt(start * 100f) + "%", 40, UIKit.Accent, TextAnchor.MiddleRight, true);
+        UIKit.Place(value.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(330f, y + 60f), new Vector2(240f, 60f));
+        valueText = value;
+
+        var slider = UIKit.MakeSlider(page, new Vector2(900f, 34f), start, v =>
         {
-            PlayerProfile.Volume = v;
-            volumeText.text = Mathf.RoundToInt(v * 100f) + "%";
+            set(v);
+            value.text = Mathf.RoundToInt(v * 100f) + "%";
         });
-        UIKit.Place((RectTransform)volumeSlider.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(900f, 34f));
-        volumeText.text = Mathf.RoundToInt(PlayerProfile.Volume * 100f) + "%";
+        UIKit.Place((RectTransform)slider.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, y), new Vector2(900f, 34f));
+        return slider;
     }
 
     // ---------- key bindings ----------

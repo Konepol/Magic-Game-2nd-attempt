@@ -25,8 +25,8 @@ MonoBehaviour:
   layers:
   - name: Rays
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.9, b: 0.45, a: 1}
     opacity: 1
     rotationSpeed: 15
     anchor: 0
@@ -38,8 +38,8 @@ MonoBehaviour:
     appear: 0
   - name: Bolt Ring
     texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.55, g: 0.7, b: 1, a: 1}
     opacity: 1
     rotationSpeed: -80
     anchor: 0
@@ -51,8 +51,8 @@ MonoBehaviour:
     appear: 0
   - name: Flame Petals
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.55, b: 0.2, a: 1}
     opacity: 1
     rotationSpeed: 55
     anchor: 0
@@ -64,8 +64,8 @@ MonoBehaviour:
     appear: 1
   - name: Halo
     texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.9, b: 0.45, a: 1}
     opacity: 1
     rotationSpeed: -5
     anchor: 0
@@ -77,8 +77,8 @@ MonoBehaviour:
     appear: 0
   - name: Glow
     texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    useSpellColor: 0
+    tint: {r: 0.55, g: 0.7, b: 1, a: 1}
     opacity: 0.4
     rotationSpeed: 0
     anchor: 0

@@ -26,6 +26,19 @@ public static class PlayerProfile
         }
     }
 
+    // how loud the sound effects are on their own (the master volume still applies on top), and the songs (there are no songs yet: kept for later)
+    public static float EffectVolume
+    {
+        get => PlayerPrefs.GetFloat("effectVolume", 1f);
+        set => PlayerPrefs.SetFloat("effectVolume", Mathf.Clamp01(value));
+    }
+
+    public static float SongVolume
+    {
+        get => PlayerPrefs.GetFloat("songVolume", 1f);
+        set => PlayerPrefs.SetFloat("songVolume", Mathf.Clamp01(value));
+    }
+
     public static void ApplyVolume() => AudioListener.volume = Volume;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]

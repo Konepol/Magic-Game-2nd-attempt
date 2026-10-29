@@ -34,6 +34,7 @@ public static class PlayerSettings
 
     public static bool Capturing { get; private set; }     // waiting for the player to press the new key
     static int captureEndFrame = -10;
+    static int captureStartFrame = -10;
 
     // true while waiting for a key and for a moment after, so the same Esc press that cancelled it does not also close the screen
     public static bool CaptureBusy => Capturing || Time.frameCount - captureEndFrame <= 1;
@@ -123,8 +124,19 @@ public static class PlayerSettings
     public static void Capture(Action<string> picked, Action cancelled)
     {
         Capturing = true;
+        captureStartFrame = Time.frameCount;
         WaitForPress(picked, cancelled);
     }
+
+    // the keys and buttons a spell or action can be bound to
+    static readonly string[] Unbindable =
+    {
+        "<Keyboard>/w", "<Keyboard>/a", "<Keyboard>/s", "<Keyboard>/d", "<Keyboard>/space", "<Keyboard>/leftShift", "<Keyboard>/rightShift",
+        "<Keyboard>/leftMeta", "<Keyboard>/rightMeta", "<Keyboard>/contextMenu", "<Keyboard>/printScreen", "<Keyboard>/scrollLock",
+        "<Keyboard>/pause", "<Keyboard>/numLock", "<Keyboard>/capsLock", "<Keyboard>/enter", "<Keyboard>/tab",
+    };
+
+    static bool Bindable(string path) => System.Array.IndexOf(Unbindable, path) < 0;
 
     static void WaitForPress(Action<string> picked, Action cancelled)
     {
@@ -141,6 +153,9 @@ public static class PlayerSettings
             }
 
             string path = "<" + control.device.layout + ">" + control.path.Substring(control.path.IndexOf('/', 1));
+
+            // keys that cannot be used (movement, system keys) and the click that opened this prompt do nothing: it keeps waiting
+            if (Time.frameCount <= captureStartFrame || !Bindable(path)) { WaitForPress(picked, cancelled); return; }
             Capturing = false;
             captureEndFrame = Time.frameCount;
             picked?.Invoke(path);
