@@ -123,7 +123,7 @@ public class PlayerHUD : MonoBehaviour
 
         RefreshKeyLabels();
         PlayerSettings.Changed += RefreshKeyLabels;
-        BuildFusionPaths();
+        pathsView = new FusionPathsView(transform, caster);
         PlaceComboBox();
 
         if (health != null) health.Damaged += OnPlayerDamaged;
@@ -227,7 +227,7 @@ public class PlayerHUD : MonoBehaviour
         UpdateSpellBar();
         UpdateIndicators();
         UpdateCombo();
-        UpdateFusionPaths();
+        pathsView?.Update();
         UpdateMana();
         UpdateHealth();
         UpdateVignette();
@@ -370,6 +370,8 @@ public class PlayerHUD : MonoBehaviour
     }
 
     // the combined-spell box lives in the bottom-left corner of the screen
+    FusionPathsView pathsView;
+
     void PlaceComboBox()
     {
         if (comboBox == null) return;
@@ -378,128 +380,6 @@ public class PlayerHUD : MonoBehaviour
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = new Vector2(100f, 100f);
         rect.localScale = Vector3.one * 1.1f;
-    }
-
-    // ---------- fusion paths: while a spell key is held, the fusions it can lead to and what else they need ----------
-
-    RectTransform pathsPanel, pathsLine;
-    Text pathsText;
-    string pathsKey = "";
-    bool pathsShown;
-    float pathsHeight, pathsWidth = 600f;
-
-    void BuildFusionPaths()
-    {
-        var panel = UIKit.Box(transform, "FusionPaths", new Color(0.05f, 0.07f, 0.12f, 0.9f));
-        pathsPanel = panel.rectTransform;
-        pathsPanel.anchorMin = pathsPanel.anchorMax = new Vector2(0.5f, 0f);
-        pathsPanel.pivot = new Vector2(0.5f, 0f);
-
-        pathsText = UIKit.Label(pathsPanel, "Text", "", 22, Color.white, TextAnchor.UpperLeft);
-        UIKit.Stretch(pathsText.rectTransform);
-        pathsText.rectTransform.offsetMin = new Vector2(20f, 12f);
-        pathsText.rectTransform.offsetMax = new Vector2(-20f, -10f);
-        pathsText.supportRichText = true;
-        pathsText.horizontalOverflow = HorizontalWrapMode.Overflow;
-
-        var line = UIKit.Box(transform, "FusionPathsLine", new Color(1f, 0.82f, 0.35f, 0.55f));
-        pathsLine = line.rectTransform;
-        pathsLine.anchorMin = pathsLine.anchorMax = new Vector2(0.5f, 0f);
-        pathsLine.pivot = new Vector2(0.5f, 0f);
-
-        pathsPanel.gameObject.SetActive(false);
-        pathsLine.gameObject.SetActive(false);
-    }
-
-    void UpdateFusionPaths()
-    {
-        if (pathsPanel == null || caster == null) return;
-
-        int newest = caster.NewestHeldSlot;
-        if (newest < 0 || newest >= slots.Length) { SetPathsShown(false); pathsKey = ""; return; }
-
-        // rebuild the text only when what is held, or what is equipped, changes
-        var held = new System.Collections.Generic.List<SpellData>();
-        var key = new System.Text.StringBuilder().Append(newest);
-        for (int i = 0; i < caster.SlotCount; i++)
-        {
-            var sp = caster.GetSpellAt(i);
-            key.Append('|').Append(sp != null ? sp.name : "-");
-            if (sp != null && caster.IsHeld(i)) { held.Add(sp); key.Append('*'); }
-        }
-        string k = key.ToString();
-        if (k != pathsKey) { pathsKey = k; RebuildFusionPaths(held); }
-
-        if (!pathsShown) return;
-
-        // above the spell that was pressed, and clear of the health and mana bars
-        var slot = slots[newest].border.rectTransform;
-        float half = pathsWidth * 0.5f + 12f;
-        float x = Mathf.Clamp(slot.anchoredPosition.x, -960f + half, 960f - half);
-        pathsPanel.anchoredPosition = new Vector2(x, 330f);
-        pathsPanel.sizeDelta = new Vector2(pathsWidth, pathsHeight);
-
-        float lineBottom = slot.anchoredPosition.y + 58f;
-        pathsLine.anchoredPosition = new Vector2(slot.anchoredPosition.x, lineBottom);
-        pathsLine.sizeDelta = new Vector2(3f, Mathf.Max(330f - lineBottom, 0f));
-    }
-
-    void SetPathsShown(bool shown)
-    {
-        pathsShown = shown;
-        if (pathsPanel.gameObject.activeSelf != shown) pathsPanel.gameObject.SetActive(shown);
-        if (pathsLine.gameObject.activeSelf != shown) pathsLine.gameObject.SetActive(shown);
-    }
-
-    void RebuildFusionPaths(System.Collections.Generic.List<SpellData> held)
-    {
-        var rows = new System.Collections.Generic.List<(int missing, string text)>();
-
-        foreach (var combo in caster.Combos)
-        {
-            if (combo == null || combo.result == null || combo.ingredients == null) continue;
-
-            var ingredients = new System.Collections.Generic.List<SpellData>();
-            foreach (var ing in combo.ingredients) if (ing != null && !ingredients.Contains(ing)) ingredients.Add(ing);
-
-            bool includesAllHeld = true;
-            foreach (var h in held) if (!ingredients.Contains(h)) includesAllHeld = false;
-            if (!includesAllHeld) continue;
-
-            int missing = 0;
-            var parts = new System.Collections.Generic.List<string>();
-            foreach (var ing in ingredients)
-            {
-                if (held.Contains(ing)) { parts.Add("<color=#7FE08A>" + ing.displayName + "</color>"); continue; }
-
-                missing++;
-                int slotOf = -1;
-                for (int i = 0; i < caster.SlotCount; i++) if (caster.GetSpellAt(i) == ing) slotOf = i;
-                parts.Add(slotOf >= 0
-                    ? "<color=#9FD8FF>[" + caster.GetKeyLabel(slotOf) + "]</color> " + ing.displayName
-                    : "<color=#808080>" + ing.displayName + " (not equipped)</color>");
-            }
-
-            string row = "<b><color=#FFD15A>" + combo.result.displayName + "</color></b>   =   " + string.Join("  +  ", parts);
-            if (missing == 0) row += "   <color=#FFD15A>ready</color>";
-            rows.Add((missing, row));
-        }
-
-        if (rows.Count == 0) { SetPathsShown(false); return; }
-
-        rows.Sort((a, b) => a.missing != b.missing ? a.missing.CompareTo(b.missing) : string.CompareOrdinal(a.text, b.text));
-        if (rows.Count > 6) rows.RemoveRange(6, rows.Count - 6);
-
-        var text = new System.Text.StringBuilder("<color=#9AA6B8>FUSIONS YOU CAN REACH</color>");
-        foreach (var r in rows) text.Append('\n').Append(r.text);
-        pathsText.text = text.ToString();
-        pathsHeight = 26f + (rows.Count + 1) * 31f;
-
-        // as wide as the longest row (without its colour tags)
-        int longest = 0;
-        foreach (var r in rows) longest = Mathf.Max(longest, System.Text.RegularExpressions.Regex.Replace(r.text, "<[^>]+>", "").Length);
-        pathsWidth = Mathf.Clamp(longest * 12.5f + 60f, 460f, 1500f);
-        SetPathsShown(true);
     }
 
     // barrier box: READY, UP with the panels still standing, or BROKEN with the time left before it can be raised again

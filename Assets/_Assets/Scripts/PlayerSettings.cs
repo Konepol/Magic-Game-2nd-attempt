@@ -39,6 +39,17 @@ public static class PlayerSettings
 
     // ---------- spell hold option ----------
 
+    // Shows the fusion paths diagram in the bottom-left while spells are held.
+    public static bool FusionPaths
+    {
+        get => PlayerPrefs.GetInt("fusionPaths", 1) == 1;
+        set
+        {
+            PlayerPrefs.SetInt("fusionPaths", value ? 1 : 0);
+            Changed?.Invoke();
+        }
+    }
+
     // On: a spell key that is let go while another key of the chord is still down, and before its spell is ready, keeps counting as held,
     // so chords can be built one key at a time on keyboards that cannot hold many keys at once. Off: a key counts only while it is down.
     public static bool ChordHold

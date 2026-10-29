@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// The Options screen, with a page for each kind of option: Audio, Key bindings and Spell hold.
+// The Options screen, with a page for each kind of option: Audio, Key bindings and Gameplay.
 // It is built from code into any full-screen panel, so the main menu and the pause menu share the same one.
 public class OptionsMenu
 {
@@ -19,7 +19,7 @@ public class OptionsMenu
     Text holdState;
     Button holdToggle;
 
-    static readonly string[] PageNames = { "Audio", "Key bindings", "Spell hold" };
+    static readonly string[] PageNames = { "Audio", "Key bindings", "Gameplay" };
 
     public static OptionsMenu Build(RectTransform parent, System.Action back)
     {
@@ -47,7 +47,7 @@ public class OptionsMenu
 
         BuildAudio(pages[0]);
         BuildBindings(pages[1]);
-        BuildSpellHold(pages[2]);
+        BuildGameplay(pages[2]);
 
         var backButton = UIKit.MakeButton(parent, "Back", new Vector2(260f, 70f), () => { Cancel(); back?.Invoke(); }, 28);
         UIKit.Place((RectTransform)backButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 70f), new Vector2(260f, 70f));
@@ -62,7 +62,7 @@ public class OptionsMenu
         volumeSlider.SetValueWithoutNotify(PlayerProfile.Volume);
         volumeText.text = Mathf.RoundToInt(PlayerProfile.Volume * 100f) + "%";
         RefreshBindings();
-        RefreshHold();
+        RefreshGameplay();
         ShowPage(0);
     }
 
@@ -159,31 +159,54 @@ public class OptionsMenu
         }
     }
 
-    // ---------- spell hold ----------
+    // ---------- gameplay ----------
 
-    void BuildSpellHold(RectTransform page)
+    Text pathsState, hintText;
+    Button pathsToggle;
+    const string HintIdle = "Hover over an option to see what it does.";
+
+    void BuildGameplay(RectTransform page)
     {
-        var title = UIKit.Label(page, "Title", "Chord hold", 48, Color.white, TextAnchor.MiddleCenter, true);
-        UIKit.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(1200f, 70f));
+        hintText = UIKit.Label(page, "Hint", HintIdle, 30, UIKit.Dim, TextAnchor.UpperCenter);
+        UIKit.Place(hintText.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 170f), new Vector2(1300f, 230f));
 
-        var info = UIKit.Label(page, "Info",
-            "Some keyboards cannot register many keys held at the same time.\n\n" +
-            "ON:  let go of a spell key while another key is still down (and before its spell is ready) and it still counts as held.\n" +
-            "E + R, let go of E, then press T is cast as E + R + T. Everything is cast when the last key comes up.\n\n" +
-            "OFF:  a spell only counts while its key is physically down.",
-            30, UIKit.Dim, TextAnchor.UpperCenter);
-        UIKit.Place(info.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -290f), new Vector2(1300f, 380f));
-
-        holdToggle = UIKit.MakeButton(page, "", new Vector2(520f, 84f), () => { PlayerSettings.ChordHold = !PlayerSettings.ChordHold; RefreshHold(); }, 34);
-        UIKit.Place((RectTransform)holdToggle.transform, new Vector2(0.5f, 0f), new Vector2(0f, 90f), new Vector2(520f, 84f));
+        holdToggle = UIKit.MakeButton(page, "", new Vector2(640f, 90f), () => { PlayerSettings.ChordHold = !PlayerSettings.ChordHold; RefreshGameplay(); }, 34);
+        UIKit.Place((RectTransform)holdToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -110f), new Vector2(640f, 90f));
         holdState = holdToggle.GetComponentInChildren<Text>();
-        RefreshHold();
+        Hint(holdToggle.gameObject,
+            "Some keyboards cannot register many keys held at the same time.\n" +
+            "ON: let go of a spell key while another key is still down (and before its spell is ready) and it still counts as held. " +
+            "E + R, let go of E, then press T is cast as E + R + T, all cast when the last key comes up.\n" +
+            "OFF: a spell only counts while its key is physically down.");
+
+        pathsToggle = UIKit.MakeButton(page, "", new Vector2(640f, 90f), () => { PlayerSettings.FusionPaths = !PlayerSettings.FusionPaths; RefreshGameplay(); }, 34);
+        UIKit.Place((RectTransform)pathsToggle.transform, new Vector2(0.5f, 1f), new Vector2(0f, -230f), new Vector2(640f, 90f));
+        pathsState = pathsToggle.GetComponentInChildren<Text>();
+        Hint(pathsToggle.gameObject,
+            "While you hold a spell key, a diagram in the bottom-left shows the fusions it can lead to: " +
+            "each spell you add moves the group up and renames it to what it becomes. Paths that do not fit are cut at the edge of the box.");
+
+        RefreshGameplay();
     }
 
-    void RefreshHold()
+    void Hint(GameObject target, string message)
     {
-        bool on = PlayerSettings.ChordHold;
-        holdState.text = "Chord hold: " + (on ? "ON" : "OFF");
-        UIKit.SetChosen(holdToggle, on);
+        var hover = target.AddComponent<HoverHint>();
+        hover.target = hintText;
+        hover.message = message;
+        hover.idleMessage = HintIdle;
+    }
+
+    void RefreshGameplay()
+    {
+        bool hold = PlayerSettings.ChordHold;
+        holdState.text = "Chord hold: " + (hold ? "ON" : "OFF");
+        UIKit.SetChosen(holdToggle, hold);
+
+        bool paths = PlayerSettings.FusionPaths;
+        pathsState.text = "Fusion paths: " + (paths ? "ON" : "OFF");
+        UIKit.SetChosen(pathsToggle, paths);
+
+        if (hintText != null) hintText.text = HintIdle;
     }
 }
