@@ -1423,7 +1423,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (mana != null) mana.Spend(v.manaCost);
 
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
-        SpellFX.Play(sound, muzzle.position, 0.8f);
+        if (sound == Sfx.BarrierPlace || !SpellSounds.Cast(spell.name, muzzle.position)) SpellFX.Play(sound, muzzle.position, 0.8f);
         SpellFX.CastFlash(LaunchPosition, v.effectColor);
 
         // a tapped (instant) spell gets a small quick circle; limited in rate so rapid-fire spells do not flood the screen
@@ -1596,6 +1596,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
         LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration);
         if (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.name, end, -dir, 1.1f, v.effectColor)) SpellFX.Sparks(end, v.effectColor);
+        SpellSounds.Impact(spell.name, end, 0f, 0.6f);
         return true;
     }
 

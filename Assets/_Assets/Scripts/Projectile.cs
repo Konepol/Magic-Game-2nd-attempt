@@ -33,7 +33,9 @@ public class Projectile : MonoBehaviour
     // the impact of a shot that does not explode
     void Impact(Vector3 point, Vector3 normal)
     {
-        if (!string.IsNullOrEmpty(fxKey)) SpellImpact.Play(fxKey, point, normal, 0.6f + radius * 0.8f, effectColor);
+        if (string.IsNullOrEmpty(fxKey)) return;
+        SpellImpact.Play(fxKey, point, normal, 0.6f + radius * 0.8f, effectColor);
+        SpellSounds.Impact(fxKey, point);
     }
 
     // called right after Instantiate to override the prefab values (spells use this)
@@ -243,7 +245,7 @@ public class ExplosionFlash : MonoBehaviour
     public static void Spawn(Vector3 point, float radius, Color? color = null, string fxKey = null)
     {
         Color c = color ?? new Color(1f, 0.55f, 0.15f);
-        SpellFX.Play(Sfx.Explosion, point);
+        if (!SpellSounds.Impact(fxKey, point, radius)) SpellFX.Play(Sfx.Explosion, point);
         CameraShake.AddAt(point, Mathf.Clamp01(radius * 0.07f));
         // a spell with its own impact effect needs no plain flash; the boss and enemies still use the generic one
         if (SpellFX.UseMagicFX && SpellImpact.Play(fxKey, point, Vector3.up, radius, c)) return;

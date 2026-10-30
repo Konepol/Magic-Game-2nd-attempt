@@ -181,7 +181,7 @@ public static class SpellFX
         AudioSource.PlayClipAtPoint(clips[i], pos, volume * PlayerProfile.EffectVolume);
     }
 
-    static void PlayClip(AudioClip clip, Vector3 pos, float volume, float pitch)
+    internal static void PlayClip(AudioClip clip, Vector3 pos, float volume, float pitch)
     {
         var go = new GameObject("Sfx_" + clip.name);
         go.transform.position = pos;
