@@ -137,6 +137,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         DropAllCircles();
         weapon = newWeapon;
         AllocateSlots(Mathf.Max(CapacityFor(newWeapon), 1));       // a different weapon may have more or fewer spells
+        ProjectilePool.WarmFor(newWeapon);
     }
 
     // 0..1 progress of the current hold toward the hold variant, 0 when not charging
@@ -167,6 +168,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             if (chosen != null) { weapon = chosen; loadout = null; }
         }
         AllocateSlots(CapacityFor(weapon));
+        ProjectilePool.WarmFor(weapon);
     }
 
     // a weapon may have fewer or more spells than there are keys; spells past the last key have no key bound yet
@@ -1422,6 +1424,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             return false;
         }
 
+        // the staff turns to the target at the moment the spell leaves, so it starts from the tip of a staff that points at it
+        if (wandAim == null) wandAim = GetComponentInParent<WandAim>();
+        if (wandAim != null && v.kind != SpellKind.Barrier) wandAim.Snap(GetAimDirection());
+
         bool cast = false;
         switch (v.kind)
         {
@@ -1447,8 +1453,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (mana != null) mana.Spend(v.manaCost);
 
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
-        if (sound == Sfx.BarrierPlace || !SpellSounds.Cast(spell.name, muzzle.position)) SpellFX.Play(sound, muzzle.position, 0.8f);
-        SpellFX.CastFlash(LaunchPosition, v.effectColor);
+        // a held beam fires every tick: its sound and cast flash are only repeated now and then
+        if (!IsSustained(spell) || Time.time - lastBeamEffect > 0.45f)
+        {
+            lastBeamEffect = Time.time;
+            if (sound == Sfx.BarrierPlace || !SpellSounds.Cast(spell.name, muzzle.position)) SpellFX.Play(sound, muzzle.position, 0.8f);
+            SpellFX.CastFlash(LaunchPosition, v.effectColor);
+        }
 
         // a tapped (instant) spell gets a small quick circle; limited in rate so rapid-fire spells do not flood the screen
         if (spell.tapCircle != null && ReferenceEquals(v, spell.tap) && Time.time - lastTapCircle[slot] > 0.3f)
@@ -1566,10 +1577,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             float angle = count == 1 ? 0f : Mathf.Lerp(-v.spreadDegrees * 0.5f, v.spreadDegrees * 0.5f, k / (float)(count - 1));
             Vector3 shotDir = Quaternion.AngleAxis(angle, mainCamera.transform.up) * dir;
 
-            var p = Instantiate(prefab, LaunchPosition, Quaternion.LookRotation(shotDir));
-            p.effectColor = v.effectColor;
-            p.fxKey = spell.name;
-            ProjectileModels.Attach(p.gameObject, spell.name, v.effectColor);
+            var p = ProjectilePool.Get(prefab, spell.name, spell.name, v.effectColor, v.projectileScale, LaunchPosition, Quaternion.LookRotation(shotDir));
             p.Init(v.damage, v.projectileSpeed, v.lifetime, v.projectileScale, v.explosionRadius,
                 v.pierceCount, v.explodeOnPierce, v.breaksBarriers, v.status);
         }
@@ -1577,6 +1585,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     }
 
     // instant hit along the aim line
+    WandAim wandAim;
+    float lastBeamEffect;
+    static bool IsSustained(SpellData spell) => spell != null && (spell.name == "RadiantBeam" || spell.name == "BlizzardLance");
+
     bool CastLaser(SpellVariant v, SpellData spell)
     {
         Vector3 origin = LaunchPosition;
@@ -1618,8 +1630,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             break;
         }
 
-        LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration);
-        if (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.name, end, -dir, 1.1f, v.effectColor)) SpellFX.Sparks(end, v.effectColor);
+        LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration, spell.name);
+        // the sustained beams draw their own starburst at the far end every few ticks
+        if (!IsSustained(spell) && (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.name, end, -dir, 1.1f, v.effectColor))) SpellFX.Sparks(end, v.effectColor);
         SpellSounds.Impact(spell.name, end, 0f, 0.6f);
         return true;
     }

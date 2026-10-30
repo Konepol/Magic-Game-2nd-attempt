@@ -8,14 +8,27 @@ public class BossProjectile : MonoBehaviour
     Vector3 velocity;
     float damage, radius, life;
     int mask;
+    ProjectilePool.Pool pool;
 
+    // takes a ball from the pool for this colour (the pool makes one the first time)
     public static void Spawn(Vector3 position, Vector3 direction, float speed, float damage, Color color, float size = 0.9f, float life = 7f)
+    {
+        var p = (BossProjectile)ProjectilePool.Take(ProjectilePool.BossPool(color), position, Quaternion.identity);
+        p.transform.localScale = Vector3.one * size;
+        p.velocity = direction.normalized * speed;
+        p.damage = damage;
+        p.radius = size * 0.5f;
+        p.life = life;
+        p.mask = ~((1 << LayerMask.NameToLayer("Enemy")) | (1 << 2));     // everything except the enemies themselves and Ignore Raycast
+    }
+
+    // builds a new ball for the pool
+    internal static BossProjectile Create(ProjectilePool.Pool pool, Color color)
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.name = "BossProjectile";
         Destroy(go.GetComponent<Collider>());
-        go.transform.position = position;
-        go.transform.localScale = Vector3.one * size;
+        go.transform.SetParent(pool.group, false);
 
         if (sharedMat == null) sharedMat = SpellVisuals.Make(Color.white, false);
         var r = go.GetComponent<Renderer>();
@@ -28,17 +41,14 @@ public class BossProjectile : MonoBehaviour
 
         ProjectileModels.Attach(go, "Boss", color);
         var p = go.AddComponent<BossProjectile>();
-        p.velocity = direction.normalized * speed;
-        p.damage = damage;
-        p.radius = size * 0.5f;
-        p.life = life;
-        p.mask = ~((1 << LayerMask.NameToLayer("Enemy")) | (1 << 2));     // everything except the enemies themselves and Ignore Raycast
+        p.pool = pool;
+        return p;
     }
 
     void Update()
     {
         life -= Time.deltaTime;
-        if (life <= 0f) { Destroy(gameObject); return; }
+        if (life <= 0f) { Despawn(); return; }
 
         Vector3 step = velocity * Time.deltaTime;
         float distance = step.magnitude;
@@ -69,6 +79,8 @@ public class BossProjectile : MonoBehaviour
     void Burst(Vector3 point)
     {
         SpellFX.Sparks(point, new Color(1f, 0.6f, 0.3f));
-        Destroy(gameObject);
+        Despawn();
     }
+
+    void Despawn() => ProjectilePool.Release(pool, this);
 }

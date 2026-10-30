@@ -324,6 +324,16 @@ public class EnemyGround : MonoBehaviour
         state = State.Chase;
     }
 
+    Color ShotColor => attackType == AttackType.HomingShot ? new Color(0.7f, 0.4f, 1f) : new Color(1f, 0.45f, 0.35f);
+
+    // the wave spawner tells the projectile pool how many of these enemies are coming, so their shots are made before they are needed
+    public void DemandShots(int enemies)
+    {
+        if (projectilePrefab == null || (attackType != AttackType.HeavyShot && attackType != AttackType.HomingShot)) return;
+        int inFlight = Mathf.Clamp(Mathf.CeilToInt(Mathf.Min(projectileLifetime, 3f) / Mathf.Max(cooldown + windupTime, 0.5f)), 1, 3);
+        ProjectilePool.DemandEnemyShots(projectilePrefab, ShotColor, projectileScale, enemies * inFlight);
+    }
+
     void FireShot()
     {
         if (projectilePrefab == null) return;
@@ -332,10 +342,7 @@ public class EnemyGround : MonoBehaviour
         Vector3 toward = attackType == AttackType.HomingShot ? target.position + Vector3.up : aimPoint;
         Vector3 dir = (toward - origin).normalized;
 
-        var p = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(dir));
-        var shotColor = attackType == AttackType.HomingShot ? new Color(0.7f, 0.4f, 1f) : new Color(1f, 0.45f, 0.35f);
-        p.effectColor = shotColor;
-        ProjectileModels.Attach(p.gameObject, "Enemy", shotColor);
+        var p = ProjectilePool.Get(projectilePrefab, "Enemy", null, ShotColor, projectileScale, origin, Quaternion.LookRotation(dir));
         p.Init(damage, projectileSpeed, projectileLifetime, projectileScale, explosionRadius,
             0, false, false, default, attackType == AttackType.HomingShot ? homingTurnRate : 0f);
     }

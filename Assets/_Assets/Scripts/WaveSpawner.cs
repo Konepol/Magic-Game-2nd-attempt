@@ -120,9 +120,14 @@ public class WaveSpawner : MonoBehaviour
         if (StartedAt < 0f) StartedAt = Time.time;
 
         queue.Clear();
+        ProjectilePool.BeginEnemyDemand();
         foreach (var e in waves[index].entries)
+        {
+            if (e.prefab != null && e.prefab.TryGetComponent(out EnemyGround shooter)) shooter.DemandShots(e.count);
             for (int i = 0; i < e.count; i++)
                 if (e.prefab != null) queue.Enqueue(e.prefab);
+        }
+        ProjectilePool.EndEnemyDemand();
 
         phase = Phase.Spawning;
         nextSpawnTime = Time.time;

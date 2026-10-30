@@ -20,7 +20,12 @@ public class Projectile : MonoBehaviour
     Transform homingTarget;
     Vector3 baseScale;
     float spawnTime;
+    Vector3 prefabScale;
+    float prefabRadius;
+    bool fxReady;
+    readonly List<ParticleSystem> trails = new List<ParticleSystem>();
     readonly HashSet<IDamageable> pierced = new HashSet<IDamageable>();
+    internal ProjectilePool.Pool pool;     // null for a shot that was not made by the pool: it is destroyed instead of given back
 
     static readonly RaycastHit[] hitBuffer = new RaycastHit[32];
     static readonly Collider[] overlapBuffer = new Collider[8];
@@ -52,24 +57,63 @@ public class Projectile : MonoBehaviour
         this.breaksBarriers = breaksBarriers;
         this.status = status;
         this.homingTurnRate = homingTurnRate;
-        transform.localScale *= scale;
-        radius *= scale;
+
+        // a reused shot starts again from the prefab's size and with nothing remembered from its last flight
+        transform.localScale = prefabScale * scale;
+        radius = prefabRadius * scale;
+        baseScale = transform.localScale;
+        pierced.Clear();
+        homingTarget = null;
+        spawnTime = Time.time;
+
+        if (fxReady) RestartTrails();
+        else BuildTrails();
     }
+
+    void Awake()
+    {
+        prefabScale = baseScale = transform.localScale;
+        prefabRadius = radius;
+    }
+
+    void OnEnable() { spawnTime = Time.time; }
 
     void Start()
     {
-        if (SpellFX.UseMagicFX)
-        {
-            MagicFX.StarTrail(transform, effectColor, Mathf.Clamp(transform.localScale.x, 0.6f, 2f));
-        }
-        spawnTime = Time.time;
-        baseScale = transform.localScale;
-        Destroy(gameObject, lifetime);
+        if (!fxReady) BuildTrails();       // shots made without Init
     }
 
+    void BuildTrails()
+    {
+        fxReady = true;
+        if (!SpellFX.UseMagicFX) return;
+        if (!ProjectileTrails.Attach(transform, fxKey, effectColor, Mathf.Clamp(transform.localScale.x, 0.6f, 2.5f)))
+            MagicFX.StarTrail(transform, effectColor, fxKey == "SparkStream" ? 0.3f : Mathf.Clamp(transform.localScale.x, 0.6f, 2f));      // Spark Stream leaves only a few tiny sparks
+        GetComponentsInChildren(true, trails);
+    }
+
+    // a disabled particle system comes back empty and stopped
+    void RestartTrails()
+    {
+        foreach (var ps in trails)
+        {
+            if (ps == null) continue;
+            ps.Clear(true);
+            ps.Play(true);
+        }
+    }
+
+    // back to the pool, or gone for a shot that did not come from it
+    void Despawn()
+    {
+        if (pool != null) ProjectilePool.Release(pool, this);
+        else Destroy(gameObject);
+    }
 
     void Update()
     {
+        if (Time.time - spawnTime >= lifetime) { Despawn(); return; }
+
         float speedFactor = homingTurnRate > 0f ? Steer() : 1f;
         if (homingTurnRate > 0f && CheckOverlap()) return;
 
@@ -93,7 +137,7 @@ public class Projectile : MonoBehaviour
                 // an explosion already reaches the barrier, so only hit it directly when there is no blast
                 if (explosionRadius > 0f) Explode(hit.point);
                 else barrier.Hit(damage, breaksBarriers, hit.point);
-                Destroy(gameObject);
+                Despawn();
                 return;
             }
 
@@ -170,7 +214,7 @@ public class Projectile : MonoBehaviour
                 if (!barrier.Blocks(damageTag)) continue;
                 if (explosionRadius > 0f) Explode(transform.position);
                 else barrier.Hit(damage, breaksBarriers, transform.position);
-                Destroy(gameObject);
+                Despawn();
                 return true;
             }
 
@@ -184,7 +228,7 @@ public class Projectile : MonoBehaviour
                 target.TakeDamage(damage, transform.position);
                 StatusEffects.Apply(col, status);
             }
-            Destroy(gameObject);
+            Despawn();
             return true;
         }
         return false;
@@ -207,7 +251,7 @@ public class Projectile : MonoBehaviour
             Impact(hit.point, hit.normal);
         }
 
-        Destroy(gameObject);
+        Despawn();
     }
 
     // damages everything with the damage tag inside the radius, once each

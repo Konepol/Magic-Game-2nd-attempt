@@ -93,6 +93,7 @@ public class BossEnemy : MonoBehaviour
     {
         var go = GameObject.FindGameObjectWithTag("Player");
         if (go != null) { player = go.transform; playerHealth = go.GetComponentInParent<Health>(); }
+        ProjectilePool.WarmBoss(PhaseColors[0], 40);
 
         // the walking agent is made now, after the scene's NavMesh has been built
         if (NavMesh.SamplePosition(transform.position, out var hit, 15f, NavMesh.AllAreas))
@@ -338,6 +339,7 @@ public class BossEnemy : MonoBehaviour
     void EnterPhase(int phase)
     {
         Phase = phase;
+        ProjectilePool.WarmBoss(PhaseColors[Mathf.Clamp(phase - 1, 0, 2)], 40);
         pendingRoar = true;
         SetPhaseColor(phase);
         if (phase == 3) StartCoroutine(HazardLoop());
