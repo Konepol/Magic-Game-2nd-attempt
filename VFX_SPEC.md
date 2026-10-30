@@ -63,4 +63,22 @@ Status is tracked at the bottom.
 
 ## Status
 Done: Arcane Bolt (violet colours, small violet pop impact, tap thrust and two-handed hold charge with a swelling hand orb; cast styles live in SpellCastPose.cs, impacts in SpellImpact.cs).
-Next: Scatter Shot, then down the list in the order above. Cast styles are added as entries in CastStyles.Build; a spell without one keeps the shared wand animation.
+Done: Scatter Shot (tap 5 shards in a 44 degree fan, hold 7 in an 80 degree fan with damage rebalanced to the old totals; sideways arm sweep, wider on hold).
+Done: Spark Stream (yellow-white thin tracers, tiny sparks as trail, almost no impact; arm held out and trembling).
+Cast styles are now built from reusable moves (class Moves in SpellCastPose.cs); CastStyle.Fuse(a, b) gives a fusion the right arm of one parent and the left arm of the other. Each base spell keeps its own unique style.
+Done (first full pass, 2026-10-30): all remaining spells and fusions. Projectile trails (ProjectileTrails.cs), beams (SpellBeams.cs: Lightning jagged bolt, Radiant and Blizzard sustained beams via autoRepeatWhenHeld), ground effects (SpellImpactGround.cs: spikes, meteors, Absolute Zero freeze wave and dim, Tremor waves, Cyclone pull field, cracks/scorch/frost decals), Freeze status with ice shell (StatusEffects.cs), barrier hit ripple, cast styles for every spell.
+Not done: Absolute Zero's slight rise off the ground (the caster is not lifted); CastStyle.Fuse exists but no fusion uses it yet (each fusion has its own style from Moves).
+Needs the user's play-test: pose and timing of the cast animations, sizes and brightness of effects, balance of the sustained beams, Cyclone and Sun Lance numbers. in the order above. Cast styles are added as entries in CastStyles.Build; a spell without one keeps the shared wand animation.
+
+## Decisions from the user (2026-10-30)
+- Absolute Zero: "frozen solid" = a tint plus ice shell effect on enemies. On the ground it floats the caster only when off the broom; on the broom it uses a different cast animation.
+- Ground cracks etc.: adding decals is fine.
+- Beams (Radiant Beam, Blizzard Lance, and the other held beams) work like Spark Stream: hold to keep one beam in place and do damage continuously until release, draining mana over time. Sun Lance becomes a plain projectile instead.
+- Cyclone: change into a ground-based spell that pulls enemies toward the centre of the spell on the ground; flying enemies are pulled down too (real gameplay).
+- Arcane Ward ripple, and the rest of the cast animations: normal arm cast animation like Arcane Bolt (no special leg/body logic), except Absolute Zero as above.
+
+## Working rules (2026-10-30, user said do all spells at once)
+- Balance: follow the spec's numbers (Fire Burst radius 4, etc.) and set damage, mana drain and pull strength by feel; the user tunes after play-testing.
+- Absolute Zero: enemies hit are actually frozen in place for a few seconds (stop moving and attacking), with the ice shell, then break free.
+- Commits: one commit at the end when all spells are done (still needs the user's explicit OK to commit and push).
+- Sustained beams: like Spark Stream (hold to fire, steady mana drain, release to stop, ends when mana runs out), no wind-up.

@@ -119,7 +119,7 @@ public class OptionsMenu
         {
             string id = bind.id;
             var row = UIKit.Box(rows, "Row_" + id, UIKit.PanelColor);
-            row.rectTransform.sizeDelta = new Vector2(1380f, 64f);
+            if (!UIKit.IsBaked(row.rectTransform)) row.rectTransform.sizeDelta = new Vector2(1380f, 64f);
 
             var name = UIKit.Label(row.transform, "Name", bind.label, 32, Color.white, TextAnchor.MiddleLeft, true);
             UIKit.Place(name.rectTransform, new Vector2(0f, 0.5f), new Vector2(380f, 0f), new Vector2(660f, 56f));
@@ -200,7 +200,8 @@ public class OptionsMenu
 
     void Hint(GameObject target, string message)
     {
-        var hover = target.AddComponent<HoverHint>();
+        var hover = target.GetComponent<HoverHint>();
+        if (hover == null) hover = target.AddComponent<HoverHint>();
         hover.target = hintText;
         hover.message = message;
         hover.idleMessage = HintIdle;

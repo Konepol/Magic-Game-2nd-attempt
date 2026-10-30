@@ -40,7 +40,7 @@ public class DamageNumbers : MonoBehaviour
     static void Create()
     {
         if (FindAnyObjectByType<DamageNumbers>() != null) return;
-        new GameObject("DamageNumbers").AddComponent<DamageNumbers>();
+        SceneGroups.Put(new GameObject("DamageNumbers"), "Systems").AddComponent<DamageNumbers>();
     }
 
     void OnEnable() => Health.AnyDamaged += OnDamaged;

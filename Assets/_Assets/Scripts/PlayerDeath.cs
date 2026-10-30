@@ -3,7 +3,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-// Placeholder death handling: freezes input, slows time, shows a game over screen and restarts on request.
+// Death handling: freezes input, slows time, shows a game over screen and restarts on request.
+// The screen is built with UIKit, so it can be baked into a prefab and edited (Tools > Magic > Bake UI Prefabs).
 public class PlayerDeath : MonoBehaviour
 {
     [SerializeField] float slowMotionScale = 0.25f;
@@ -12,7 +13,8 @@ public class PlayerDeath : MonoBehaviour
     Health health;
     bool dead;
     float deathTime;
-    GUIStyle bigStyle, smallStyle;
+    CanvasGroup screen;
+    GameObject prompt;
 
     void Awake() => health = GetComponent<Health>();
 
@@ -54,14 +56,55 @@ public class PlayerDeath : MonoBehaviour
         var mana = GetComponent<Mana>();
         if (mana != null) mana.enabled = false;
 
+        UIKit.EnsureEventSystem();
+        UIKit.BeginAdopt();                // use the baked prefab (Resources/UI/DeathScreen) when there is one
+        BuildScreen();
+        UIKit.EndAdopt();
+
         Time.timeScale = slowMotionScale;
         SpellFX.Play(Sfx.Death, transform.position);
         CameraShake.Add(0.6f);
     }
 
+    // used by the UI baker (Tools > Magic > Bake UI Prefabs): builds the screen without a prefab and returns its canvas
+    public GameObject BuildForBake()
+    {
+        var canvas = BuildScreen();
+        screen.alpha = 1f;                 // visible and complete while you edit it
+        prompt.SetActive(true);
+        return canvas;
+    }
+
+    GameObject BuildScreen()
+    {
+        var canvas = UIKit.MakeCanvas("DeathScreen", 250);
+        screen = canvas.GetComponent<CanvasGroup>();
+        if (screen == null) screen = canvas.gameObject.AddComponent<CanvasGroup>();
+        screen.interactable = false;
+        screen.blocksRaycasts = false;
+        screen.alpha = 0f;
+
+        var dim = UIKit.Box(canvas.transform, "Dim", new Color(0f, 0f, 0f, 0.7f));
+        UIKit.Stretch(dim.rectTransform);
+
+        var title = UIKit.Label(canvas.transform, "Title", "YOU DIED", 110, new Color(0.9f, 0.15f, 0.1f), TextAnchor.MiddleCenter, true);
+        UIKit.Place(title.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 90f), new Vector2(1400f, 160f));
+
+        var hint = UIKit.Label(canvas.transform, "Prompt", "Press R, Enter or click to restart      M: main menu", 36, Color.white, TextAnchor.MiddleCenter);
+        UIKit.Place(hint.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(1600f, 60f));
+        prompt = hint.gameObject;
+        prompt.SetActive(false);
+        return canvas.gameObject;
+    }
+
     void Update()
     {
-        if (!dead || Time.unscaledTime - deathTime < restartPromptDelay) return;
+        if (!dead) return;
+
+        float t = Time.unscaledTime - deathTime;
+        if (screen != null) screen.alpha = Mathf.Clamp01(t / 1.5f);
+        if (t < restartPromptDelay) return;
+        if (prompt != null && !prompt.activeSelf) prompt.SetActive(true);
 
         bool restart = (Keyboard.current != null && (Keyboard.current.rKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame))
                        || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame);
@@ -78,30 +121,5 @@ public class PlayerDeath : MonoBehaviour
             Cursor.visible = true;
             SceneManager.LoadScene(PlayerProfile.MenuScene);
         }
-    }
-
-    void OnGUI()
-    {
-        if (!dead) return;
-
-        if (bigStyle == null)
-        {
-            bigStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 72, fontStyle = FontStyle.Bold };
-            smallStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 24 };
-            bigStyle.normal.textColor = new Color(0.9f, 0.15f, 0.1f);
-            smallStyle.normal.textColor = Color.white;
-        }
-
-        float t = Time.unscaledTime - deathTime;
-
-        Color old = GUI.color;
-        GUI.color = new Color(0f, 0f, 0f, Mathf.Clamp01(t / 1.5f) * 0.7f);
-        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
-        GUI.color = new Color(1f, 1f, 1f, Mathf.Clamp01(t / 1f));
-
-        GUI.Label(new Rect(0, Screen.height * 0.35f, Screen.width, 100f), "YOU DIED", bigStyle);
-        if (t >= restartPromptDelay)
-            GUI.Label(new Rect(0, Screen.height * 0.35f + 100f, Screen.width, 40f), "Press R, Enter or click to restart      M: main menu", smallStyle);
-        GUI.color = old;
     }
 }

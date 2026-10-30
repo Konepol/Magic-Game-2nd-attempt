@@ -142,8 +142,26 @@ public class StageRunner : MonoBehaviour
         Cursor.visible = true;
 
         UIKit.EnsureEventSystem();
-        var canvas = UIKit.MakeCanvas("StageResults", 200);
         SpellFX.Play(Sfx.Ready, Camera.main != null ? Camera.main.transform.position : Vector3.zero, 1f);
+
+        bool best = PlayerProfile.SubmitTime(stage, clearTime);
+        UIKit.BeginAdopt();                // use the baked prefab (Resources/UI/StageResults) when there is one
+        BuildResults(best);
+        UIKit.EndAdopt();
+    }
+
+    // used by the UI baker (Tools > Magic > Bake UI Prefabs): builds the screen without a prefab, with no kills listed, and returns its canvas
+    public GameObject BuildForBake()
+    {
+        catalog = GameCatalog.Load();
+        stage = 0;
+        clearTime = 95f;
+        return BuildResults(false);
+    }
+
+    GameObject BuildResults(bool best)
+    {
+        var canvas = UIKit.MakeCanvas("StageResults", 200);
 
         var dim = UIKit.Box(canvas.transform, "Dim", new Color(0f, 0f, 0f, 0.7f));
         UIKit.Stretch(dim.rectTransform);
@@ -154,8 +172,6 @@ public class StageRunner : MonoBehaviour
         string stageName = catalog != null && stage >= 0 && stage < catalog.stages.Length ? catalog.stages[stage].displayName : "Stage";
         var title = UIKit.Label(panel.transform, "Title", stageName.ToUpper() + " CLEARED", 66, UIKit.Gold, TextAnchor.MiddleCenter, true);
         UIKit.Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(940f, 100f));
-
-        bool best = PlayerProfile.SubmitTime(stage, clearTime);
 
         float y = 250f;
         Row(panel.transform, ref y, "Time", PlayerProfile.FormatTime(clearTime) + (best ? "   NEW BEST!" : ""), best ? UIKit.Gold : Color.white);
@@ -177,13 +193,14 @@ public class StageRunner : MonoBehaviour
         int next = stage + 1;
         bool hasNext = catalog != null && next < catalog.stages.Length && Application.CanStreamedLevelBeLoaded(catalog.stages[next].sceneName);
 
-        var nextButton = UIKit.MakeButton(panel.transform, hasNext ? "Next Stage" : "Next Stage (coming soon)", new Vector2(520f, 80f), () => LoadStage(next), 32);
+        var nextButton = UIKit.MakeButton(panel.transform, hasNext ? "Next Stage" : "Next Stage (coming soon)", new Vector2(520f, 80f), () => LoadStage(next), 32, "NextStage");
         UIKit.Place((RectTransform)nextButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 190f), new Vector2(520f, 80f));
         nextButton.interactable = hasNext;
-        if (!hasNext) nextButton.GetComponentInChildren<Text>().color = UIKit.Dim;
+        nextButton.GetComponentInChildren<Text>().color = hasNext ? Color.white : UIKit.Dim;
 
         var menuButton = UIKit.MakeButton(panel.transform, "Main Menu", new Vector2(520f, 80f), GoToMenu, 32);
         UIKit.Place((RectTransform)menuButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 85f), new Vector2(520f, 80f));
+        return canvas.gameObject;
     }
 
     static void Row(Transform parent, ref float y, string label, string value, Color valueColor)
@@ -191,6 +208,7 @@ public class StageRunner : MonoBehaviour
         var l = UIKit.Label(parent, label, label, 40, UIKit.Dim, TextAnchor.MiddleLeft, true);
         UIKit.Place(l.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-250f, y), new Vector2(430f, 60f));
         var v = UIKit.Label(parent, label + "Value", value, 44, valueColor, TextAnchor.MiddleRight, true);
+        v.color = valueColor;              // follows the result (gold for a new best) even when the look comes from the prefab
         UIKit.Place(v.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(190f, y), new Vector2(520f, 60f));
         y -= 72f;
     }

@@ -54,7 +54,7 @@ public class CastingCircle : MonoBehaviour
     {
         if (data == null || data.layers == null || data.layers.Length == 0 || source == null) return null;
 
-        var go = new GameObject("CastingCircle_" + data.name);
+        var go = SceneGroups.Put(new GameObject("CastingCircle_" + data.name), "VFX/Casting");
         var c = go.AddComponent<CastingCircle>();
         c.data = data;
         c.spellColor = color;

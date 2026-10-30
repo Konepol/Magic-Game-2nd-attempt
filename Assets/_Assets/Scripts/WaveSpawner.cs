@@ -169,7 +169,7 @@ public class WaveSpawner : MonoBehaviour
         var prefabAgent = prefab.GetComponent<NavMeshAgent>();
         if (prefabAgent != null) pos += Vector3.up * prefabAgent.baseOffset * prefab.transform.lossyScale.y;
 
-        var go = Instantiate(prefab, pos, rot);
+        var go = Instantiate(prefab, pos, rot, SceneGroups.Get("Enemies"));
         if (go.TryGetComponent(out NavMeshAgent agent) && agent.enabled && !agent.isOnNavMesh) agent.Warp(navPos);
         go.SendMessage("Alert", SendMessageOptions.DontRequireReceiver);
         alive.Add(go);

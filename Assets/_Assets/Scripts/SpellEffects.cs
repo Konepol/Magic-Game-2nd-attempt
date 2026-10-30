@@ -32,7 +32,7 @@ public static class SpellVisuals
     public static LineRenderer CreateRing(Transform parent, Material mat, float width)
     {
         var go = new GameObject("Ring");
-        if (parent != null) go.transform.SetParent(parent, false);
+        go.transform.SetParent(parent != null ? parent : SceneGroups.Get("VFX/Misc"), false);
         var lr = go.AddComponent<LineRenderer>();
         lr.useWorldSpace = true;
         lr.loop = true;
@@ -63,9 +63,10 @@ public class LaserBeam : MonoBehaviour
     Color color;
     float width, duration, start;
 
-    public static void Spawn(Vector3 from, Vector3 to, float width, Color color, float duration)
+    public static void Spawn(Vector3 from, Vector3 to, float width, Color color, float duration, string fxKey = null)
     {
-        var go = new GameObject("LaserBeam");
+        if (fxKey != null && SpellFX.UseMagicFX && BeamFX.Handles(fxKey)) { BeamFX.Spawn(from, to, width, color, duration, fxKey); return; }
+        var go = SceneGroups.Put(new GameObject("LaserBeam"), "VFX/Beams");
         var b = go.AddComponent<LaserBeam>();
         b.mat = SpellVisuals.Make(color, true);
         b.line = go.AddComponent<LineRenderer>();
@@ -110,7 +111,7 @@ public class AoeStrike : MonoBehaviour
 
     public static void Spawn(Vector3 point, SpellVariant v, string damageTag, bool inAir = false, string fxKey = null)
     {
-        var go = new GameObject("AoeStrike");
+        var go = SceneGroups.Put(new GameObject("AoeStrike"), "VFX/Misc");
         var s = go.AddComponent<AoeStrike>();
         s.point = point;
         s.v = v;
@@ -118,6 +119,7 @@ public class AoeStrike : MonoBehaviour
         s.inAir = inAir;
         s.fxKey = fxKey;
         s.start = Time.time;
+        SpellImpact.Telegraph(fxKey, point, v.aoeRadius, v.aoeDelay, v.effectColor, inAir);
 
         if (v.aoeDelay <= 0f) { s.Strike(); Destroy(go); return; }
 
@@ -139,6 +141,13 @@ public class AoeStrike : MonoBehaviour
     void Strike()
     {
         float r = v.aoeRadius;
+        if (fxKey == "Cyclone" && SpellFX.UseMagicFX)
+        {
+            // Cyclone is a ground vortex now: it pulls enemies in for a few seconds and hurts them steadily, instead of one blast
+            SpellImpact.CycloneStart(point, r, 5f, v.damage / 5f, damageTag);
+            SpellFX.Play(Sfx.Explosion, point, 0.6f);
+            return;
+        }
         float h = Mathf.Max(v.aoeHeight, r * 2f);
         var cols = inAir
             ? Physics.OverlapSphere(point, r, ~0, QueryTriggerInteraction.Ignore)

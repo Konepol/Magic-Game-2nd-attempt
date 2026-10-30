@@ -17,7 +17,7 @@ public class SpeedLines : MonoBehaviour
 
     public static SpeedLines Create()
     {
-        return new GameObject("SpeedLines").AddComponent<SpeedLines>();
+        return SceneGroups.Put(new GameObject("SpeedLines"), "Systems").AddComponent<SpeedLines>();
     }
 
     void Awake()

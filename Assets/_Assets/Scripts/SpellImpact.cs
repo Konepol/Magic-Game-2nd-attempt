@@ -3,7 +3,7 @@ using UnityEngine;
 // One impact effect per spell (and per fusion), built from the same pieces as MagicFX: a glow core, tumbling 3D shapes, glowing billboards, stretched
 // streaks, shock rings, vortexes and lightning arcs. Each spell mixes them differently so it reads at a glance: fire flares upward, frost shatters,
 // wind spins, venom splashes, lightning forks, earth throws rocks. Play returns false for a key it does not know, so callers can fall back.
-public static class SpellImpact
+public static partial class SpellImpact
 {
     // ---------- entry point ----------
 
@@ -20,28 +20,28 @@ public static class SpellImpact
         {
             case "ArcaneBolt": Arcane(pos, normal, r, color, lod); break;
             case "ScatterShot": Scatter(pos, normal, r, color, lod); break;
-            case "FireBurst": Fire(pos, normal, r, color, lod, 1f); break;
+            case "FireBurst": Fire(pos, normal, r, color, lod, 1f); Ring(pos, normal, r * 1.8f, new Color(1f, 0.6f, 0.25f), 0.45f, lod); break;
             case "SparkStream": Sparkle(pos, normal, r, color, lod); break;
             case "FrostShard": Frost(pos, normal, r, color, lod, 1f); break;
             case "WindBlade": Wind(pos, normal, r, color, lod, 1f); break;
-            case "VenomDart": Venom(pos, normal, r, color, lod); break;
+            case "VenomDart": Venom(pos, normal, r, color, lod); Mist(pos, r, new Color(0.5f, 0.85f, 0.35f), 2.4f, N(5, lod)); break;
 
-            case "InfernalBolt": Fire(pos, normal, r, color, lod, 1.3f); Ring(pos, normal, r * 1.5f, Lighter(color, 0.3f), 0.4f, lod); break;
+            case "InfernalBolt": Fire(pos, normal, r, color, lod, 1.3f); Ring(pos, normal, r * 1.5f, Lighter(color, 0.3f), 0.4f, lod); SmokeRing(pos, normal, r, lod); break;
             case "CinderStorm": Embers(pos, normal, r, color, lod); break;
             case "FirestormLance": Column(pos, normal, r, color, lod); break;
-            case "GlacierBolt": Frost(pos, normal, r, color, lod, 1.5f); Ring(pos, normal, r * 2.2f, color, 0.55f, lod); break;
+            case "GlacierBolt": Frost(pos, normal, r, color, lod, 1.5f); Ring(pos, normal, r * 2.2f, color, 0.55f, lod); Mist(pos, r, new Color(0.8f, 0.95f, 1f), 2f, N(8, lod)); if (normal.y > 0.5f && lod > 0.3f) Spikes(pos, r * 0.9f, 6, 1f, IceColors, 0f, 0.8f, 1.4f); break;
             case "Cyclone": Wind(pos, normal, r, color, lod, 1.5f); Vortex(pos, normal, r * 0.8f, 3.5f, 7f, color, lod); break;
-            case "PlagueStorm": Plague(pos, normal, r, color, lod); break;
+            case "PlagueStorm": Plague(pos, normal, r, color, lod); Mist(pos, r * 1.2f, new Color(0.5f, 0.8f, 0.35f), 3f, N(6, lod)); break;
 
             case "LightningLance": Lightning(pos, normal, r, color, lod, 1f); break;
             case "RadiantBeam": Radiant(pos, normal, r, color, lod, 1f); break;
             case "BlizzardLance": Frost(pos, normal, r, color, lod, 1.2f); Vortex(pos, normal, r * 0.7f, 2.5f, 5f, Lighter(color, 0.4f), lod); break;
-            case "SunLance": Radiant(pos, normal, r, color, lod, 1.4f); Fire(pos, normal, r * 0.9f, new Color(1f, 0.6f, 0.2f), lod, 1f); break;
-            case "EarthSpike": Earth(pos, normal, r, color, lod, 1f); break;
-            case "MeteorStrike": Meteor(pos, normal, r, color, lod); break;
-            case "AbsoluteZero": Absolute(pos, normal, r, color, lod); break;
-            case "ThunderMeteor": Meteor(pos, normal, r, color, lod); Lightning(pos, normal, r * 1.3f, new Color(1f, 0.95f, 0.5f), lod, 1.3f); break;
-            case "TremorStorm": Earth(pos, normal, r * 1.2f, color, lod, 1.4f); Ring(pos, normal, r * 2.4f, Lighter(color, 0.3f), 0.5f, lod); break;
+            case "SunLance": Radiant(pos, normal, r, color, lod, 1.4f); Fire(pos, normal, r * 0.9f, new Color(1f, 0.6f, 0.2f), lod, 1f); if (normal.y > 0.5f && lod > 0.3f) Scorch.Spawn(pos, r * 1.3f, 14f, new Color(0.05f, 0.04f, 0.03f)); break;
+            case "EarthSpike": EarthGround(pos, normal, r, color, lod, 1f); break;
+            case "MeteorStrike": MeteorGround(pos, normal, r, color, lod, false); break;
+            case "AbsoluteZero": AbsoluteGround(pos, normal, r, color, lod); break;
+            case "ThunderMeteor": MeteorGround(pos, normal, r, color, lod, true); break;
+            case "TremorStorm": TremorGround(pos, normal, r, color, lod); break;
             default: return false;
         }
         return true;
@@ -92,9 +92,9 @@ public static class SpellImpact
 
     static void Sparkle(Vector3 p, Vector3 n, float r, Color c, float lod)
     {
-        Core(p, n, r * 0.45f, c, 0.2f);
-        Emit(p, n, new Spec { stretch = true, count = N(14, lod), size = new Vector2(0.05f, 0.1f), speed = new Vector2(4f, 9f), life = new Vector2(0.2f, 0.4f), cone = 120f, a = Lighter(c, 0.4f), b = Color.white });
-        Stars(p, r * 0.5f, Lighter(c, 0.4f), N(2, lod), 0.8f);
+        // almost nothing: a small flicker and a few tiny sparks
+        Core(p, n, r * 0.25f, c, 0.12f);
+        Emit(p, n, new Spec { stretch = true, count = N(5, lod), size = new Vector2(0.03f, 0.06f), speed = new Vector2(3f, 6f), life = new Vector2(0.12f, 0.25f), cone = 120f, a = Lighter(c, 0.4f), b = Color.white });
     }
 
     static void Frost(Vector3 p, Vector3 n, float r, Color c, float lod, float mul)
@@ -214,7 +214,7 @@ public static class SpellImpact
     // a one-shot particle burst; dir is the way the burst opens (the surface normal)
     static void Emit(Vector3 pos, Vector3 dir, Spec s)
     {
-        var go = new GameObject("FXImpact");
+        var go = SceneGroups.Put(new GameObject("FXImpact"), "VFX/Impacts");
         go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(dir));
         var ps = go.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -319,6 +319,7 @@ public static class SpellImpact
     static Mesh shardMesh, chunkMesh, ringMesh;
 
     static Mesh Orb() => MagicFX.OrbMesh();
+    public static Mesh ShardMesh() => Shard();
 
     // a long four-sided crystal (a bipyramid) about 1 unit long: ice shards
     static Mesh Shard()
@@ -368,7 +369,7 @@ public static class SpellImpact
     public static Mesh Torus()
     {
         if (ringMesh != null) return ringMesh;
-        const int major = 40, minor = 6; const float thick = 0.045f;
+        const int major = 40, minor = 6; const float thick = 0.03f;
         var v = new System.Collections.Generic.List<Vector3>(); var t = new System.Collections.Generic.List<int>();
         for (int i = 0; i <= major; i++)
         {
@@ -400,7 +401,7 @@ public static class SpellImpact
 
         public static void Spawn(Vector3 p, Vector3 n, float reach, Color c, int count)
         {
-            var a = new GameObject("FXArcs").AddComponent<Arcs>();
+            var a = SceneGroups.Put(new GameObject("FXArcs"), "VFX/Impacts").AddComponent<Arcs>();
             a.pos = p; a.normal = n; a.reach = reach;
             a.mat = SpellVisuals.Make(c, true);
             a.lines = new LineRenderer[count];

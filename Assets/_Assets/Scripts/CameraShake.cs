@@ -25,7 +25,7 @@ public class CameraShake : MonoBehaviour
     static void Create()
     {
         if (FindAnyObjectByType<CameraShake>() != null) return;
-        new GameObject("CameraShake").AddComponent<CameraShake>();
+        SceneGroups.Put(new GameObject("CameraShake"), "Systems").AddComponent<CameraShake>();
     }
 
     void Awake() => instance = this;

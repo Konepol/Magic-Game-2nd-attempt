@@ -2,10 +2,11 @@ using UnityEngine;
 
 // Turns the wand hand toward where a tap spell is being aimed: the arm is held out by the animation, and the wrist and forearm swing the wand
 // toward the aim direction for a moment after the cast. Runs after the animation each frame.
+[DefaultExecutionOrder(200)]                  // after the cast pose driver, so the wand ends up pointing at the aim whatever the arm pose
 public class WandAim : MonoBehaviour
 {
     public float holdTime = 0.45f;
-    public float maxAngle = 80f;
+    public float maxAngle = 170f;
 
     Animator animator;
     PlayerSpellCaster caster;
@@ -26,7 +27,17 @@ public class WandAim : MonoBehaviour
 
     void OnCasted(bool wasHold)
     {
-        if (!wasHold) until = Time.time + holdTime;
+        until = Time.time + holdTime;
+    }
+
+    // called by the caster at the very moment a spell leaves: the wand turns to the aim at once (this frame), so the shot starts at the tip
+    // of a wand that already points at the target, then the usual blend keeps it there for a moment
+    public void Snap(Vector3 desired)
+    {
+        if (hand == null || wand == null) return;
+        Turn(desired, 1f);
+        weight = 1f;
+        until = Time.time + holdTime;
     }
 
     void LateUpdate()
@@ -37,8 +48,11 @@ public class WandAim : MonoBehaviour
         weight = Mathf.MoveTowards(weight, target, Time.deltaTime * (target > weight ? 14f : 4f));
         if (weight <= 0.001f) return;
 
-        Vector3 desired = caster.AimDirection;
+        Turn(caster.AimDirection, weight);
+    }
 
+    void Turn(Vector3 desired, float weight)
+    {
         // the forearm takes a part of the turn, the hand the rest
         Vector3 now = wand.forward;
         Quaternion turn = Quaternion.FromToRotation(now, desired);

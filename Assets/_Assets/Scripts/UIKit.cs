@@ -1,10 +1,16 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 // Small helpers for building uGUI screens from code (the main menu and the stage results), in the same dark style as the HUD.
+//
+// A screen can also be baked into a prefab (Tools > Magic > Bake UI Prefabs, saved in Resources/UI) and then edited in the Unity editor.
+// While a screen is being built between BeginAdopt and EndAdopt, every helper first looks for an object of that name already in the baked
+// prefab and uses it: its position, size, colours, fonts and layout stay as edited, and the code only puts the texts and the click
+// handlers back. Anything the code builds that is not in the prefab is created as before, and anything extra you add in the prefab stays.
 public static class UIKit
 {
     public static readonly Color PanelColor = new Color(0.06f, 0.08f, 0.13f, 0.94f);
@@ -25,8 +31,70 @@ public static class UIKit
         }
     }
 
+    // ---------- adopting a baked prefab ----------
+
+    static bool adopting;
+    static readonly HashSet<Transform> taken = new HashSet<Transform>();
+
+    public static void BeginAdopt() { adopting = true; taken.Clear(); }
+    public static void EndAdopt() { adopting = false; taken.Clear(); sceneCanvas = null; }
+
+    // a canvas that already sits in the scene (the main menu's): the next MakeCanvas while adopting uses it instead of a prefab
+    static GameObject sceneCanvas;
+    public static void AdoptSceneCanvas(GameObject canvas) { sceneCanvas = canvas; }
+
+    // true for an object that was found in the baked prefab: its layout and style belong to the editor
+    static bool Found(Component c) => adopting && c != null && taken.Contains(c.transform);
+
+    // for screen code that sets a size or colour itself: leave it alone when it came from the prefab
+    public static bool IsBaked(Component c) => Found(c);
+
+    static RectTransform FindBaked(Transform parent, string name)
+    {
+        if (!adopting || parent == null) return null;
+        foreach (Transform c in parent)
+            if (c.name == name && !taken.Contains(c) && c is RectTransform rt) { taken.Add(c); return rt; }
+        return null;
+    }
+
+    static T Comp<T>(GameObject go) where T : Component
+    {
+        var c = go.GetComponent<T>();
+        return c != null ? c : go.AddComponent<T>();
+    }
+
+    // destroys a UI object now when baking in the editor, at the end of the frame when playing
+    public static void Kill(GameObject go)
+    {
+        if (go == null) return;
+        if (Application.isPlaying) UnityEngine.Object.Destroy(go);
+        else UnityEngine.Object.DestroyImmediate(go);
+    }
+
+    // ---------- building ----------
+
     public static Canvas MakeCanvas(string name, int sortingOrder)
     {
+        if (adopting)
+        {
+            if (sceneCanvas != null && sceneCanvas.name == name)
+            {
+                taken.Add(sceneCanvas.transform);
+                var inScene = sceneCanvas.GetComponent<Canvas>();
+                sceneCanvas = null;
+                if (inScene != null) return inScene;
+            }
+
+            var baked = Resources.Load<GameObject>("UI/" + name);
+            if (baked != null)
+            {
+                var copy = UnityEngine.Object.Instantiate(baked);
+                copy.name = name;
+                taken.Add(copy.transform);
+                return copy.GetComponent<Canvas>();
+            }
+        }
+
         var go = new GameObject(name, typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas = go.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -42,6 +110,9 @@ public static class UIKit
     // a UI object with a RectTransform under parent
     public static RectTransform Child(Transform parent, string name)
     {
+        var baked = FindBaked(parent, name);
+        if (baked != null) return baked;
+
         var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         return (RectTransform)go.transform;
@@ -49,6 +120,7 @@ public static class UIKit
 
     public static void Stretch(RectTransform rt)
     {
+        if (Found(rt)) return;
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
@@ -57,6 +129,7 @@ public static class UIKit
     // anchor: where in the parent (0..1), pos: offset from there in reference pixels
     public static void Place(RectTransform rt, Vector2 anchor, Vector2 pos, Vector2 size)
     {
+        if (Found(rt)) return;
         rt.anchorMin = rt.anchorMax = anchor;
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.anchoredPosition = pos;
@@ -66,17 +139,19 @@ public static class UIKit
     public static Image Box(Transform parent, string name, Color color)
     {
         var rt = Child(parent, name);
-        var img = rt.gameObject.AddComponent<Image>();
-        img.color = color;
+        var img = Comp<Image>(rt.gameObject);
+        if (!Found(rt)) img.color = color;
         return img;
     }
 
     public static Text Label(Transform parent, string name, string text, int size, Color color, TextAnchor align = TextAnchor.MiddleCenter, bool bold = false)
     {
         var rt = Child(parent, name);
-        var t = rt.gameObject.AddComponent<Text>();
+        var t = Comp<Text>(rt.gameObject);
+        t.text = text;                       // the words always come from the code; the look comes from the prefab when there is one
+        if (Found(rt)) return t;
+
         t.font = Font;
-        t.text = text;
         t.fontSize = size;
         t.color = color;
         t.alignment = align;
@@ -87,22 +162,27 @@ public static class UIKit
         return t;
     }
 
-    public static Button MakeButton(Transform parent, string text, Vector2 size, Action onClick, int fontSize = 30)
+    public static Button MakeButton(Transform parent, string text, Vector2 size, Action onClick, int fontSize = 30, string name = null)
     {
-        var img = Box(parent, text, Color.white);
-        img.rectTransform.sizeDelta = size;
+        var img = Box(parent, name ?? text, Color.white);
+        bool baked = Found(img.rectTransform);
+        if (!baked) img.rectTransform.sizeDelta = size;
 
-        var button = img.gameObject.AddComponent<Button>();
+        var button = Comp<Button>(img.gameObject);
         button.targetGraphic = img;
-        var colors = button.colors;
-        colors.normalColor = ButtonColor;
-        colors.highlightedColor = ButtonHover;
-        colors.pressedColor = Accent;
-        colors.selectedColor = ButtonColor;
-        colors.disabledColor = ButtonOff;
-        colors.colorMultiplier = 1f;
-        colors.fadeDuration = 0.08f;
-        button.colors = colors;
+        if (!baked)
+        {
+            var colors = button.colors;
+            colors.normalColor = ButtonColor;
+            colors.highlightedColor = ButtonHover;
+            colors.pressedColor = Accent;
+            colors.selectedColor = ButtonColor;
+            colors.disabledColor = ButtonOff;
+            colors.colorMultiplier = 1f;
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+        }
+        button.onClick.RemoveAllListeners();        // only the code's handlers; clicks you hooked up in the editor stay
         if (onClick != null) button.onClick.AddListener(() => onClick());
 
         var label = Label(img.transform, "Text", text, fontSize, Color.white, TextAnchor.MiddleCenter, true);
@@ -114,35 +194,42 @@ public static class UIKit
     public static ScrollRect MakeScroll(Transform parent, string name, Vector2 size, out RectTransform content)
     {
         var root = Box(parent, name, new Color(0f, 0f, 0f, 0.0001f));
-        root.rectTransform.sizeDelta = size;
-        var scroll = root.gameObject.AddComponent<ScrollRect>();
+        bool baked = Found(root.rectTransform);
+        if (!baked) root.rectTransform.sizeDelta = size;
+        var scroll = Comp<ScrollRect>(root.gameObject);
 
         var viewport = Child(root.transform, "Viewport");
         Stretch(viewport);
-        viewport.gameObject.AddComponent<RectMask2D>();
-        var viewImage = viewport.gameObject.AddComponent<Image>();
-        viewImage.color = new Color(0f, 0f, 0f, 0.0001f);
+        Comp<RectMask2D>(viewport.gameObject);
+        var viewImage = Comp<Image>(viewport.gameObject);
+        if (!Found(viewport)) viewImage.color = new Color(0f, 0f, 0f, 0.0001f);
 
         content = Child(viewport, "Content");
-        content.anchorMin = new Vector2(0f, 1f);
-        content.anchorMax = new Vector2(1f, 1f);
-        content.pivot = new Vector2(0.5f, 1f);
-        content.offsetMin = content.offsetMax = Vector2.zero;
+        if (!Found(content))
+        {
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.offsetMin = content.offsetMax = Vector2.zero;
 
-        var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.spacing = 8f;
-        layout.childControlWidth = true;
-        layout.childControlHeight = false;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-        content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            var layout = Comp<VerticalLayoutGroup>(content.gameObject);
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            Comp<ContentSizeFitter>(content.gameObject).verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
 
         scroll.viewport = viewport;
         scroll.content = content;
-        scroll.horizontal = false;
-        scroll.vertical = true;
-        scroll.movementType = ScrollRect.MovementType.Clamped;
-        scroll.scrollSensitivity = 45f;
+        if (!baked)
+        {
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 45f;
+        }
         return scroll;
     }
 
@@ -159,6 +246,14 @@ public static class UIKit
     public static Slider MakeSlider(Transform parent, Vector2 size, float value, Action<float> onChanged)
     {
         var root = Child(parent, "Slider");
+        if (Found(root) && root.GetComponent<Slider>() != null)
+        {
+            var existing = root.GetComponent<Slider>();
+            existing.SetValueWithoutNotify(value);
+            existing.onValueChanged.RemoveAllListeners();
+            if (onChanged != null) existing.onValueChanged.AddListener(v => onChanged(v));
+            return existing;
+        }
         root.sizeDelta = size;
 
         var back = Box(root, "Background", new Color(0.12f, 0.16f, 0.24f, 1f));
@@ -178,7 +273,7 @@ public static class UIKit
         var handle = Box(handleArea, "Handle", Color.white);
         handle.rectTransform.sizeDelta = new Vector2(28f, size.y + 20f);
 
-        var slider = root.gameObject.AddComponent<Slider>();
+        var slider = Comp<Slider>(root.gameObject);
         slider.fillRect = fill.rectTransform;
         slider.handleRect = handle.rectTransform;
         slider.targetGraphic = handle;
@@ -193,6 +288,8 @@ public static class UIKit
     // the UI needs an EventSystem with the Input System's UI module (this project uses the new Input System)
     public static void EnsureEventSystem()
     {
+        if (!Application.isPlaying) return;          // baking in the editor must not leave an EventSystem in the open scene
+
         var existing = UnityEngine.Object.FindAnyObjectByType<EventSystem>();
         if (existing != null)
         {

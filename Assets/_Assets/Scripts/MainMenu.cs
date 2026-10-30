@@ -47,6 +47,28 @@ public class MainMenu : MonoBehaviour
         UIKit.EnsureEventSystem();
         PlayerProfile.ApplyVolume();
 
+        UIKit.BeginAdopt();                // use the baked prefab (Resources/UI/MainMenuCanvas) when there is one
+        BuildScreen();
+        UIKit.EndAdopt();
+
+        Show(mainPanel);
+    }
+
+    // used by the UI baker (Tools > Magic > Bake UI Prefabs): builds the screen without a prefab and returns its canvas
+    public GameObject BuildForBake()
+    {
+        catalog = GameCatalog.Load();
+        BuildScreen();
+        Show(mainPanel);
+        return canvasRoot.gameObject;
+    }
+
+    void BuildScreen()
+    {
+        // the baked canvas sits in the menu scene under this object (Tools > Magic > Bake UI Prefabs); without it the code builds the screen
+        var inScene = transform.Find("MainMenuCanvas");
+        if (inScene != null) UIKit.AdoptSceneCanvas(inScene.gameObject);
+
         var canvas = UIKit.MakeCanvas("MainMenuCanvas", 0);
         canvas.transform.SetParent(transform, false);
         canvasRoot = canvas.transform;
@@ -62,8 +84,6 @@ public class MainMenu : MonoBehaviour
         spellMenu = BuildSpellMenu(canvasRoot);
         comboMenu = BuildComboMenu(canvasRoot);
         keyPrompt = BuildKeyPrompt(canvasRoot);
-
-        Show(mainPanel);
     }
 
     void Update()
@@ -110,7 +130,45 @@ public class MainMenu : MonoBehaviour
     // a soft bluish glow behind the title so the screen is not a flat colour
     static void AddGlow(Transform parent)
     {
-        var tex = new Texture2D(128, 128, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        var rt = UIKit.Child(parent, "Glow");
+        var raw = rt.GetComponent<RawImage>();
+        if (raw == null) raw = rt.gameObject.AddComponent<RawImage>();
+        if (rt.GetComponent<MenuGlow>() == null) rt.gameObject.AddComponent<MenuGlow>();      // gives it the generated texture, in the editor too
+        raw.raycastTarget = false;
+        UIKit.Place(rt, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(2000f, 1400f));
+    }
+
+    // ---------- previewing in the editor ----------
+    // Right-click the MainMenu component (in the MainMenu scene) > Preview to switch which screen shows in the Game view while you edit.
+    // When the game runs, the menu starts on the main screen whatever is switched on here.
+
+    [ContextMenu("Preview/Main")] void PreviewMain() => Preview("Main", null);
+    [ContextMenu("Preview/Stages")] void PreviewStages() => Preview("Stages", null);
+    [ContextMenu("Preview/Customize")] void PreviewCustomize() => Preview("Customize", null);
+    [ContextMenu("Preview/Customize + Spell book")] void PreviewSpellBook() => Preview("Customize", "SpellMenu");
+    [ContextMenu("Preview/Customize + Combinations")] void PreviewCombos() => Preview("Customize", "ComboMenu");
+    [ContextMenu("Preview/Customize + Key prompt")] void PreviewKeyPrompt() => Preview("Customize", "KeyPrompt");
+    [ContextMenu("Preview/Options")] void PreviewOptions() => Preview("Options", null);
+
+    void Preview(string screen, string overlay)
+    {
+        var canvas = transform.Find("MainMenuCanvas");
+        if (canvas == null) { Debug.LogWarning("The menu canvas is not in this scene yet. Run Tools > Magic > Bake UI Prefabs."); return; }
+        foreach (var n in new[] { "Main", "Stages", "Customize", "Options" })
+        {
+            var t = canvas.Find(n);
+            if (t != null) t.gameObject.SetActive(n == screen);
+        }
+        foreach (var n in new[] { "SpellMenu", "ComboMenu", "KeyPrompt" })
+        {
+            var t = canvas.Find(n);
+            if (t != null) t.gameObject.SetActive(n == overlay);
+        }
+    }
+
+    public static Texture2D GlowTexture()
+    {
+        var tex = new Texture2D(128, 128, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
         for (int y = 0; y < 128; y++)
             for (int x = 0; x < 128; x++)
             {
@@ -119,12 +177,7 @@ public class MainMenu : MonoBehaviour
                 tex.SetPixel(x, y, new Color(0.25f, 0.5f, 0.9f, a * a * 0.35f));
             }
         tex.Apply();
-
-        var rt = UIKit.Child(parent, "Glow");
-        var raw = rt.gameObject.AddComponent<RawImage>();
-        raw.texture = tex;
-        raw.raycastTarget = false;
-        UIKit.Place(rt, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(2000f, 1400f));
+        return tex;
     }
 
     RectTransform Panel(Transform parent, string name)
@@ -190,7 +243,7 @@ public class MainMenu : MonoBehaviour
 
             // the button's own label is replaced by a name, a description and the best time
             var own = card.transform.Find("Text");
-            if (own != null) Destroy(own.gameObject);
+            if (own != null) UIKit.Kill(own.gameObject);
 
             var name = UIKit.Label(card.transform, "Name", info.displayName, 52, Color.white, TextAnchor.MiddleLeft, true);
             UIKit.Place(name.rectTransform, new Vector2(0f, 0.5f), new Vector2(480f, 34f), new Vector2(880f, 70f));
@@ -200,6 +253,7 @@ public class MainMenu : MonoBehaviour
             float best = PlayerProfile.GetBestTime(i);
             var record = UIKit.Label(card.transform, "Best", best >= 0f ? "BEST\n" + PlayerProfile.FormatTime(best) : "NOT\nCLEARED", 28,
                 best >= 0f ? UIKit.Accent : UIKit.Dim, TextAnchor.MiddleCenter, true);
+            record.color = best >= 0f ? UIKit.Accent : UIKit.Dim;      // follows the result even when the look comes from the prefab
             UIKit.Place(record.rectTransform, new Vector2(1f, 0.5f), new Vector2(-130f, 0f), new Vector2(220f, 100f));
         }
 
@@ -251,7 +305,7 @@ public class MainMenu : MonoBehaviour
             var card = UIKit.MakeButton(p, "Slot" + (i + 1), new Vector2(cardW, 440f), () => OpenSpellMenu(slot), 1);
             UIKit.Place((RectTransform)card.transform, new Vector2(0.5f, 0.5f), new Vector2(x, 60f), new Vector2(cardW, 440f));
             var own = card.transform.Find("Text");
-            if (own != null) Destroy(own.gameObject);
+            if (own != null) UIKit.Kill(own.gameObject);
 
             var keyText = UIKit.Label(card.transform, "Key", KeyLabel(i), narrow ? 40 : 46, UIKit.Gold, TextAnchor.MiddleCenter, true);
             slotKeyText.Add(keyText);
@@ -474,7 +528,7 @@ public class MainMenu : MonoBehaviour
             spellMenuHint.text = "Click a spell, then choose the key for it.  X takes a spell off its key.";
         }
 
-        for (int i = spellRows.childCount - 1; i >= 0; i--) Destroy(spellRows.GetChild(i).gameObject);
+        for (int i = spellRows.childCount - 1; i >= 0; i--) UIKit.Kill(spellRows.GetChild(i).gameObject);
 
         if (catalog != null && catalog.spells != null)
             foreach (var spell in catalog.spells)
@@ -499,7 +553,7 @@ public class MainMenu : MonoBehaviour
         var row = UIKit.MakeButton(spellRows, spell != null ? spell.displayName : "(empty)", new Vector2(1540f, 96f), () => OnSpellChosen(spell), 1);
         UIKit.SetChosen(row, here);
         var own = row.transform.Find("Text");
-        if (own != null) Destroy(own.gameObject);
+        if (own != null) UIKit.Kill(own.gameObject);
 
         if (spell == null)
         {
@@ -573,7 +627,7 @@ public class MainMenu : MonoBehaviour
         promptOpenFrame = Time.frameCount;
         promptTitle.text = title;
         promptSub.text = subtitle + "  You can also press the key.";
-        for (int i = promptCards.childCount - 1; i >= 0; i--) Destroy(promptCards.GetChild(i).gameObject);
+        for (int i = promptCards.childCount - 1; i >= 0; i--) UIKit.Kill(promptCards.GetChild(i).gameObject);
 
         int keys = loadout.Length;
         const float w = 230f, gap = 20f;
@@ -593,7 +647,7 @@ public class MainMenu : MonoBehaviour
             }, 1);
             UIKit.Place((RectTransform)card.transform, new Vector2(0.5f, 0.5f), new Vector2(-total * 0.5f + w * 0.5f + k * (w + gap), 0f), new Vector2(w, 280f));
             var own = card.transform.Find("Text");
-            if (own != null) Destroy(own.gameObject);
+            if (own != null) UIKit.Kill(own.gameObject);
             card.interactable = !isTaken;
             UIKit.SetChosen(card, here);
 
@@ -639,7 +693,7 @@ public class MainMenu : MonoBehaviour
 
     void RefreshComboMenu()
     {
-        for (int i = comboRows.childCount - 1; i >= 0; i--) Destroy(comboRows.GetChild(i).gameObject);
+        for (int i = comboRows.childCount - 1; i >= 0; i--) UIKit.Kill(comboRows.GetChild(i).gameObject);
         if (catalog == null || catalog.combos == null) return;
 
         foreach (var combo in catalog.combos)

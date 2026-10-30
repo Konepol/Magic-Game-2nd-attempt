@@ -16,7 +16,7 @@ MonoBehaviour:
   defaultProjectile: {fileID: 0}
   tap:
     kind: 1
-    damage: 45
+    damage: 5
     breaksBarriers: 0
     effectColor: {r: 0.7, g: 0.95, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
@@ -28,11 +28,11 @@ MonoBehaviour:
     explodeOnPierce: 0
     projectileCount: 1
     spreadDegrees: 0
-    laserRange: 150
+    laserRange: 100
     laserRadius: 0.5
     laserPierces: 1
-    laserWidth: 1.2
-    laserDuration: 0.4
+    laserWidth: 0.9
+    laserDuration: 0.16
     aoeRadius: 4
     aoeRange: 30
     aoeHeight: 6
@@ -45,11 +45,11 @@ MonoBehaviour:
     barrierDistance: 3
     status:
       type: 2
-      duration: 5
+      duration: 2
       magnitude: 0.6
-    manaCost: 45
-    cooldown: 2.4
-  hasHoldVariant: 1
+    manaCost: 3
+    cooldown: 0.1
+  hasHoldVariant: 0
   holdThreshold: 1.4
   hold:
     kind: 1

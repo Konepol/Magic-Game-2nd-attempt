@@ -82,6 +82,7 @@ public class Barrier : MonoBehaviour
         float lost = (before - health.Current) / health.Max;
 
         flashUntil = Time.time + 0.12f;
+        SpellImpact.BarrierRipple(point, transform, baseColor);
         AddCrack(point, breaksInstantly ? 1f : lost);
 
         if (health.IsDead)
@@ -98,6 +99,7 @@ public class Barrier : MonoBehaviour
 
         float taken = manaSource.Drain(damage * manaPerDamage * (breaksInstantly ? BreakDamageMultiplier : 1f));
         flashUntil = Time.time + 0.12f;
+        SpellImpact.BarrierRipple(point, transform, baseColor);
         lastMana = manaSource.Current;                      // this loss is the hit's, not spell spending
 
         if (tiles != null)
@@ -129,7 +131,7 @@ public class Barrier : MonoBehaviour
     public static Barrier SpawnFromMana(Vector3 position, Quaternion rotation, float width, float height, float hexRadius, float thickness,
                                         Mana mana, float manaPerDamage, string protectsTag, Color color)
     {
-        var go = new GameObject("Barrier");
+        var go = SceneGroups.Put(new GameObject("Barrier"), "Barriers");
         go.transform.SetPositionAndRotation(position, rotation);
 
         var b = go.AddComponent<Barrier>();
@@ -512,6 +514,7 @@ public class Barrier : MonoBehaviour
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = "Barrier";
+        SceneGroups.Put(go, "Barriers");
         go.transform.SetPositionAndRotation(position, rotation);
         go.transform.localScale = size;
 

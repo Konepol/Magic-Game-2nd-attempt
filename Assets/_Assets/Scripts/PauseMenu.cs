@@ -74,7 +74,12 @@ public class PauseMenu : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        if (root == null) Build();
+        if (root == null)
+        {
+            UIKit.BeginAdopt();                // use the baked prefab (Resources/UI/PauseMenu) when there is one
+            Build();
+            UIKit.EndAdopt();
+        }
         Refresh();
         root.SetActive(true);
     }
@@ -96,6 +101,14 @@ public class PauseMenu : MonoBehaviour
     }
 
     // ---------- screen ----------
+
+    // used by the UI baker (Tools > Magic > Bake UI Prefabs): builds the screen without a prefab and returns its canvas
+    public GameObject BuildForBake()
+    {
+        Build();
+        optionsRoot.gameObject.SetActive(false);
+        return root;
+    }
 
     void Build()
     {

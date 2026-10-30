@@ -44,8 +44,8 @@ MonoBehaviour:
     barrierDuration: 8
     barrierDistance: 3
     status:
-      type: 3
-      duration: 2.5
+      type: 4
+      duration: 3.5
       magnitude: 0
     manaCost: 120
     cooldown: 5
@@ -81,8 +81,8 @@ MonoBehaviour:
     barrierDuration: 8
     barrierDistance: 3
     status:
-      type: 3
-      duration: 2.5
+      type: 4
+      duration: 3.5
       magnitude: 0
     manaCost: 120
     cooldown: 5

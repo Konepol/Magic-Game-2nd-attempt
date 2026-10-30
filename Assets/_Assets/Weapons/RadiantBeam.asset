@@ -16,9 +16,9 @@ MonoBehaviour:
   defaultProjectile: {fileID: 0}
   tap:
     kind: 1
-    damage: 10
+    damage: 6
     breaksBarriers: 0
-    effectColor: {r: 1, g: 0.95, b: 0.6, a: 1}
+    effectColor: {r: 1, g: 0.9, b: 0.5, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 40
     lifetime: 4
@@ -29,10 +29,10 @@ MonoBehaviour:
     projectileCount: 1
     spreadDegrees: 0
     laserRange: 120
-    laserRadius: 0.2
+    laserRadius: 0.45
     laserPierces: 1
-    laserWidth: 0.35
-    laserDuration: 0.22
+    laserWidth: 0.9
+    laserDuration: 0.16
     aoeRadius: 4
     aoeRange: 30
     aoeHeight: 6
@@ -47,9 +47,9 @@ MonoBehaviour:
       type: 0
       duration: 0
       magnitude: 0
-    manaCost: 8
-    cooldown: 0.5
-  hasHoldVariant: 1
+    manaCost: 2
+    cooldown: 0.1
+  hasHoldVariant: 0
   holdThreshold: 1
   hold:
     kind: 1

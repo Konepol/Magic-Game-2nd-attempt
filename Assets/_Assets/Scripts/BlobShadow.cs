@@ -31,7 +31,7 @@ public class BlobShadow : MonoBehaviour
 
         if (blob == null)
         {
-            var go = new GameObject(name + " BlobShadow");
+            var go = SceneGroups.Put(new GameObject(name + " BlobShadow"), "VFX/Shadows");
             go.AddComponent<MeshFilter>().sharedMesh = quad;
             blobRenderer = go.AddComponent<MeshRenderer>();
             blobRenderer.sharedMaterial = material;

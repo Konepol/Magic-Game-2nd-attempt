@@ -297,6 +297,7 @@ public class ExplosionFlash : MonoBehaviour
 
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.name = "ExplosionFlash";
+        SceneGroups.Put(go, "VFX/Misc");
         Destroy(go.GetComponent<Collider>());
         go.transform.position = point;
         go.transform.localScale = Vector3.zero;

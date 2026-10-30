@@ -16,7 +16,7 @@ MonoBehaviour:
   defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
   tap:
     kind: 0
-    damage: 5
+    damage: 3
     breaksBarriers: 0
     effectColor: {r: 0.75, g: 0.55, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
@@ -26,8 +26,8 @@ MonoBehaviour:
     explosionRadius: 0
     pierceCount: 0
     explodeOnPierce: 0
-    projectileCount: 3
-    spreadDegrees: 20
+    projectileCount: 5
+    spreadDegrees: 44
     laserRange: 60
     laserRadius: 0.15
     laserPierces: 0
@@ -53,7 +53,7 @@ MonoBehaviour:
   holdThreshold: 0.8
   hold:
     kind: 0
-    damage: 7
+    damage: 9
     breaksBarriers: 0
     effectColor: {r: 0.85, g: 0.45, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
@@ -63,8 +63,8 @@ MonoBehaviour:
     explosionRadius: 0
     pierceCount: 0
     explodeOnPierce: 0
-    projectileCount: 9
-    spreadDegrees: 70
+    projectileCount: 7
+    spreadDegrees: 80
     laserRange: 60
     laserRadius: 0.15
     laserPierces: 0

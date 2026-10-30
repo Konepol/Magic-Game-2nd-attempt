@@ -25,10 +25,11 @@ public static class ProjectilePool
 
     internal readonly struct Key : IEquatable<Key>
     {
-        readonly int prefab, color, scale;
+        readonly Object prefab;
+        readonly int color, scale;
         readonly string model, fx;
 
-        public Key(int prefab, string model, string fx, Color color, float scale)
+        public Key(Object prefab, string model, string fx, Color color, float scale)
         {
             this.prefab = prefab;
             this.model = model;
@@ -38,13 +39,13 @@ public static class ProjectilePool
             this.scale = Mathf.RoundToInt(scale * 100f);
         }
 
-        public bool Equals(Key o) => prefab == o.prefab && color == o.color && scale == o.scale && model == o.model && fx == o.fx;
+        public bool Equals(Key o) => ReferenceEquals(prefab, o.prefab) && color == o.color && scale == o.scale && model == o.model && fx == o.fx;
         public override bool Equals(object o) => o is Key k && Equals(k);
         public override int GetHashCode()
         {
             unchecked
             {
-                int h = prefab;
+                int h = prefab != null ? prefab.GetHashCode() : 0;
                 h = h * 31 + color;
                 h = h * 31 + scale;
                 h = h * 31 + (model != null ? model.GetHashCode() : 0);
@@ -72,6 +73,7 @@ public static class ProjectilePool
             groups.Clear();
             var go = new GameObject("Projectile Pools");
             root = go.transform;
+            root.SetParent(SceneGroups.Get("Projectiles"), false);
             runner = go.AddComponent<Runner>();
             runner.enabled = false;
         }
@@ -108,7 +110,7 @@ public static class ProjectilePool
 
     static Pool ProjectilePoolFor(Projectile prefab, string modelKey, string fxKey, Color color, float scale)
     {
-        var key = new Key(prefab.GetInstanceID(), modelKey, fxKey, color, scale);
+        var key = new Key(prefab, modelKey, fxKey, color, scale);
         return PoolFor(key, fxKey ?? modelKey, modelKey == "Enemy" ? Owner.Enemy : Owner.Player, p =>
         {
             var proj = Object.Instantiate(prefab, p.group);
@@ -122,7 +124,7 @@ public static class ProjectilePool
 
     internal static Pool BossPool(Color color)
     {
-        var key = new Key(0, "Boss", null, color, 1f);
+        var key = new Key(null, "Boss", null, color, 1f);
         return PoolFor(key, "Boss", Owner.Boss, p => BossProjectile.Create(p, color));
     }
 

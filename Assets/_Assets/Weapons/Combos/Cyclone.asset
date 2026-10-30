@@ -15,10 +15,10 @@ MonoBehaviour:
   displayName: Cyclone
   defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
   tap:
-    kind: 0
-    damage: 30
+    kind: 2
+    damage: 50
     breaksBarriers: 0
-    effectColor: {r: 1, g: 0.7, b: 0.35, a: 1}
+    effectColor: {r: 0.8, g: 1, b: 0.9, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 55
     lifetime: 4
@@ -33,10 +33,10 @@ MonoBehaviour:
     laserPierces: 0
     laserWidth: 0.3
     laserDuration: 0.2
-    aoeRadius: 4
-    aoeRange: 30
-    aoeHeight: 6
-    aoeDelay: 0.6
+    aoeRadius: 6.5
+    aoeRange: 35
+    aoeHeight: 14
+    aoeDelay: 0.5
     barrierWidth: 4
     barrierHeight: 3
     barrierThickness: 0.3
@@ -44,18 +44,18 @@ MonoBehaviour:
     barrierDuration: 8
     barrierDistance: 3
     status:
-      type: 1
-      duration: 3
+      type: 0
+      duration: 0
       magnitude: 8
     manaCost: 50
     cooldown: 2.6
-  hasHoldVariant: 1
+  hasHoldVariant: 0
   holdThreshold: 1.4
   hold:
-    kind: 0
-    damage: 30
+    kind: 2
+    damage: 50
     breaksBarriers: 0
-    effectColor: {r: 1, g: 0.7, b: 0.35, a: 1}
+    effectColor: {r: 0.8, g: 1, b: 0.9, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 55
     lifetime: 4
@@ -70,10 +70,10 @@ MonoBehaviour:
     laserPierces: 0
     laserWidth: 0.3
     laserDuration: 0.2
-    aoeRadius: 4
-    aoeRange: 30
-    aoeHeight: 6
-    aoeDelay: 0.6
+    aoeRadius: 6.5
+    aoeRange: 35
+    aoeHeight: 14
+    aoeDelay: 0.5
     barrierWidth: 4
     barrierHeight: 3
     barrierThickness: 0.3
@@ -81,8 +81,8 @@ MonoBehaviour:
     barrierDuration: 8
     barrierDistance: 3
     status:
-      type: 1
-      duration: 3
+      type: 0
+      duration: 0
       magnitude: 8
     manaCost: 50
     cooldown: 2.6

@@ -31,7 +31,7 @@ public static class SpellFX
 
     public static void Burst(Vector3 pos, float radius, Color color, int count = 40)
     {
-        var go = new GameObject("FXBurst");
+        var go = SceneGroups.Put(new GameObject("FXBurst"), "VFX/Bursts");
         go.transform.position = pos;
         var ps = go.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // it auto-plays with defaults, so stop before configuring
@@ -111,7 +111,7 @@ public static class SpellFX
 
     static void SpawnFx(GameObject prefab, Vector3 pos, float scale, Color tint)
     {
-        var go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity);
+        var go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity, SceneGroups.Get("VFX/Prefabs"));
         go.transform.localScale = Vector3.one * Mathf.Max(scale, 0.2f);
 
         // tint everything except smoke, keeping the alpha each system was designed with
@@ -183,7 +183,7 @@ public static class SpellFX
 
     internal static void PlayClip(AudioClip clip, Vector3 pos, float volume, float pitch)
     {
-        var go = new GameObject("Sfx_" + clip.name);
+        var go = SceneGroups.Put(new GameObject("Sfx_" + clip.name), "Sfx");
         go.transform.position = pos;
         var src = go.AddComponent<AudioSource>();
         src.clip = clip;

@@ -37,11 +37,12 @@ public static class ProjectileModels
             case "FrostShard": Crystal(root, facet, bright, 1f, 0.2f); break;
             case "WindBlade": Blade(root, facet, bright, 1); break;
             case "VenomDart": Dart(root, body, hot, dark); break;
-            case "InfernalBolt": Infernal(root, body, hot, dark); break;
+            case "InfernalBolt": Infernal(root, Material(new Color(0.6f, 0.08f, 0.05f), 0.9f), Material(Color.white, 1.8f), dark); break;
             case "CinderStorm": Ember(root, body, hot); break;
             case "FirestormLance": Lance(root, body, hot, dark); break;
             case "GlacierBolt": Glacier(root, facet, bright); break;
             case "Cyclone": Pinwheel(root, facet, bright); break;
+            case "SunLance": Sun(root, Material(new Color(1f, 0.8f, 0.3f), 1.5f), Material(Color.white, 2f)); break;
             case "PlagueStorm": Plague(root, body, hot, dark); break;
             case "Boss": Orb(root, body, hot, dark, true, 0.55f); break;
             default: Orb(root, body, hot, dark, true, 0.45f); break;                    // enemy shots: a spiky orb
@@ -91,8 +92,9 @@ public static class ProjectileModels
 
     static void Spark(Transform root, Material body, Material hot)
     {
-        Part(root, Star(), hot, Vector3.zero, Vector3.one * 0.85f, Quaternion.identity, new Vector3(120f, 200f, 60f));
-        Part(root, Sphere(), body, Vector3.zero, Vector3.one * 0.3f);
+        // a thin tracer: a bright needle with a glowing head, like a machine-gun spark
+        Part(root, Lathe("tracer", new[] { new Vector2(0f, 0.5f), new Vector2(0.03f, 0.3f), new Vector2(0.035f, -0.35f), new Vector2(0f, -0.55f) }, 8), hot, Vector3.zero, Vector3.one);
+        Part(root, Sphere(), body, new Vector3(0f, 0f, 0.3f), Vector3.one * 0.12f);
     }
 
     static void Blade(Transform root, Material body, Material hot, int count)
@@ -119,6 +121,13 @@ public static class ProjectileModels
     static void Infernal(Transform root, Material body, Material hot, Material dark)
     {
         Flame(root, body, hot, 1.1f);
+        // a swirling sheath of dark flame around the white-hot core
+        var swirl = Part(root, null, null, Vector3.zero, Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 480f));
+        for (int i = 0; i < 3; i++)
+        {
+            float a = i * Mathf.PI * 2f / 3f;
+            Part(swirl, Teardrop(), dark, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 0.3f + new Vector3(0f, 0f, -0.1f), Vector3.one * 0.55f, Quaternion.Euler(Mathf.Sin(a) * 18f, -Mathf.Cos(a) * 18f, 0f));
+        }
         Part(root, Ring(0.46f, 0.04f), hot, Vector3.zero, Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 200f));
         Part(root, Star(), hot, new Vector3(0f, 0f, 0.3f), Vector3.one * 0.22f, Quaternion.identity, new Vector3(90f, 160f, 0f));
     }
@@ -137,6 +146,24 @@ public static class ProjectileModels
         Part(root, Ring(0.2f, 0.03f), hot, new Vector3(0f, 0f, 0.1f), Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 300f));
         Part(root, Ring(0.16f, 0.03f), body, new Vector3(0f, 0f, -0.15f), Vector3.one, Quaternion.identity, new Vector3(0f, 0f, -300f));
         Part(root, Teardrop(), dark, new Vector3(0f, 0f, -0.5f), Vector3.one * 0.6f, Quaternion.identity);
+        // a spiral of flame winding around the spear
+        var spiral = Part(root, null, null, Vector3.zero, Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 420f));
+        for (int i = 0; i < 4; i++)
+        {
+            float a = i * Mathf.PI * 0.5f;
+            Part(spiral, Teardrop(), body, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 0.26f + new Vector3(0f, 0f, 0.3f - i * 0.2f), Vector3.one * 0.4f, Quaternion.Euler(Mathf.Sin(a) * 25f, -Mathf.Cos(a) * 25f, 0f));
+        }
+    }
+
+    // a blinding mini sun: a white core in a gold glow, with rays all round
+    static void Sun(Transform root, Material body, Material hot)
+    {
+        Part(root, Sphere(), body, Vector3.zero, Vector3.one * 0.7f);
+        Part(root, Sphere(), hot, Vector3.zero, Vector3.one * 0.45f);
+        var rays = Part(root, null, null, Vector3.zero, Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 120f));
+        for (int i = 0; i < 8; i++)
+            Part(rays, Crystal(4, 0.5f, 0.07f, 0.5f), hot, Vector3.zero, Vector3.one, Quaternion.Euler(0f, 90f, i * 45f));
+        Part(root, Ring(0.55f, 0.03f), hot, Vector3.zero, Vector3.one, Quaternion.identity, new Vector3(0f, 0f, 200f));
     }
 
     static void Glacier(Transform root, Material body, Material hot)

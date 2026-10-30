@@ -128,7 +128,7 @@ public static class MagicFX
         Color warm = Warm(color, 0.45f);
 
         // the glowing core: a soft ball that swells and fades
-        var core = new GameObject("FXCore").AddComponent<CoreGlow>();
+        var core = SceneGroups.Put(new GameObject("FXCore"), "VFX/Bursts").AddComponent<CoreGlow>();
         core.Setup(pos, radius * 0.9f, warm, coreMat, 0.38f);
 
         // 3D stars tumbling outward
@@ -139,7 +139,7 @@ public static class MagicFX
         // crescent streaks that whip once around the core
         for (int i = 0; i < 2; i++)
         {
-            var s = new GameObject("FXStreak").AddComponent<OrbitStreak>();
+            var s = SceneGroups.Put(new GameObject("FXStreak"), "VFX/Bursts").AddComponent<OrbitStreak>();
             s.Setup(pos, radius * 0.7f, warm, streakMat, i * Mathf.PI, 0.45f);
         }
     }
@@ -148,7 +148,7 @@ public static class MagicFX
     public static void Core(Vector3 pos, float radius, Color color, float seconds = 0.35f)
     {
         EnsureMaterials();
-        new GameObject("FXCore").AddComponent<CoreGlow>().Setup(pos, radius, Warm(color, 0.08f), coreMat, seconds);
+        SceneGroups.Put(new GameObject("FXCore"), "VFX/Bursts").AddComponent<CoreGlow>().Setup(pos, radius, Warm(color, 0.08f), coreMat, seconds);
     }
 
     public static Material StarMat { get { EnsureMaterials(); return starMat; } }
@@ -167,6 +167,16 @@ public static class MagicFX
             return softMat;
         }
     }
+    // a soft alpha-blended material for flat textured quads (decals): the texture's alpha is the shape, the colour comes from _BaseColor
+    public static Material SoftMaterial(Texture tex)
+    {
+        EnsureMaterials();
+        var m = new Material(glowMat);
+        if (m.HasProperty("_DstBlend")) m.SetFloat("_DstBlend", 10f);
+        m.SetTexture("_BaseMap", tex);
+        return m;
+    }
+
     public static Material CoreMat { get { EnsureMaterials(); return coreMat; } }
     public static Mesh OrbMesh() => Orb();
 
@@ -178,7 +188,7 @@ public static class MagicFX
     public static void Gather(Vector3 pos, Color color, float seconds = 0.28f)
     {
         EnsureMaterials();
-        var g = new GameObject("FXGather").AddComponent<GatherFX>();
+        var g = SceneGroups.Put(new GameObject("FXGather"), "VFX/Casting").AddComponent<GatherFX>();
         g.Setup(pos, Warm(color, 0.4f), seconds, starMat, glowMat, StarMesh(), Orb());
     }
 
@@ -242,7 +252,7 @@ public static class MagicFX
     // a one-shot particle burst of meshes with 3D tumbling
     static void Burst(Vector3 pos, Mesh mesh, Material mat, int count, float sizeMin, float sizeMax, Vector2 speed, float life, Color color, bool tumble)
     {
-        var go = new GameObject("FXMeshBurst");
+        var go = SceneGroups.Put(new GameObject("FXMeshBurst"), "VFX/Bursts");
         go.transform.position = pos;
         var ps = go.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);

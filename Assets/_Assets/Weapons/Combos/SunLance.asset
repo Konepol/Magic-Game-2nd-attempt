@@ -13,19 +13,19 @@ MonoBehaviour:
   m_Name: SunLance
   m_EditorClassIdentifier: Assembly-CSharp::SpellData
   displayName: Sun Lance
-  defaultProjectile: {fileID: 0}
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
   tap:
-    kind: 1
-    damage: 110
+    kind: 0
+    damage: 90
     breaksBarriers: 1
     effectColor: {r: 1, g: 0.9, b: 0.4, a: 1}
     projectilePrefab: {fileID: 0}
-    projectileSpeed: 40
-    lifetime: 4
-    projectileScale: 1
-    explosionRadius: 0
-    pierceCount: 0
-    explodeOnPierce: 0
+    projectileSpeed: 60
+    lifetime: 3
+    projectileScale: 3.2
+    explosionRadius: 6.5
+    pierceCount: -1
+    explodeOnPierce: 1
     projectileCount: 1
     spreadDegrees: 0
     laserRange: 160
@@ -49,7 +49,7 @@ MonoBehaviour:
       magnitude: 20
     manaCost: 80
     cooldown: 3.5
-  hasHoldVariant: 1
+  hasHoldVariant: 0
   holdThreshold: 2
   hold:
     kind: 1
