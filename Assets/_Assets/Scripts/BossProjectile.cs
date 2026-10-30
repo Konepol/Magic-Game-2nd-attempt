@@ -26,6 +26,7 @@ public class BossProjectile : MonoBehaviour
         block.SetColor("_Color", color);
         r.SetPropertyBlock(block);
 
+        ProjectileModels.Attach(go, "Boss", color);
         var p = go.AddComponent<BossProjectile>();
         p.velocity = direction.normalized * speed;
         p.damage = damage;

@@ -333,6 +333,9 @@ public class EnemyGround : MonoBehaviour
         Vector3 dir = (toward - origin).normalized;
 
         var p = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(dir));
+        var shotColor = attackType == AttackType.HomingShot ? new Color(0.7f, 0.4f, 1f) : new Color(1f, 0.45f, 0.35f);
+        p.effectColor = shotColor;
+        ProjectileModels.Attach(p.gameObject, "Enemy", shotColor);
         p.Init(damage, projectileSpeed, projectileLifetime, projectileScale, explosionRadius,
             0, false, false, default, attackType == AttackType.HomingShot ? homingTurnRate : 0f);
     }

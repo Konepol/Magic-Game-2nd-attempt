@@ -1543,6 +1543,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             Vector3 shotDir = Quaternion.AngleAxis(angle, mainCamera.transform.up) * dir;
 
             var p = Instantiate(prefab, LaunchPosition, Quaternion.LookRotation(shotDir));
+            p.effectColor = v.effectColor;
+            ProjectileModels.Attach(p.gameObject, spell.name, v.effectColor);
             p.Init(v.damage, v.projectileSpeed, v.lifetime, v.projectileScale, v.explosionRadius,
                 v.pierceCount, v.explodeOnPierce, v.breaksBarriers, v.status);
         }

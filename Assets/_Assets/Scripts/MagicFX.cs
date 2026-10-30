@@ -14,7 +14,7 @@ public static class MagicFX
     static Color Warm(Color c, float toGold = 0.35f) => Color.Lerp(c, new Color(1f, 0.86f, 0.4f), toGold);
 
     // a chubby five-pointed star with a rounded bevel, about 1 unit across and 0.5 thick (a lofted outline: a front point, a ring and a back point)
-    static Mesh StarMesh()
+    public static Mesh StarMesh()
     {
         if (starMesh != null) return starMesh;
 

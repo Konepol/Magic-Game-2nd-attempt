@@ -26,6 +26,7 @@ public class Projectile : MonoBehaviour
     static readonly Comparer<RaycastHit> byDistance = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
     public float Speed => speed;
+    public Color effectColor = new Color(1f, 0.8f, 0.4f);        // set by the caster; the trail follows it
 
     // called right after Instantiate to override the prefab values (spells use this)
     public void Init(float damage, float speed, float lifetime, float scale, float explosionRadius,
@@ -49,9 +50,7 @@ public class Projectile : MonoBehaviour
     {
         if (SpellFX.UseMagicFX)
         {
-            var rend = GetComponentInChildren<Renderer>();
-            Color col = rend != null && rend.sharedMaterial != null && rend.sharedMaterial.HasProperty("_BaseColor") ? rend.sharedMaterial.GetColor("_BaseColor") : new Color(1f, 0.8f, 0.4f);
-            MagicFX.StarTrail(transform, col, Mathf.Clamp(transform.localScale.x, 0.6f, 2f));
+            MagicFX.StarTrail(transform, effectColor, Mathf.Clamp(transform.localScale.x, 0.6f, 2f));
         }
         spawnTime = Time.time;
         baseScale = transform.localScale;
