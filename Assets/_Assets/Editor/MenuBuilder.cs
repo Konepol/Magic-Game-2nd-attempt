@@ -38,7 +38,8 @@ public static class MenuBuilder
         }
 
         // every spell except the barrier, which is part of the base kit now
-        string[] spellNames = { "ArcaneBolt", "ScatterShot", "FireBurst", "SparkStream", "LightningLance", "MeteorStrike" };
+        string[] spellNames = { "ArcaneBolt", "ScatterShot", "FireBurst", "SparkStream", "LightningLance", "MeteorStrike",
+                                "FrostShard", "EarthSpike", "RadiantBeam", "VenomDart", "WindBlade" };
         var spells = new List<SpellData>();
         foreach (var n in spellNames)
         {
