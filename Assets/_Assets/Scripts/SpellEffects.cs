@@ -102,12 +102,13 @@ public class AoeStrike : MonoBehaviour
     Vector3 point;
     SpellVariant v;
     string damageTag;
+    string fxKey;         // the spell's asset name, for its own impact effect
     bool inAir;           // centred on something in the air: hits a sphere around the point instead of a column above the ground
     float start;
     LineRenderer inner;
     Material mat;
 
-    public static void Spawn(Vector3 point, SpellVariant v, string damageTag, bool inAir = false)
+    public static void Spawn(Vector3 point, SpellVariant v, string damageTag, bool inAir = false, string fxKey = null)
     {
         var go = new GameObject("AoeStrike");
         var s = go.AddComponent<AoeStrike>();
@@ -115,6 +116,7 @@ public class AoeStrike : MonoBehaviour
         s.v = v;
         s.damageTag = damageTag;
         s.inAir = inAir;
+        s.fxKey = fxKey;
         s.start = Time.time;
 
         if (v.aoeDelay <= 0f) { s.Strike(); Destroy(go); return; }
@@ -158,7 +160,7 @@ public class AoeStrike : MonoBehaviour
                 StatusEffects.Apply(col, v.status);
             }
         }
-        ExplosionFlash.Spawn(inAir ? point : point + Vector3.up * 0.5f, r, v.effectColor);
+        ExplosionFlash.Spawn(inAir ? point : point + Vector3.up * 0.5f, r, v.effectColor, fxKey);
     }
 
     void OnDestroy() { if (mat != null) Destroy(mat); }

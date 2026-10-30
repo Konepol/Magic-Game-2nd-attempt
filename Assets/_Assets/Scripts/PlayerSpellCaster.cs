@@ -1403,9 +1403,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         switch (v.kind)
         {
             case SpellKind.Projectile: cast = CastProjectile(v, spell); break;
-            case SpellKind.Laser: cast = CastLaser(v); break;
+            case SpellKind.Laser: cast = CastLaser(v, spell); break;
             case SpellKind.GroundAoE:
-                AoeStrike.Spawn(GetAoeTarget(v, out bool inAir), v, damageTag, inAir);
+                AoeStrike.Spawn(GetAoeTarget(v, out bool inAir), v, damageTag, inAir, spell.name);
                 cast = true;
                 break;
             case SpellKind.Barrier: cast = CastBarrier(v); break;
@@ -1544,6 +1544,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             var p = Instantiate(prefab, LaunchPosition, Quaternion.LookRotation(shotDir));
             p.effectColor = v.effectColor;
+            p.fxKey = spell.name;
             ProjectileModels.Attach(p.gameObject, spell.name, v.effectColor);
             p.Init(v.damage, v.projectileSpeed, v.lifetime, v.projectileScale, v.explosionRadius,
                 v.pierceCount, v.explodeOnPierce, v.breaksBarriers, v.status);
@@ -1552,7 +1553,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     }
 
     // instant hit along the aim line
-    bool CastLaser(SpellVariant v)
+    bool CastLaser(SpellVariant v, SpellData spell)
     {
         Vector3 origin = LaunchPosition;
         Vector3 dir = GetAimDirection();
@@ -1594,7 +1595,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
 
         LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration);
-        SpellFX.Sparks(end, v.effectColor);
+        if (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.name, end, -dir, 1.1f, v.effectColor)) SpellFX.Sparks(end, v.effectColor);
         return true;
     }
 

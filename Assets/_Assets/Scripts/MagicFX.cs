@@ -7,7 +7,7 @@ using UnityEngine;
 public static class MagicFX
 {
     static Mesh starMesh, orbMesh;
-    static Material starMat, glowMat, coreMat, streakMat;
+    static Material starMat, glowMat, softMat, coreMat, streakMat;
 
     // ---------- shared pieces ----------
 
@@ -66,6 +66,16 @@ public static class MagicFX
 
     static Material Unlit(bool additive, Texture tex = null)
     {
+        if (additive && tex != null)
+        {
+            var glow = Shader.Find("Magic/ParticleGlow");           // the URP particle shader ignored the soft texture's alpha, leaving white squares
+            if (glow != null)
+            {
+                var g = new Material(glow);
+                g.SetTexture("_BaseMap", tex);
+                return g;
+            }
+        }
         Shader sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         if (sh == null) sh = Shader.Find("Sprites/Default");
         var m = new Material(sh);
@@ -133,6 +143,31 @@ public static class MagicFX
             s.Setup(pos, radius * 0.7f, warm, streakMat, i * Mathf.PI, 0.45f);
         }
     }
+
+    // the soft glowing ball on its own, for the spell impact effects
+    public static void Core(Vector3 pos, float radius, Color color, float seconds = 0.35f)
+    {
+        EnsureMaterials();
+        new GameObject("FXCore").AddComponent<CoreGlow>().Setup(pos, radius, Warm(color, 0.08f), coreMat, seconds);
+    }
+
+    public static Material StarMat { get { EnsureMaterials(); return starMat; } }
+    public static Material GlowMat { get { EnsureMaterials(); return glowMat; } }
+    // the same soft dot but alpha-blended instead of added: shows up on bright ground and sky (flames, dust, venom, clouds)
+    public static Material SoftMat
+    {
+        get
+        {
+            EnsureMaterials();
+            if (softMat == null)
+            {
+                softMat = new Material(glowMat);
+                if (softMat.HasProperty("_DstBlend")) softMat.SetFloat("_DstBlend", 10f);
+            }
+            return softMat;
+        }
+    }
+    public static Mesh OrbMesh() => Orb();
 
     // a smaller version for hits and impacts
     public static void Hit(Vector3 pos, Color color) => Pop(pos, 0.7f, color, 4);

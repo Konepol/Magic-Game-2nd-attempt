@@ -6,6 +6,7 @@ public class Projectile : MonoBehaviour
     [SerializeField] float speed = 30f;
     [SerializeField] float lifetime = 4f;
     [SerializeField] float radius = 0.1f;
+    [SerializeField, Range(0.05f, 1f)] float worldRadiusFactor = 0.5f;   // hitbox against ground/walls, as a fraction of radius
     [SerializeField] LayerMask hitMask = ~0;   // exclude the Player layer here
     [SerializeField] float damage = 10f;
     [SerializeField] string damageTag = "Enemy";    // only damages this tag (use "Player" for enemy bullets)
@@ -26,7 +27,14 @@ public class Projectile : MonoBehaviour
     static readonly Comparer<RaycastHit> byDistance = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
     public float Speed => speed;
-    public Color effectColor = new Color(1f, 0.8f, 0.4f);        // set by the caster; the trail follows it
+    public Color effectColor = new Color(1f, 0.8f, 0.4f);        // set by the caster; the trail and the impact follow it
+    public string fxKey;                                          // the spell's asset name: picks its impact effect (null for enemy shots)
+
+    // the impact of a shot that does not explode
+    void Impact(Vector3 point, Vector3 normal)
+    {
+        if (!string.IsNullOrEmpty(fxKey)) SpellImpact.Play(fxKey, point, normal, 0.6f + radius * 0.8f, effectColor);
+    }
 
     // called right after Instantiate to override the prefab values (spells use this)
     public void Init(float damage, float speed, float lifetime, float scale, float explosionRadius,
@@ -98,12 +106,22 @@ public class Projectile : MonoBehaviour
                 if (explodeOnPierce && explosionRadius > 0f) Explode(hit.point);
                 else
                 {
+                    Impact(hit.point, -transform.forward);
                     target.TakeDamage(damage, hit.point);
                     StatusEffects.Apply(hit.collider, status);
                 }
 
                 if (pierceRemaining > 0) pierceRemaining--;
                 continue;
+            }
+
+            // ground and walls use a smaller hitbox, so shots skim past the floor before bursting
+            if (!isTarget)
+            {
+                if (!Physics.SphereCast(transform.position, radius * worldRadiusFactor, transform.forward,
+                        out RaycastHit small, dist, hitMask, QueryTriggerInteraction.Ignore)
+                    || small.collider != hit.collider || small.distance <= 0f) continue;
+                hit = small;
             }
 
             OnHit(hit);
@@ -160,6 +178,7 @@ public class Projectile : MonoBehaviour
             if (explosionRadius > 0f) Explode(transform.position);
             else
             {
+                Impact(transform.position, -transform.forward);
                 target.TakeDamage(damage, transform.position);
                 StatusEffects.Apply(col, status);
             }
@@ -183,9 +202,9 @@ public class Projectile : MonoBehaviour
                 target.TakeDamage(damage, hit.point);
                 StatusEffects.Apply(hit.collider, status);
             }
+            Impact(hit.point, hit.normal);
         }
 
-        // TODO: spawn hit effect at hit.point
         Destroy(gameObject);
     }
 
@@ -210,7 +229,7 @@ public class Projectile : MonoBehaviour
                 StatusEffects.Apply(col, status);
             }
         }
-        ExplosionFlash.Spawn(point, explosionRadius);
+        ExplosionFlash.Spawn(point, explosionRadius, effectColor, fxKey);
     }
 }
 
@@ -221,12 +240,14 @@ public class ExplosionFlash : MonoBehaviour
     float start;
     const float Duration = 0.15f;
 
-    public static void Spawn(Vector3 point, float radius, Color? color = null)
+    public static void Spawn(Vector3 point, float radius, Color? color = null, string fxKey = null)
     {
         Color c = color ?? new Color(1f, 0.55f, 0.15f);
-        SpellFX.Explosion(point, radius, c);
         SpellFX.Play(Sfx.Explosion, point);
         CameraShake.AddAt(point, Mathf.Clamp01(radius * 0.07f));
+        // a spell with its own impact effect needs no plain flash; the boss and enemies still use the generic one
+        if (SpellFX.UseMagicFX && SpellImpact.Play(fxKey, point, Vector3.up, radius, c)) return;
+        SpellFX.Explosion(point, radius, c);
 
         var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         go.name = "ExplosionFlash";
