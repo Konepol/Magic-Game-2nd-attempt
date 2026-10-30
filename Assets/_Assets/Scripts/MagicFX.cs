@@ -167,6 +167,7 @@ public static class MagicFX
             return softMat;
         }
     }
+    public static Material CoreMat { get { EnsureMaterials(); return coreMat; } }
     public static Mesh OrbMesh() => Orb();
 
     // a smaller version for hits and impacts

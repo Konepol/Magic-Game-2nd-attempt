@@ -18,7 +18,7 @@ MonoBehaviour:
     kind: 0
     damage: 10
     breaksBarriers: 0
-    effectColor: {r: 0.45, g: 0.7, b: 1, a: 1}
+    effectColor: {r: 0.6, g: 0.45, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 45
     lifetime: 4
@@ -55,7 +55,7 @@ MonoBehaviour:
     kind: 0
     damage: 40
     breaksBarriers: 0
-    effectColor: {r: 0.35, g: 0.55, b: 1, a: 1}
+    effectColor: {r: 0.5, g: 0.38, b: 1, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 60
     lifetime: 4

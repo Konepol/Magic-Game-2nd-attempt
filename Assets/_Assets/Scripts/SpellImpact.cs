@@ -66,9 +66,10 @@ public static class SpellImpact
 
     static void Arcane(Vector3 p, Vector3 n, float r, Color c, float lod)
     {
-        Core(p, n, r * 0.7f, c, 0.32f);
-        Ring(p, n, r * 1.7f, c, 0.4f, lod);
-        Stars(p, r, Lighter(c, 0.35f), N(6, lod), 1f);
+        // a small violet pop: a glow, one thin ring and a few stars
+        Core(p, n, r * 0.7f, c, 0.28f);
+        Ring(p, n, r * 1.2f, c, 0.3f, lod);
+        Stars(p, r * 0.8f, Lighter(c, 0.35f), N(5, lod), 0.9f);
         Dots(p, n, r, Lighter(c, 0.5f), N(8, lod), 180f, 2f, 0f);
     }
 

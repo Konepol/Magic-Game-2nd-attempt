@@ -646,6 +646,29 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
     // a spell was cast: true for a hold (chanted) cast, false for a tap
     public event System.Action<bool> Casted;
+    // the same, with the spell that was cast (the cast animation and hand effects choose their style from it)
+    public event System.Action<SpellData, bool> SpellCasted;
+
+    // the spell being chanted right now (the fusion, or the newest held key) and how far along the chant is, 0..1
+    public SpellData ChantSpell
+    {
+        get
+        {
+            if (combo != null) return combo.spec.result;
+            int s = NewestHeldSlot;
+            return s >= 0 ? GetSpell(s) : null;
+        }
+    }
+
+    public float ChantProgress
+    {
+        get
+        {
+            if (combo != null) return ComboProgress;
+            int s = NewestHeldSlot;
+            return s >= 0 ? GetCharge(s) : 0f;
+        }
+    }
     public float ComboCost => combo != null ? combo.spec.manaCost : 0f;
     public float ComboProgress => combo != null ? Mathf.Clamp01(combo.effHeld / Mathf.Max(combo.spec.castTime, 0.05f)) : 0f;
     public bool ComboReady => combo != null && ComboProgress >= 1f;
@@ -1416,6 +1439,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         cooldownEnd[slot] = Time.time + v.cooldown;
         bool wasHold = spell.hasHoldVariant && ReferenceEquals(v, spell.hold);
         Casted?.Invoke(wasHold);
+        SpellCasted?.Invoke(spell, wasHold);
         castingUntil = Time.time + (wasHold ? spell.heldRecovery : spell.tapRecovery);
         facingUntil = Time.time + Mathf.Max(faceAimAfterCast, wasHold ? spell.heldRecovery : spell.tapRecovery);
         lastCastMovement = wasHold ? spell.heldMovement : spell.tapMovement;

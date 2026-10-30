@@ -18,6 +18,7 @@ public class PlayerCastAnimator : MonoBehaviour
         animator = GetComponent<Animator>();
         caster = GetComponentInChildren<PlayerSpellCaster>();
         if (caster != null) health = caster.GetComponentInParent<Health>();
+        if (GetComponent<CastPoseDriver>() == null) gameObject.AddComponent<CastPoseDriver>();      // the per-spell cast poses and hand orbs
     }
 
     void OnEnable()
