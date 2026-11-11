@@ -73,6 +73,8 @@ public class CircleLayer : ISerializationCallbackReceiver
     public bool reverseSpin = false;
     [Min(0f), Tooltip("Multiplies every spin of this layer: 1 = as set, 2 = twice as fast, 0.5 = half speed.")]
     public float spinSpeed = 1f;
+    [Tooltip("The point this layer spins around, as a fraction of the layer's size, measured from its middle (x = right, y = up). 0, 0 = it spins around its own middle. For example 0.3, 0 makes it swing around a point to the right of its middle.")]
+    public Vector2 spinOrigin = Vector2.zero;
     [Tooltip("Graph of the spin speed while this layer draws in: left = the moment it starts to appear, right = when it is fully drawn (after that it keeps the right-hand value). The height multiplies the Rotation Speed, so a tall bump at the left gives a fast spin at the start that slows down. A flat line at 1 changes nothing. On the arrow ring it shapes the settled spin (Ring Spin).")]
     public AnimationCurve spinOverTime = AnimationCurve.Constant(0f, 1f, 1f);
 
@@ -97,6 +99,8 @@ public class CircleLayer : ISerializationCallbackReceiver
     public int pieceCount = 4;
     [Range(-180f, 180f), Tooltip("Orbit-only ring (Point To Center unchecked): turns every piece on its own centre by a fixed angle, the same turn Point To Center animates but static. 0 = pointing along the ring; +90 = pointing at the middle; -90 = pointing away from it. It follows Reverse Spin, so +90 still points at the middle when the ring is reversed.")]
     public float pieceTurn = 0f;
+    [Range(-1f, 1f), Tooltip("Orbit-only ring: the point on each piece that sits on the ring and that Piece Turn rotates around. 0 = the middle of the piece, +1 = its tip (the front end), -1 = its back end.")]
+    public float piecePivot = 0f;
     [Range(0.05f, 0.6f), Tooltip("Orbit-only ring: how far from the middle the pieces sit, as a fraction of the layer's size (0.5 = at the edge).")]
     public float ringRadius = 0.5f;
 

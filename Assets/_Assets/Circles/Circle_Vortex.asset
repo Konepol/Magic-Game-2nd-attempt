@@ -42,6 +42,7 @@ MonoBehaviour:
     appear: 2
     reverseSpin: 0
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -78,6 +79,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10
@@ -101,6 +103,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 0
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -137,6 +140,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10
@@ -160,6 +164,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 0
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -196,6 +201,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10
@@ -218,7 +224,8 @@ MonoBehaviour:
     drawTime: 1
     appear: 11
     reverseSpin: 0
-    spinSpeed: 2
+    spinSpeed: 1.5
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -254,7 +261,8 @@ MonoBehaviour:
     convertedToPointToCenter: 1
     pieceWing: 0.2
     pieceCount: 4
-    pieceTurn: 0
+    pieceTurn: 40
+    piecePivot: 0
     ringRadius: 0.353
     variants: []
     variantFps: 10
@@ -278,6 +286,7 @@ MonoBehaviour:
     appear: 11
     reverseSpin: 1
     spinSpeed: 1.5
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -313,7 +322,8 @@ MonoBehaviour:
     convertedToPointToCenter: 1
     pieceWing: 0.2
     pieceCount: 4
-    pieceTurn: 0
+    pieceTurn: 40
+    piecePivot: 0
     ringRadius: 0.48
     variants: []
     variantFps: 10
@@ -337,6 +347,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 0
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -373,6 +384,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10
@@ -396,6 +408,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 0
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -432,6 +445,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.45
     variants: []
     variantFps: 10
@@ -455,6 +469,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 1
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -491,6 +506,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10
@@ -514,6 +530,7 @@ MonoBehaviour:
     appear: 10
     reverseSpin: 1
     spinSpeed: 1
+    spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -550,6 +567,7 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
+    piecePivot: 0
     ringRadius: 0.5
     variants: []
     variantFps: 10

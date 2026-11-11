@@ -415,7 +415,8 @@ public class CastingCircle : MonoBehaviour
             }
 
             Vector3 worldPos = pose.position + pose.rotation * local;
-            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(flip, 0f, 0f) * Quaternion.Euler(0f, 0f, shownAngle + enterSpin + exitSpin * dir);
+            Quaternion spinQ = Quaternion.Euler(0f, 0f, shownAngle + enterSpin + exitSpin * dir);
+            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(flip, 0f, 0f) * spinQ;
 
             // upright layers swing around the player on the ring; the parts on the ground stay centred on the player / the target
             if (def.anchor == CircleAnchor.Front && (Mathf.Abs(placementAngle) > 0.01f || Mathf.Abs(placementRadius - 1f) > 0.001f))
@@ -441,6 +442,14 @@ public class CastingCircle : MonoBehaviour
             if (def.shimmer > 0f) styleAlpha *= 1f - def.shimmer * 0.5f * (1f + 0.5f * Mathf.Sin(Time.time * 11f + l.index * 2.3f) + 0.5f * Mathf.Sin(Time.time * 17.3f + l.index * 5.1f));
 
             l.root.localScale = Vector3.one * (diameter * sizeMul * (def.exitOnly ? 1f : scaleMul));
+
+            // Spin Origin: the layer spins around this point instead of its middle (the point stays where it would be unspun)
+            if (def.spinOrigin != Vector2.zero)
+            {
+                Vector3 pv = new Vector3(def.spinOrigin.x, def.spinOrigin.y, 0f) * l.root.localScale.x;
+                Quaternion baseQ = worldRot * Quaternion.Inverse(spinQ);
+                l.root.position = worldPos + baseQ * pv - worldRot * pv;
+            }
 
             Color c = def.useSpellColor ? spellColor * def.tint : def.tint;
             if (overrideAmount > 0f && !def.exitOnly) c = Color.Lerp(c, tintOverride, overrideAmount);
@@ -521,7 +530,7 @@ public class CastingCircle : MonoBehaviour
             float axis = psi + sgn * (90f + l.def.pieceTurn);          // along the ring, the way it spins, turned by Piece Turn (+ = toward the middle)
             // the middle of the piece sits on the ring and the piece runs along it (the image's tip is at its front end, about 0.38 of the image behind it is its back end)
             float half = 0.5f * 0.38f * (wing / ArrowL);
-            Vector2 tip = l.def.ringRadius * Dir(psi) + Dir(axis) * half;
+            Vector2 tip = l.def.ringRadius * Dir(psi) + Dir(axis) * half * (1f - l.def.piecePivot);      // Piece Pivot: the point of the piece that sits on the ring (0 middle, +1 tip, -1 back)
             SetPiece(l.pieces[k], tip, axis, wing / ArrowL, main, l.def);
         }
     }
