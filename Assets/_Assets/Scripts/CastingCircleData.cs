@@ -95,6 +95,8 @@ public class CircleLayer : ISerializationCallbackReceiver
     public float pieceWing = 0.26f;
     [Range(1, 8), Tooltip("Orbit-only ring: how many pieces.")]
     public int pieceCount = 4;
+    [Range(-180f, 180f), Tooltip("Orbit-only ring (Point To Center unchecked): turns every piece on its own centre by a fixed angle, the same turn Point To Center animates but static. 0 = pointing along the ring; +90 = pointing at the middle; -90 = pointing away from it. It follows Reverse Spin, so +90 still points at the middle when the ring is reversed.")]
+    public float pieceTurn = 0f;
     [Range(0.05f, 0.6f), Tooltip("Orbit-only ring: how far from the middle the pieces sit, as a fraction of the layer's size (0.5 = at the edge).")]
     public float ringRadius = 0.5f;
 

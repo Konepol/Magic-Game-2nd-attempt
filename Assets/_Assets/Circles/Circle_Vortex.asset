@@ -71,12 +71,14 @@ MonoBehaviour:
     arrowDiamond: {fileID: 2800000, guid: 423a8050d5a2b8d40b5c5c97f4bbe408, type: 3}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
-    orbitTurns: 1.25
+    orbitTurns: 1.43
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -129,11 +131,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -186,11 +190,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -243,11 +249,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 100
     orbitTurns: 1
+    pointToCenter: 0
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.2
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.353
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -300,11 +308,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 100
     orbitTurns: 1
+    pointToCenter: 0
     ringOrbitOnly: 1
+    convertedToPointToCenter: 1
     pieceWing: 0.2
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.48
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -357,11 +367,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -414,11 +426,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.45
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -471,11 +485,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -528,11 +544,13 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    pointToCenter: 1
     ringOrbitOnly: 0
+    convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
+    pieceTurn: 0
     ringRadius: 0.5
-    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
