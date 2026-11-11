@@ -674,7 +674,7 @@ public static class UniqueCircleBuilder
         var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, 60f, 0.0f, 0.8f, CircleAppear.Bloom);
 
         // Layer 3: a second, bigger ring of double-V pieces that only spins around, starting small and growing
-        var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 3.4f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
+        var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 2.6f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
         ring2.arrowRing = true;
         ring2.ringOrbitOnly = true;
         ring2.pieceWing = 0.3f;

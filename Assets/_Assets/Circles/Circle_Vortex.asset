@@ -125,7 +125,7 @@ MonoBehaviour:
     rotationSpeed: 50
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 3.4
+    size: 2.6
     scaleToAoeRadius: 0
     startAt: 0
     drawTime: 0.8
