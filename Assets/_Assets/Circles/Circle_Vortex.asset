@@ -37,7 +37,7 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     size: 3
     scaleToAoeRadius: 0
-    startAt: 0
+    startAt: 0.05
     drawTime: 1
     appear: 2
     arrowRing: 1
@@ -130,17 +130,17 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     size: 2.6
     scaleToAoeRadius: 0
-    startAt: 0
-    drawTime: 0.8
-    appear: 10
+    startAt: 0.6
+    drawTime: 0.2
+    appear: 6
     arrowRing: 1
     arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
     arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
-    ringSpin: 90
+    ringSpin: 100
     orbitTurns: 1
     ringOrbitOnly: 1
-    pieceWing: 0.3
+    pieceWing: 0.2
     pieceCount: 4
     ringRadius: 0.3
     piecesFaceMiddle: 0

@@ -68,6 +68,12 @@ public class CircleLayer
     public float drawTime = 0.4f;
     public CircleAppear appear = CircleAppear.RadialWipe;
 
+    [Header("Spin")]
+    [Tooltip("Turns the spin of this layer the other way (its Rotation Speed, the whirl while it appears, and the arrow ring's orbit). On the orbit-only ring the tips of the pieces turn round too, so they still point the way they travel.")]
+    public bool reverseSpin = false;
+    [Min(0f), Tooltip("Multiplies every spin of this layer: 1 = as set, 2 = twice as fast, 0.5 = half speed.")]
+    public float spinSpeed = 1f;
+
     [Header("Arrow ring (a ring of diamond + V groups: they turn apart, fuse, turn to face the middle, shrink and circle it)")]
     [Tooltip("Turns this layer into the arrow ring. It then draws its own pieces from the two images below instead of the Texture above. Start At / Draw Time set when the whole sequence plays.")]
     public bool arrowRing = false;

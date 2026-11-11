@@ -301,7 +301,8 @@ public class CastingCircle : MonoBehaviour
             if (t <= 0f) { SetEnabled(l, false); continue; }
             SetEnabled(l, true);
 
-            l.angle += def.rotationSpeed * dt;
+            float spinF = def.spinSpeed * (def.reverseSpin ? -1f : 1f);      // Spin Speed and Reverse Spin on the layer
+            l.angle += def.rotationSpeed * spinF * dt;
 
             // how this layer comes in (each layer can have its own)
             float reveal = 1f, sizeMul = 1f, styleAlpha = 1f, enterSpin = 0f, flip = 0f;
@@ -375,6 +376,8 @@ public class CastingCircle : MonoBehaviour
                 }
             }
 
+            enterSpin *= spinF;
+
             // leaving by un-drawing: the layer drawn last is erased first
             if (mode == Mode.Fading && data.exitStyle == CircleExit.Unwind)
             {
@@ -403,9 +406,9 @@ public class CastingCircle : MonoBehaviour
 
             // spin drawn 'on twos': it moves in jumps instead of smoothly
             float shownAngle = l.angle;
-            if (def.stepFps > 0f && Mathf.Abs(def.rotationSpeed) > 0.01f)
+            if (def.stepFps > 0f && Mathf.Abs(def.rotationSpeed * spinF) > 0.01f)
             {
-                float stepDeg = Mathf.Abs(def.rotationSpeed) / def.stepFps;
+                float stepDeg = Mathf.Abs(def.rotationSpeed * spinF) / def.stepFps;
                 shownAngle = Mathf.Round(l.angle / stepDeg) * stepDeg;
             }
 
@@ -462,7 +465,7 @@ public class CastingCircle : MonoBehaviour
             {
                 Color accent = def.arrowAccent;
                 if (overrideAmount > 0f) accent = Color.Lerp(accent, tintOverride, overrideAmount);
-                UpdateArrowRing(l, t, def.ringSpin * l.hold, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
+                UpdateArrowRing(l, t, def.ringSpin * l.hold * spinF, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
             }
         }
     }
@@ -505,7 +508,7 @@ public class CastingCircle : MonoBehaviour
         {
             if (k >= count) { SetPiece(l.pieces[k], Vector2.zero, 0f, 0f, main, l.def); continue; }
             float psi = 360f * k / count + 45f;
-            float axis = psi + (l.def.piecesFaceMiddle ? 180f : 90f);
+            float axis = psi + (l.def.piecesFaceMiddle ? 180f : (l.def.reverseSpin ? -90f : 90f));
             // the middle of the piece sits on the ring and the piece runs along it (the image's tip is at its front end, about 0.38 of the image behind it is its back end)
             float half = 0.5f * 0.38f * (wing / ArrowL);
             Vector2 tip = l.def.ringRadius * Dir(psi) + Dir(axis) * half;
@@ -529,7 +532,7 @@ public class CastingCircle : MonoBehaviour
 
         // the whole ring spins around the middle while the pieces appear, slowing to a stop as the shape completes
         float eo = 1f - Mathf.Pow(1f - Mathf.Clamp01(s / 0.65f), 3f);
-        spinDeg += -360f * def.orbitTurns * (1f - eo);
+        spinDeg += -360f * def.orbitTurns * (1f - eo) * def.spinSpeed * (def.reverseSpin ? -1f : 1f);
 
         main.a = alpha;
         accent.a = alpha;
