@@ -40,6 +40,11 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.5
     appear: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Bolt Ring Counter
@@ -55,6 +60,11 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.4
     appear: 1
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Cross
@@ -70,6 +80,11 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Side Bolt A
@@ -85,6 +100,11 @@ MonoBehaviour:
     startAt: 0.55
     drawTime: 0.3
     appear: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Side Bolt B
@@ -100,5 +120,10 @@ MonoBehaviour:
     startAt: 0.65
     drawTime: 0.3
     appear: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0

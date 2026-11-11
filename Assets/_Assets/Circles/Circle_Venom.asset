@@ -40,6 +40,11 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.6
     appear: 5
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Fangs Counter
@@ -55,6 +60,11 @@ MonoBehaviour:
     startAt: 0.25
     drawTime: 0.5
     appear: 5
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Drops
@@ -70,6 +80,11 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Floor Fangs
@@ -85,6 +100,11 @@ MonoBehaviour:
     startAt: 0.4
     drawTime: 0.6
     appear: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Floor Scatter
@@ -100,5 +120,10 @@ MonoBehaviour:
     startAt: 0.6
     drawTime: 0.4
     appear: 1
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0

@@ -13,77 +13,210 @@ MonoBehaviour:
   m_Name: Circle_Vortex
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.3
-  exitStyle: 7
-  exitDuration: 0.3
+  exitStyle: 8
+  exitDuration: 0.6
   glow: 1.2
   coreWhite: 0.35
-  depthSpacing: 0.3
+  depthSpacing: 0.04
   groundLayerSpacing: 0.03
-  tiltDegrees: 3
+  tiltDegrees: 2
   tiltSpeed: 1.4
   groundTiltMinHeight: 0.5
   readyColor: {r: 1, g: 0.95, b: 0.6, a: 1}
   readyColorBlend: 0.45
-  readyFlash: 0.8
+  readyFlash: 0.5
   readyPulse: 0
   layers:
   - name: Stray Glyphs
-    texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
-    useSpellColor: 0
-    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    texture: {fileID: 2800000, guid: ff3ebd26b3c2e9743bc985ef9629e399, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: 4
+    rotationSpeed: 0
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 2.8
+    size: 2.9
     scaleToAoeRadius: 0
     startAt: 0
-    drawTime: 0.35
-    appear: 9
+    drawTime: 0.2
+    appear: 4
+    variants:
+    - {fileID: 2800000, guid: ff3ebd26b3c2e9743bc985ef9629e399, type: 3}
+    - {fileID: 2800000, guid: d6027ddb19a663247b4c3412fb3fe8a0, type: 3}
+    variantFps: 12
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
-    shimmer: 0.35
-  - name: Vortex
-    texture: {fileID: 2800000, guid: bf22b89585269de4c957c7227965c09c, type: 3}
-    useSpellColor: 1
-    tint: {r: 1, g: 1, b: 1, a: 1}
-    opacity: 1
-    rotationSpeed: 230
-    anchor: 0
-    offset: {x: 0, y: 0, z: 0}
-    size: 2.4
-    scaleToAoeRadius: 0
-    startAt: 0.1
-    drawTime: 0.45
-    appear: 10
-    holdDrift: 0.02
     shimmer: 0
-  - name: Vortex Counter
-    texture: {fileID: 2800000, guid: bf22b89585269de4c957c7227965c09c, type: 3}
+  - name: Stray Yellow
+    texture: {fileID: 2800000, guid: 427763dacae017140ae9df1ae9316b48, type: 3}
     useSpellColor: 0
     tint: {r: 1, g: 0.85, b: 0.3, a: 1}
     opacity: 1
-    rotationSpeed: -340
+    rotationSpeed: 0
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 1.5
+    size: 2.9
     scaleToAoeRadius: 0
-    startAt: 0.25
-    drawTime: 0.45
-    appear: 10
-    holdDrift: 0.03
-    shimmer: 0.2
-  - name: Ring
-    texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
+    startAt: 0.04
+    drawTime: 0.2
+    appear: 4
+    variants:
+    - {fileID: 2800000, guid: 427763dacae017140ae9df1ae9316b48, type: 3}
+    - {fileID: 2800000, guid: 4e1bdb1087a30d44bbb95e0f1f9e346e, type: 3}
+    variantFps: 12
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Inner Spiral
+    texture: {fileID: 2800000, guid: 816bd8fd1340083408bde3c5561267a2, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: -10
+    rotationSpeed: -120
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 2.8
+    size: 1.7
+    scaleToAoeRadius: 0
+    startAt: 0.12
+    drawTime: 0.3
+    appear: 10
+    variants:
+    - {fileID: 2800000, guid: 816bd8fd1340083408bde3c5561267a2, type: 3}
+    - {fileID: 2800000, guid: c626b761144d1c349a906d7d98266f19, type: 3}
+    - {fileID: 2800000, guid: c190e36934bfd5143ad17e9a284f56d5, type: 3}
+    variantFps: 10
+    stepFps: 10
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Tendrils
+    texture: {fileID: 2800000, guid: f04846fa0ca43cb43811e42a66cd9eb3, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 55
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.5
+    scaleToAoeRadius: 0
+    startAt: 0.18
+    drawTime: 0.32
+    appear: 10
+    variants:
+    - {fileID: 2800000, guid: f04846fa0ca43cb43811e42a66cd9eb3, type: 3}
+    - {fileID: 2800000, guid: 083007d0bdf748c478f72689d0a94b34, type: 3}
+    - {fileID: 2800000, guid: 70e2c5bf9a9c8e147882ed1a5e60902f, type: 3}
+    variantFps: 12
+    stepFps: 10
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Arrowheads
+    texture: {fileID: 2800000, guid: 65b54381c5fd799428b574c784d22b6c, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    opacity: 1
+    rotationSpeed: 55
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.5
+    scaleToAoeRadius: 0
+    startAt: 0.26
+    drawTime: 0.3
+    appear: 10
+    variants:
+    - {fileID: 2800000, guid: 65b54381c5fd799428b574c784d22b6c, type: 3}
+    - {fileID: 2800000, guid: 07445141416c8024eb3cccaa95e4abd5, type: 3}
+    - {fileID: 2800000, guid: fa2bff0030a8d2e4598ece76a42c65d7, type: 3}
+    variantFps: 12
+    stepFps: 10
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Hub
+    texture: {fileID: 2800000, guid: da9ae765b9e6eac4ab753865c99d5554, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.9
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.26
     scaleToAoeRadius: 0
     startAt: 0.45
-    drawTime: 0.3
-    appear: 8
+    drawTime: 0.2
+    appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0.3
+  - name: Flash
+    texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.93, b: 0.7, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.2
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.55
+    appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 1
+    exitGrow: 0.35
+    holdDrift: 0
+    shimmer: 0
+  - name: Shockwave
+    texture: {fileID: 2800000, guid: dfdba03c34bd4d24f91cea3a1365c955, type: 3}
+    useSpellColor: 0
+    tint: {r: 0.9, g: 0.95, b: 1, a: 1}
+    opacity: 0.8
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 4.6
+    scaleToAoeRadius: 0
+    startAt: 0.2
+    drawTime: 0.7
+    appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 1
+    exitGrow: 0.25
+    holdDrift: 0
+    shimmer: 0
+  - name: Embers
+    texture: {fileID: 2800000, guid: 224c723d7f6fd0243bab8bb2ecce05a5, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.55, b: 0.15, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3.4
+    scaleToAoeRadius: 0
+    startAt: 0.15
+    drawTime: 0.85
+    appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 1
+    exitGrow: 0.5
     holdDrift: 0
     shimmer: 0

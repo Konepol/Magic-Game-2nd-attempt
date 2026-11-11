@@ -38,6 +38,7 @@ public enum CircleExit
     Dissolve,     // breaks into specks
     Launch,       // shoots forward toward where the spell is going
     Shatter,      // white flash, then the lines are pulled outward and break into specks
+    Overload,     // the lines stay for a moment while they are stretched longer and thinner, then fade; layers marked 'Exit Only' play their own flash, shockwave and embers
 }
 
 [Serializable]
@@ -66,6 +67,20 @@ public class CircleLayer
     [Range(0.02f, 1f), Tooltip("How much of the cast time this layer takes to draw.")]
     public float drawTime = 0.4f;
     public CircleAppear appear = CircleAppear.RadialWipe;
+
+    [Header("Hand-drawn animation")]
+    [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]
+    public Texture2D[] variants;
+    [Tooltip("How many times a second the drawings are swapped.")]
+    public float variantFps = 10f;
+    [Tooltip("0 = the spin is smooth. Above 0 the spin moves in jumps this many times a second (like animation drawn on twos).")]
+    public float stepFps = 0f;
+
+    [Header("Exit only")]
+    [Tooltip("This layer is hidden while the circle builds and holds, and plays only while the circle leaves (a flash, a shockwave, embers). Start At and Draw Time then mean a fraction of the exit.")]
+    public bool exitOnly = false;
+    [Tooltip("Exit-only layers start at this fraction of their size and grow to full size.")]
+    public float exitGrow = 0.4f;
 
     [Header("While it holds")]
     [Tooltip("The layer slowly grows by this fraction of its size per second while the cast is held (0.05 = 5% a second).")]

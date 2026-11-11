@@ -40,6 +40,11 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.2
     appear: 11
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Haze
@@ -55,6 +60,11 @@ MonoBehaviour:
     startAt: 0.12
     drawTime: 0.3
     appear: 2
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Flash Flare
@@ -70,6 +80,11 @@ MonoBehaviour:
     startAt: 0.4
     drawTime: 0.2
     appear: 11
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0
   - name: Burst Yellow
@@ -85,6 +100,11 @@ MonoBehaviour:
     startAt: 0.4
     drawTime: 0.12
     appear: 12
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0.05
     shimmer: 0.3
   - name: Burst Green
@@ -100,6 +120,11 @@ MonoBehaviour:
     startAt: 0.52
     drawTime: 0.14
     appear: 12
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0.04
     shimmer: 0.25
   - name: Glyph Field
@@ -115,5 +140,10 @@ MonoBehaviour:
     startAt: 0.62
     drawTime: 0.3
     appear: 9
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
     holdDrift: 0
     shimmer: 0.35

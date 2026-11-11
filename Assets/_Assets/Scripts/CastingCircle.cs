@@ -42,6 +42,7 @@ public class CastingCircle : MonoBehaviour
     float progress;
     float modeTime;
     float modeDuration = 0.35f;
+    float clock;                // seconds this circle has existed (drives the hand-drawn variants)
     float autoDrawSeconds;      // > 0: draws itself on a timer and then fades out (quick tap circles)
 
     // where this circle sits on the ring around the player when several casts share the aim (0 degrees = straight ahead)
@@ -178,6 +179,7 @@ public class CastingCircle : MonoBehaviour
     public void Tick(float dt)
     {
         modeTime += dt;
+        clock += dt;
 
         if (autoDrawSeconds > 0f && mode == Mode.Building)
         {
@@ -242,6 +244,10 @@ public class CastingCircle : MonoBehaviour
                         tintOverride = Color.white; overrideAmount = Mathf.Clamp01(1f - k * 4f) * 0.9f;
                         exitDissolve = Mathf.Clamp01((k - 0.12f) / 0.88f); exitStretch = k2;
                         break;
+                    case CircleExit.Overload:      // the lines hang on a moment while they stretch longer and thinner, then fade
+                        alphaMul = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((k - 0.3f) / 0.45f));
+                        scaleMul = 1f + 0.25f * k; exitStretch = Mathf.Clamp01(k * 1.4f);
+                        break;
                     case CircleExit.Launch:        // shoots forward toward where the spell is going
                         alphaMul = 1f - k2; scaleMul = Mathf.Lerp(1f, 0.45f, k); exitLaunch = k2;
                         break;
@@ -267,6 +273,11 @@ public class CastingCircle : MonoBehaviour
         {
             var def = l.def;
             float t = Mathf.Clamp01((progress - def.startAt) / Mathf.Max(def.drawTime, 0.02f));
+            if (def.exitOnly)
+            {
+                if (mode != Mode.Fading) { SetEnabled(l, false); continue; }
+                t = Mathf.Clamp01((exitK - def.startAt) / Mathf.Max(def.drawTime, 0.02f));      // a fraction of the exit
+            }
             if (t <= 0f) { SetEnabled(l, false); continue; }
             SetEnabled(l, true);
 
@@ -274,8 +285,15 @@ public class CastingCircle : MonoBehaviour
 
             // how this layer comes in (each layer can have its own)
             float reveal = 1f, sizeMul = 1f, styleAlpha = 1f, enterSpin = 0f, flip = 0f;
-            float dir = l.index % 2 == 0 ? 1f : -1f;
-            switch (def.appear)
+            float dir = Mathf.Abs(def.rotationSpeed) > 0.01f ? Mathf.Sign(def.rotationSpeed) : (l.index % 2 == 0 ? 1f : -1f);      // layers that spin the same way also come in the same way
+            if (def.exitOnly)
+            {
+                // swells and brightens quickly, then fades as it grows
+                float a = t < 0.2f ? t / 0.2f : 1f - (t - 0.2f) / 0.8f;
+                styleAlpha = a * a;
+                sizeMul = Mathf.Lerp(def.exitGrow, 1f, 1f - (1f - t) * (1f - t));
+            }
+            else switch (def.appear)
             {
                 case CircleAppear.RadialWipe: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
                 case CircleAppear.ScaleUp: sizeMul = Mathf.Lerp(0.2f, 1f, 1f - (1f - t) * (1f - t)); styleAlpha = Mathf.Min(1f, t * 4f); break;
@@ -297,7 +315,7 @@ public class CastingCircle : MonoBehaviour
                     // opens from the middle outward, growing and whirling, the spin dying away as it settles
                     float u = 1f - t;
                     reveal = t;
-                    sizeMul = Mathf.Lerp(0.3f, 1f, 1f - u * u);
+                    sizeMul = Mathf.Lerp(0.12f, 1f, 1f - u * u);
                     enterSpin = u * u * 360f * dir;
                     styleAlpha = Mathf.Min(1f, t * 5f);
                     break;
@@ -363,8 +381,16 @@ public class CastingCircle : MonoBehaviour
                                           Mathf.Cos(Time.time * data.tiltSpeed * 0.8f + ph) * data.tiltDegrees, 0f);
             }
 
+            // spin drawn 'on twos': it moves in jumps instead of smoothly
+            float shownAngle = l.angle;
+            if (def.stepFps > 0f && Mathf.Abs(def.rotationSpeed) > 0.01f)
+            {
+                float stepDeg = Mathf.Abs(def.rotationSpeed) / def.stepFps;
+                shownAngle = Mathf.Round(l.angle / stepDeg) * stepDeg;
+            }
+
             Vector3 worldPos = pose.position + pose.rotation * local;
-            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(flip, 0f, 0f) * Quaternion.Euler(0f, 0f, l.angle + enterSpin + exitSpin * dir);
+            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(flip, 0f, 0f) * Quaternion.Euler(0f, 0f, shownAngle + enterSpin + exitSpin * dir);
 
             // upright layers swing around the player on the ring; the parts on the ground stay centred on the player / the target
             if (def.anchor == CircleAnchor.Front && (Mathf.Abs(placementAngle) > 0.01f || Mathf.Abs(placementRadius - 1f) > 0.001f))
@@ -389,19 +415,26 @@ public class CastingCircle : MonoBehaviour
             if (def.holdDrift != 0f) sizeMul *= 1f + def.holdDrift * l.hold;
             if (def.shimmer > 0f) styleAlpha *= 1f - def.shimmer * 0.5f * (1f + 0.5f * Mathf.Sin(Time.time * 11f + l.index * 2.3f) + 0.5f * Mathf.Sin(Time.time * 17.3f + l.index * 5.1f));
 
-            l.root.localScale = Vector3.one * (diameter * sizeMul * scaleMul);
+            l.root.localScale = Vector3.one * (diameter * sizeMul * (def.exitOnly ? 1f : scaleMul));
 
             Color c = def.useSpellColor ? spellColor * def.tint : def.tint;
-            if (overrideAmount > 0f) c = Color.Lerp(c, tintOverride, overrideAmount);
-            float baseAlpha = def.opacity * styleAlpha * alphaMul;
+            if (overrideAmount > 0f && !def.exitOnly) c = Color.Lerp(c, tintOverride, overrideAmount);
+            float baseAlpha = def.opacity * styleAlpha * (def.exitOnly ? 1f : alphaMul);
 
             c.a = baseAlpha;
+            block.Clear();
+            if (def.variants != null && def.variants.Length > 0)
+            {
+                // hand-drawn wiggle: the layer swaps between its drawings
+                int vi = (Mathf.FloorToInt(clock * Mathf.Max(def.variantFps, 1f)) + l.index * 3) % def.variants.Length;
+                if (def.variants[vi] != null) block.SetTexture("_BaseMap", def.variants[vi]);
+            }
             block.SetColor("_Color", c);
             block.SetFloat("_Reveal", reveal);
-            block.SetFloat("_Dissolve", exitDissolve);
+            block.SetFloat("_Dissolve", def.exitOnly ? 0f : exitDissolve);
             block.SetFloat("_Glow", data.glow);
             block.SetFloat("_CoreWhite", data.coreWhite);
-            block.SetFloat("_Stretch", exitStretch);
+            block.SetFloat("_Stretch", def.exitOnly ? 0f : exitStretch);
             block.SetFloat("_Mode", RevealMode(def.appear));
             l.face.SetPropertyBlock(block);
         }
