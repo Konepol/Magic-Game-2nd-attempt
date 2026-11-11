@@ -113,7 +113,7 @@ public class CastingCircle : MonoBehaviour
                     Kill(pq.GetComponent<Collider>());
                     pq.transform.SetParent(root, false);
                     var pr = pq.GetComponent<Renderer>();
-                    pr.sharedMaterial = MaterialFor(p < 4 || def.ringOrbitOnly ? def.arrowDiamond : def.arrowV);
+                    pr.sharedMaterial = MaterialFor(p < 4 || !def.pointToCenter ? def.arrowDiamond : def.arrowV);
                     pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     pr.receiveShadows = false;
                     pr.enabled = false;
@@ -517,7 +517,7 @@ public class CastingCircle : MonoBehaviour
         {
             if (k >= count) { SetPiece(l.pieces[k], Vector2.zero, 0f, 0f, main, l.def); continue; }
             float psi = 360f * k / count + 45f;
-            float axis = psi + (l.def.piecesFaceMiddle ? 180f : (l.def.reverseSpin ? -90f : 90f));
+            float axis = psi + (l.def.reverseSpin ? -90f : 90f);       // along the ring, the way it spins
             // the middle of the piece sits on the ring and the piece runs along it (the image's tip is at its front end, about 0.38 of the image behind it is its back end)
             float half = 0.5f * 0.38f * (wing / ArrowL);
             Vector2 tip = l.def.ringRadius * Dir(psi) + Dir(axis) * half;
@@ -528,7 +528,7 @@ public class CastingCircle : MonoBehaviour
     void UpdateArrowRing(LayerInstance l, float s, float spinDeg, Color main, Color accent, float alpha)
     {
         var def = l.def;
-        if (def.ringOrbitOnly) { UpdateOrbitRing(l, main, accent, alpha); return; }
+        if (!def.pointToCenter) { UpdateOrbitRing(l, main, accent, alpha); return; }
         float fuse = Smooth((s - 0.2f) / 0.25f);
         float turn = Smooth((s - 0.45f) / 0.2f);
         float shrink = Smooth((s - 0.72f) / 0.28f);

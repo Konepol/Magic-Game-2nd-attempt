@@ -42,7 +42,7 @@ public enum CircleExit
 }
 
 [Serializable]
-public class CircleLayer
+public class CircleLayer : ISerializationCallbackReceiver
 {
     public string name = "Layer";
     public Texture2D texture;
@@ -87,16 +87,26 @@ public class CircleLayer
     public float ringSpin = 90f;
     [Tooltip("While the pieces appear and before the shape is complete, the whole ring spins around the middle this many full turns, starting fast and slowing to a stop as the shape completes (0 = no spin).")]
     public float orbitTurns = 1f;
-    [Tooltip("Orbit-only ring: Piece Count pieces (all drawn from the 'Arrow Diamond' image) sit on the ring. No fusing, turning to the middle or shrinking: the layer just spins (Rotation Speed) and grows (Appear).")]
-    public bool ringOrbitOnly = false;
+    [Tooltip("Arrow ring. Checked: the full sequence (the pieces turn apart, fuse into groups, turn to point at the middle, then the ring shrinks and locks around the middle). Unchecked: the pieces do not point at the middle; they stay on the ring pointing along it and only spin and grow (Piece Count, Piece Wing and Ring Radius apply).")]
+    public bool pointToCenter = true;
+    [HideInInspector] public bool ringOrbitOnly;        // the old, inverted toggle: only read once to convert layers saved before Point To Center existed
+    [HideInInspector, SerializeField] bool convertedToPointToCenter;
     [Tooltip("Orbit-only ring: wing length of the pieces, as a fraction of the layer's size.")]
     public float pieceWing = 0.26f;
     [Range(1, 8), Tooltip("Orbit-only ring: how many pieces.")]
     public int pieceCount = 4;
     [Range(0.05f, 0.6f), Tooltip("Orbit-only ring: how far from the middle the pieces sit, as a fraction of the layer's size (0.5 = at the edge).")]
     public float ringRadius = 0.5f;
-    [Tooltip("Orbit-only ring: off = the tips point along the ring (counter-clockwise); on = the tips point at the middle.")]
-    public bool piecesFaceMiddle = false;
+
+    // layers saved with the old Ring Orbit Only toggle keep their behaviour: Point To Center is its inverse
+    public void OnBeforeSerialize() { convertedToPointToCenter = true; }
+
+    public void OnAfterDeserialize()
+    {
+        if (convertedToPointToCenter) return;
+        pointToCenter = !ringOrbitOnly;
+        convertedToPointToCenter = true;
+    }
 
     [Header("Hand-drawn animation")]
     [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]

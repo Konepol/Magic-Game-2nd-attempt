@@ -663,6 +663,7 @@ public static class UniqueCircleBuilder
 
         var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
         ring.arrowRing = true;
+        ring.pointToCenter = true;
         ring.arrowV = Tex["Arrow_V"];
         ring.arrowDiamond = Tex["Arrow_Diamond"];
         ring.arrowAccent = yellow;
@@ -676,11 +677,10 @@ public static class UniqueCircleBuilder
         // Layer 3: a second, bigger ring of double-V pieces that only spins around, starting small and growing
         var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 2.6f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
         ring2.arrowRing = true;
-        ring2.ringOrbitOnly = true;
+        ring2.pointToCenter = false;
         ring2.pieceWing = 0.3f;
         ring2.pieceCount = 4;
         ring2.ringRadius = 0.30f;           // the pieces sit on the arms (the arms reach out to about 0.46)
-        ring2.piecesFaceMiddle = false;
         ring2.arrowV = Tex["Arrow_V"];
         ring2.arrowDiamond = Tex["Arrow_DoubleV"];
         ring2.arrowAccent = yellow;
@@ -743,7 +743,7 @@ public static class UniqueCircleBuilder
         copy.name = name;
         copy.texture = Tex.TryGetValue(texture, out var t) ? t : AssetDatabase.LoadAssetAtPath<Texture2D>(ImageDir + "/" + texture + ".png");
         copy.variants = null;
-        copy.arrowRing = false; copy.ringOrbitOnly = false; copy.exitOnly = false;
+        copy.arrowRing = false; copy.exitOnly = false;
         copy.arrowV = null; copy.arrowDiamond = null;
         copy.spinOverTime = new AnimationCurve(like.spinOverTime.keys);
         return copy;
