@@ -260,10 +260,10 @@ MonoBehaviour:
     ringOrbitOnly: 0
     convertedToPointToCenter: 1
     pieceWing: 0.2
-    pieceCount: 4
-    pieceTurn: 40
-    piecePivot: 0
-    ringRadius: 0.353
+    pieceCount: 8
+    pieceTurn: 10
+    piecePivot: 1
+    ringRadius: 0.283
     variants: []
     variantFps: 10
     stepFps: 0
@@ -321,10 +321,10 @@ MonoBehaviour:
     ringOrbitOnly: 1
     convertedToPointToCenter: 1
     pieceWing: 0.2
-    pieceCount: 4
-    pieceTurn: 40
-    piecePivot: 0
-    ringRadius: 0.48
+    pieceCount: 6
+    pieceTurn: -3
+    piecePivot: 1
+    ringRadius: 0.293
     variants: []
     variantFps: 10
     stepFps: 0

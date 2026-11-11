@@ -91,6 +91,10 @@ public class CircleLayer : ISerializationCallbackReceiver
     public float orbitTurns = 1f;
     [Tooltip("Arrow ring. Checked: the full sequence (the pieces turn apart, fuse into groups, turn to point at the middle, then the ring shrinks and locks around the middle). Unchecked: the pieces do not point at the middle; they stay on the ring pointing along it and only spin and grow (Piece Count, Piece Wing and Ring Radius apply).")]
     public bool pointToCenter = true;
+    [Range(0.02f, 0.5f), Tooltip("Point To Center ring: how far from the middle the ring ends up once it has shrunk and locked, as a fraction of the layer's size. The ring starts at 0.5 (the edge), so a smaller number shrinks it more. 0.19 is the old fixed amount.")]
+    public float finalRadius = 0.19f;
+    [Range(0.1f, 1f), Tooltip("Point To Center ring: how big the pieces are once the ring has shrunk, compared with their size before it shrinks (1 = they do not get smaller). 0.5 is the old fixed amount.")]
+    public float finalPieceScale = 0.5f;
     [HideInInspector] public bool ringOrbitOnly;        // the old, inverted toggle: only read once to convert layers saved before Point To Center existed
     [HideInInspector, SerializeField] bool convertedToPointToCenter;
     [Tooltip("Orbit-only ring: wing length of the pieces, as a fraction of the layer's size.")]

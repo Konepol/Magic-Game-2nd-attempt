@@ -542,8 +542,8 @@ public class CastingCircle : MonoBehaviour
         float fuse = Smooth((s - 0.2f) / 0.25f);
         float turn = Smooth((s - 0.45f) / 0.2f);
         float shrink = Smooth((s - 0.72f) / 0.28f);
-        float ringR = 0.5f * (1f - 0.62f * shrink);
-        float wing = (30f + 22f * fuse) * (1f - 0.5f * shrink);
+        float ringR = Mathf.Lerp(0.5f, def.finalRadius, shrink);              // Final Radius: where the ring ends up
+        float wing = (30f + 22f * fuse) * Mathf.Lerp(1f, def.finalPieceScale, shrink);
         float dW = 0.78f * wing / 300f;                         // the diamond's wing length (the V is 1.6 times that)
         float wob = s < 0.25f ? 30f * Mathf.Sin(Mathf.PI * Mathf.Min(1f, s / 0.25f)) : 0f;
         float nose = 2.07f * dW * 0.5f + 0.55f * dW;            // how far the V's tip sits ahead of the diamond's middle once fused
