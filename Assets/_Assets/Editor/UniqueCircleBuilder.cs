@@ -636,7 +636,7 @@ public static class UniqueCircleBuilder
                     for (int k = 0; k <= 48; k++)
                     {
                         float t = k / 48f;
-                        float ang = a0 + 0.35f * t + 0.5f * Mathf.Sin(t * 2f * Mathf.PI * 0.9f + phase);      // one smooth S per arm
+                        float ang = a0 + 0.2f * t + 0.26f * Mathf.Sin(t * 2f * Mathf.PI * 0.9f + phase);      // one gentle S per arm
                         float r = Mathf.Lerp(0.05f, 0.46f, t);
                         pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
                     }
@@ -655,7 +655,7 @@ public static class UniqueCircleBuilder
 
         // the arms start small and grow until they reach their size, rotating as they grow (Bloom), then keep turning slowly
         var armsOuter = L("Arms Outer", "Vortex_Arms_A", CircleAnchor.Front, 2.6f, 40f, 0.0f, 0.8f, CircleAppear.Bloom);
-        var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, -60f, 0.0f, 0.8f, CircleAppear.Bloom);
+        var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, 60f, 0.0f, 0.8f, CircleAppear.Bloom);
 
         var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner);
         vortex.depthSpacing = 0.04f;
