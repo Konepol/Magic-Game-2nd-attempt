@@ -76,15 +76,17 @@ Shader "Magic/CastingCircle"
             half Halo(float2 uv)
             {
                 // two blurs of different widths: a tight inner glow and a wide soft one
-                half h1 = 0;
-                half h2 = 0;
-                const float2 d[4] = { float2(1, 1), float2(-1, 1), float2(1, -1), float2(-1, -1) };
-                [unroll] for (int i = 0; i < 4; i++)
+                // taps sit closer together than the blur width of the mip they read, so they merge into one smooth glow
+                half h1 = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv, 2.5).a;
+                half h2 = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv, 4.0).a;
+                const float2 d[8] = { float2(1, 0), float2(0.707, 0.707), float2(0, 1), float2(-0.707, 0.707),
+                                      float2(-1, 0), float2(-0.707, -0.707), float2(0, -1), float2(0.707, -0.707) };
+                [unroll] for (int i = 0; i < 8; i++)
                 {
-                    h1 += SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv + d[i] * 0.010, 1.5).a;
-                    h2 += SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv + d[i] * 0.028, 3.0).a;
+                    h1 += SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv + d[i] * 0.008, 2.5).a;
+                    h2 += SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv + d[i] * 0.020, 4.0).a;
                 }
-                return h1 * 0.25 * 0.75 + h2 * 0.25 * 0.65;
+                return h1 / 9.0 * 0.8 + h2 / 9.0 * 0.7;
             }
 
             half4 frag(Varyings input) : SV_Target
