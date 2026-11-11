@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Circle_CinderStorm
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.5
+  glow: 1.2
+  coreWhite: 0.35
   depthSpacing: 0.3
   groundLayerSpacing: 0.03
   tiltDegrees: 8

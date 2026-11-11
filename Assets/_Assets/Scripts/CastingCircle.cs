@@ -24,6 +24,8 @@ public class CastingCircle : MonoBehaviour
         public float angle;
     }
 
+    const float QuadPadding = 1.16f;      // must match _Pad in the Magic/CastingCircle shader
+
     static readonly Dictionary<Texture2D, Material> materials = new Dictionary<Texture2D, Material>();
     static Material baseMaterial;
 
@@ -88,6 +90,7 @@ public class CastingCircle : MonoBehaviour
             quad.name = "Face";
             Kill(quad.GetComponent<Collider>());
             quad.transform.SetParent(root, false);
+            quad.transform.localScale = Vector3.one * QuadPadding;      // a little bigger than the image so the stroke glow is not cut off at its edge
 
             var r = quad.GetComponent<Renderer>();
             r.sharedMaterial = MaterialFor(def.texture);
@@ -277,6 +280,16 @@ public class CastingCircle : MonoBehaviour
                 case CircleAppear.RadialWipe: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
                 case CircleAppear.ScaleUp: sizeMul = Mathf.Lerp(0.2f, 1f, 1f - (1f - t) * (1f - t)); styleAlpha = Mathf.Min(1f, t * 4f); break;
                 case CircleAppear.FadeIn: styleAlpha = t; break;
+                case CircleAppear.Burst:
+                {
+                    // ease out with an overshoot: opens fast from a small size, swells slightly past full, settles
+                    float k = t - 1f;
+                    float back = 1f + 2.2f * k * k * k + 1.2f * k * k;
+                    sizeMul = Mathf.LerpUnclamped(0.08f, 1f, back);
+                    styleAlpha = Mathf.Min(1f, t * 8f);
+                    break;
+                }
+                case CircleAppear.Sparkle: reveal = t; break;
             }
 
             l.root.localScale = Vector3.one * (diameter * sizeMul * scaleMul);
@@ -288,6 +301,9 @@ public class CastingCircle : MonoBehaviour
             c.a = baseAlpha;
             block.SetColor("_Color", c);
             block.SetFloat("_Reveal", reveal);
+            block.SetFloat("_Glow", data.glow);
+            block.SetFloat("_CoreWhite", data.coreWhite);
+            block.SetFloat("_Sparkle", def.appear == CircleAppear.Sparkle ? 1f : 0f);
             l.face.SetPropertyBlock(block);
         }
     }

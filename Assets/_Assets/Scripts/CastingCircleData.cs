@@ -15,6 +15,8 @@ public enum CircleAppear
     RadialWipe,   // drawn on clockwise from the top
     ScaleUp,      // grows from the middle
     FadeIn,       // fades in
+    Burst,        // snaps out from the middle with an overshoot, like a vortex opening
+    Sparkle,      // for a layer holding a grid of glyphs (8 x 8 cells): each glyph pops in at its own moment, then shimmers
 }
 
 [Serializable]
@@ -51,6 +53,12 @@ public class CastingCircleData : ScriptableObject
 {
     [Tooltip("How far in front of the hand the 'Front' anchor sits, in metres.")]
     public float frontDistance = 1.3f;
+
+    [Header("Stroke glow")]
+    [Range(0f, 4f), Tooltip("Soft halo around every stroke, and a hotter white core. 0 = flat lines.")]
+    public float glow = 1.2f;
+    [Range(0f, 1f), Tooltip("How much the centre of each stroke turns white.")]
+    public float coreWhite = 0.35f;
 
     [Header("Depth (every layer sits at its own distance)")]
     [Tooltip("Each layer sits this much further from the previous one along the circle's depth, so the layers float apart. Upright circles stack away from the viewer; flat circles stack upward. A layer's own Offset z adds to this.")]
