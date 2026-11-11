@@ -464,7 +464,7 @@ public static class UniqueCircleBuilder
         Accent(runeField, 1, yellow);
         Accent(runeField, 3, yellow);
 
-        // Radial Burst: straight light lines, a zig-zag ring and diamonds shooting out from the middle (not assigned to a spell yet)
+        // Radial Burst: straight light lines, a zig-zag ring and diamonds shooting out from the middle (Lightning Lance)
         var burst = Circle("Circle_Burst", 1.3f, Tilt(10f, 1.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.9f),
             L("Burst", "Burst_Lines", CircleAnchor.Front, 3.0f, 25f, 0.0f, 0.45f, CircleAppear.Burst),
             L("Burst Counter", "Burst_Lines", CircleAnchor.Front, 1.8f, -60f, 0.15f, 0.45f, CircleAppear.Burst),
@@ -474,8 +474,8 @@ public static class UniqueCircleBuilder
         // ---------- assign ----------
         Assign(WeaponDir, "ArcaneBolt", vortex);
         Assign(WeaponDir, "ScatterShot", runeField);
+        Assign(WeaponDir, "LightningLance", burst);
         Assign(WeaponDir, "FireBurst", fire);
-        Assign(WeaponDir, "LightningLance", lightning);
         Assign(WeaponDir, "FrostShard", frost);
         Assign(WeaponDir, "WindBlade", wind);
         Assign(WeaponDir, "EarthSpike", earth);
@@ -496,7 +496,7 @@ public static class UniqueCircleBuilder
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned (Arcane Bolt: vortex, Scatter Shot: rune field, other basic spells and 11 fusions: own circles). Also built: Circle_Burst (not assigned).");
+        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned (Arcane Bolt: vortex, Scatter Shot: rune field, other basic spells and 11 fusions: own circles). Lightning Lance: radial burst.");
     }
 
     // ---------- helpers ----------
