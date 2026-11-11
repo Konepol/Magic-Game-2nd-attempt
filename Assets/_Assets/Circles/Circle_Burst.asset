@@ -46,6 +46,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0
@@ -72,6 +74,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0
@@ -98,6 +102,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0
@@ -124,6 +130,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0
@@ -150,6 +158,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0
@@ -176,6 +186,8 @@ MonoBehaviour:
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     variants: []
     variantFps: 10
     stepFps: 0

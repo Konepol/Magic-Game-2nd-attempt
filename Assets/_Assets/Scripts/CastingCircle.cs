@@ -494,9 +494,25 @@ public class CastingCircle : MonoBehaviour
     static Vector2 Dir(float deg) => new Vector2(Mathf.Cos(deg * Mathf.Deg2Rad), Mathf.Sin(deg * Mathf.Deg2Rad));
     static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
 
+    // orbit-only ring: 4 V's alternate with 4 second pieces (triangles) on the ring, tips pointing counter-clockwise along it.
+    // The layer's own rotation and its Appear (growth) do the rest, so the pieces just sit on the ring here.
+    void UpdateOrbitRing(LayerInstance l, Color main, Color accent, float alpha)
+    {
+        float wing = l.def.pieceWing;
+        main.a = alpha;
+        accent.a = alpha;
+        for (int k = 0; k < 4; k++)
+        {
+            float psiV = 90f * k + 10f, psiT = 90f * k + 55f;
+            SetPiece(l.pieces[4 + k], 0.5f * Dir(psiV), psiV + 90f, wing / ArrowL, accent, l.def);
+            SetPiece(l.pieces[k], 0.5f * Dir(psiT), psiT + 90f, wing / ArrowL, main, l.def);
+        }
+    }
+
     void UpdateArrowRing(LayerInstance l, float s, float spinDeg, Color main, Color accent, float alpha)
     {
         var def = l.def;
+        if (def.ringOrbitOnly) { UpdateOrbitRing(l, main, accent, alpha); return; }
         float fuse = Smooth((s - 0.2f) / 0.25f);
         float turn = Smooth((s - 0.45f) / 0.2f);
         float shrink = Smooth((s - 0.72f) / 0.28f);

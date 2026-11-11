@@ -645,6 +645,14 @@ public static class UniqueCircleBuilder
             });
         }
 
+        // a triangle: a V (same wing angle) closed by a line across the wing ends; its tip is in the middle of the image, pointing right
+        Make("Arrow_Triangle", c =>
+        {
+            c.Taper(Vector2.zero, new Vector2(-dx, dy), 0.014f, 0.006f, 0.9f);
+            c.Taper(Vector2.zero, new Vector2(-dx, -dy), 0.014f, 0.006f, 0.9f);
+            c.Seg(new Vector2(-dx, dy), new Vector2(-dx, -dy), 0.006f);
+        });
+
         var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
         ring.arrowRing = true;
         ring.arrowV = Tex["Arrow_V"];
@@ -657,7 +665,16 @@ public static class UniqueCircleBuilder
         var armsOuter = L("Arms Outer", "Vortex_Arms_A", CircleAnchor.Front, 2.6f, 40f, 0.0f, 0.8f, CircleAppear.Bloom);
         var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, 60f, 0.0f, 0.8f, CircleAppear.Bloom);
 
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner);
+        // Layer 3: a second, bigger ring of V's and triangles that only spins around, starting small and growing
+        var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 3.4f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
+        ring2.arrowRing = true;
+        ring2.ringOrbitOnly = true;
+        ring2.pieceWing = 0.26f;
+        ring2.arrowV = Tex["Arrow_V"];
+        ring2.arrowDiamond = Tex["Arrow_Triangle"];
+        ring2.arrowAccent = yellow;
+
+        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner, ring2);
         vortex.depthSpacing = 0.04f;
         return vortex;
     }
