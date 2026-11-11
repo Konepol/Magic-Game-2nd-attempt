@@ -9,7 +9,7 @@ using UnityEngine;
 // spikes, fangs, sun rays, lightning ring, scattered dots, crystal, square runes) combined in a layout of its own, with its own spin,
 // tilt and ready colour. Fusions mix the images of the spells they are made of and add a layer of their own.
 // Everything is a normal editable asset. Running it again overwrites the generated images and these circles.
-public static class UniqueCircleBuilder
+public static partial class UniqueCircleBuilder
 {
     const string ImageDir = "Assets/_Assets/Images/Circles";
     const string CircleDir = "Assets/_Assets/Circles";

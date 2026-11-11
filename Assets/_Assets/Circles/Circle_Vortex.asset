@@ -35,7 +35,7 @@ MonoBehaviour:
     rotationSpeed: 0
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 1.5
+    size: 1.21
     scaleToAoeRadius: 0
     startAt: 0.05
     drawTime: 1
@@ -72,17 +72,17 @@ MonoBehaviour:
     arrowDiamond: {fileID: 2800000, guid: 423a8050d5a2b8d40b5c5c97f4bbe408, type: 3}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
-    orbitTurns: 1.43
+    orbitTurns: 1
     pointToCenter: 1
-    finalRadius: 0.087
-    finalPieceScale: 0.25
+    finalRadius: 0.24
+    finalPieceScale: 0.678
     ringOrbitOnly: 0
     convertedToPointToCenter: 1
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
-    piecePivot: 0.02
-    ringRadius: 0.6
+    piecePivot: -0.03
+    ringRadius: 1.13
     variants: []
     variantFps: 10
     stepFps: 0
