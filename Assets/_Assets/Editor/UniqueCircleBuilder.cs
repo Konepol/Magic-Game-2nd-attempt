@@ -620,6 +620,31 @@ public static class UniqueCircleBuilder
             c.Taper(tail, tail + new Vector2(dx, -dy), 0.014f, 0.004f, 0.7f);
         });
 
+        // Layer 2: S-curved arms (your drawing): 8 arms leave the middle, each bending one way and then back, all turned the same way.
+        // Thick at the root, thinning to a point. Two copies (B is turned half a step with a different wiggle) make the two layers.
+        for (int v = 0; v < 2; v++)
+        {
+            int vv = v;
+            Make("Vortex_Arms_" + (v == 0 ? "A" : "B"), c =>
+            {
+                const int arms = 8;
+                for (int i = 0; i < arms; i++)
+                {
+                    float a0 = 2f * Mathf.PI * i / arms + (vv == 0 ? 0f : Mathf.PI / arms);
+                    float phase = vv == 0 ? 0f : 0.5f;
+                    var pts = new List<Vector2>();
+                    for (int k = 0; k <= 48; k++)
+                    {
+                        float t = k / 48f;
+                        float ang = a0 + 0.35f * t + 0.5f * Mathf.Sin(t * 2f * Mathf.PI * 0.9f + phase);      // one smooth S per arm
+                        float r = Mathf.Lerp(0.05f, 0.46f, t);
+                        pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
+                    }
+                    c.TaperPath(pts, 0.013f, 0.004f, 0.9f);
+                }
+            });
+        }
+
         var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
         ring.arrowRing = true;
         ring.arrowV = Tex["Arrow_V"];
@@ -628,7 +653,11 @@ public static class UniqueCircleBuilder
         ring.ringSpin = 90f;
         ring.orbitTurns = 1f;
 
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring);
+        // the arms start small and grow until they reach their size, rotating as they grow (Bloom), then keep turning slowly
+        var armsOuter = L("Arms Outer", "Vortex_Arms_A", CircleAnchor.Front, 2.6f, 40f, 0.0f, 0.8f, CircleAppear.Bloom);
+        var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, -60f, 0.0f, 0.8f, CircleAppear.Bloom);
+
+        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner);
         vortex.depthSpacing = 0.04f;
         return vortex;
     }
