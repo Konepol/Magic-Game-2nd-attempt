@@ -105,7 +105,7 @@ public class CircleLayer : ISerializationCallbackReceiver
     public float pieceTurn = 0f;
     [Range(-1f, 1f), Tooltip("Orbit-only ring: the point on each piece that sits on the ring and that Piece Turn rotates around. 0 = the middle of the piece, +1 = its tip (the front end), -1 = its back end.")]
     public float piecePivot = 0f;
-    [Range(0.05f, 0.6f), Tooltip("Orbit-only ring: how far from the middle the pieces sit, as a fraction of the layer's size (0.5 = at the edge).")]
+    [Range(0.05f, 0.6f), Tooltip("Arrow ring: how far from the middle the ring sits, as a fraction of the layer's size (0.5 = at the edge). With Point To Center checked this is where the ring starts, before it shrinks to Final Radius; unchecked, it is where the pieces stay.")]
     public float ringRadius = 0.5f;
 
     // layers saved with the old Ring Orbit Only toggle keep their behaviour: Point To Center is its inverse
