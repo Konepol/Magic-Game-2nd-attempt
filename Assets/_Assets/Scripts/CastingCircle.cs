@@ -505,7 +505,7 @@ public class CastingCircle : MonoBehaviour
         {
             if (k >= count) { SetPiece(l.pieces[k], Vector2.zero, 0f, 0f, main, l.def); continue; }
             float psi = 360f * k / count + 45f;
-            SetPiece(l.pieces[k], 0.5f * Dir(psi), psi + (l.def.piecesFaceMiddle ? 180f : 90f), wing / ArrowL, main, l.def);
+            SetPiece(l.pieces[k], l.def.ringRadius * Dir(psi), psi + (l.def.piecesFaceMiddle ? 180f : 90f), wing / ArrowL, main, l.def);
         }
     }
 

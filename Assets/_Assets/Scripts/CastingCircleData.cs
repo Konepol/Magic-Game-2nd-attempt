@@ -85,6 +85,8 @@ public class CircleLayer
     public float pieceWing = 0.26f;
     [Range(1, 8), Tooltip("Orbit-only ring: how many pieces.")]
     public int pieceCount = 4;
+    [Range(0.05f, 0.6f), Tooltip("Orbit-only ring: how far from the middle the pieces sit, as a fraction of the layer's size (0.5 = at the edge).")]
+    public float ringRadius = 0.5f;
     [Tooltip("Orbit-only ring: off = the tips point along the ring (counter-clockwise); on = the tips point at the middle.")]
     public bool piecesFaceMiddle = false;
 

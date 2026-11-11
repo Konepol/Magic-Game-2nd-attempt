@@ -679,6 +679,7 @@ public static class UniqueCircleBuilder
         ring2.ringOrbitOnly = true;
         ring2.pieceWing = 0.3f;
         ring2.pieceCount = 4;
+        ring2.ringRadius = 0.30f;           // the pieces sit on the arms (the arms reach out to about 0.46)
         ring2.piecesFaceMiddle = false;
         ring2.arrowV = Tex["Arrow_V"];
         ring2.arrowDiamond = Tex["Arrow_DoubleV"];

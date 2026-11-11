@@ -49,6 +49,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -79,6 +80,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -109,6 +111,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -139,6 +142,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -169,6 +173,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -199,6 +204,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
@@ -229,6 +235,7 @@ MonoBehaviour:
     ringOrbitOnly: 0
     pieceWing: 0.26
     pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
