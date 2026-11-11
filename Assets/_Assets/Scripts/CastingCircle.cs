@@ -21,6 +21,7 @@ public class CastingCircle : MonoBehaviour
         public int groupIndex;            // position among the layers that share its kind (upright or on the ground)
         public Transform root;            // moved, rotated and scaled as one
         public Renderer face;
+        public Renderer[] pieces;        // arrow ring: 4 diamonds then 4 V's
         public float angle;
         public float hold;               // seconds this layer has been fully drawn
     }
@@ -100,7 +101,26 @@ public class CastingCircle : MonoBehaviour
             r.receiveShadows = false;
             r.enabled = false;
 
-            layers.Add(new LayerInstance { def = def, index = index++, groupIndex = def.anchor == CircleAnchor.Front ? upright++ : ground++, root = root, face = r });
+            Renderer[] pieces = null;
+            if (def.arrowRing && def.arrowDiamond != null && def.arrowV != null)
+            {
+                pieces = new Renderer[8];
+                for (int p = 0; p < 8; p++)
+                {
+                    var pq = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    pq.name = p < 4 ? "Diamond" : "V";
+                    Kill(pq.GetComponent<Collider>());
+                    pq.transform.SetParent(root, false);
+                    var pr = pq.GetComponent<Renderer>();
+                    pr.sharedMaterial = MaterialFor(p < 4 ? def.arrowDiamond : def.arrowV);
+                    pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    pr.receiveShadows = false;
+                    pr.enabled = false;
+                    pieces[p] = pr;
+                }
+            }
+
+            layers.Add(new LayerInstance { def = def, index = index++, groupIndex = def.anchor == CircleAnchor.Front ? upright++ : ground++, root = root, face = r, pieces = pieces });
         }
     }
 
@@ -437,6 +457,13 @@ public class CastingCircle : MonoBehaviour
             block.SetFloat("_Stretch", def.exitOnly ? 0f : exitStretch);
             block.SetFloat("_Mode", RevealMode(def.appear));
             l.face.SetPropertyBlock(block);
+
+            if (def.arrowRing && l.pieces != null)
+            {
+                Color accent = def.arrowAccent;
+                if (overrideAmount > 0f) accent = Color.Lerp(accent, tintOverride, overrideAmount);
+                UpdateArrowRing(l, t, def.ringSpin * l.hold, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
+            }
         }
     }
 
@@ -454,6 +481,62 @@ public class CastingCircle : MonoBehaviour
 
     static void SetEnabled(LayerInstance l, bool on)
     {
-        l.face.enabled = on;
+        l.face.enabled = on && l.pieces == null;
+        if (l.pieces != null) foreach (var pr in l.pieces) pr.enabled = on;
+    }
+
+    // ---------- the arrow ring ----------
+    // Positions are in units of the layer's diameter (the ring starts at radius 0.5), y up, angles in degrees counter-clockwise.
+    // One after the other: each piece turns a little on its own -> V's close up on their diamonds -> each group turns to face the
+    // middle (the shape is complete) -> the whole ring scales down and moves in -> locked small, it circles the middle.
+    const float ArrowL = 0.30f;      // wing length of the V in the arrow images, as a fraction of the image width
+
+    static Vector2 Dir(float deg) => new Vector2(Mathf.Cos(deg * Mathf.Deg2Rad), Mathf.Sin(deg * Mathf.Deg2Rad));
+    static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    void UpdateArrowRing(LayerInstance l, float s, float spinDeg, Color main, Color accent, float alpha)
+    {
+        var def = l.def;
+        float fuse = Smooth((s - 0.2f) / 0.25f);
+        float turn = Smooth((s - 0.45f) / 0.2f);
+        float shrink = Smooth((s - 0.72f) / 0.28f);
+        float ringR = 0.5f * (1f - 0.62f * shrink);
+        float wing = (30f + 22f * fuse) * (1f - 0.5f * shrink);
+        float dW = 0.78f * wing / 300f;                         // the diamond's wing length (the V is 1.6 times that)
+        float wob = s < 0.25f ? 30f * Mathf.Sin(Mathf.PI * Mathf.Min(1f, s / 0.25f)) : 0f;
+        float nose = 2.07f * dW * 0.5f + 0.55f * dW;            // how far the V's tip sits ahead of the diamond's middle once fused
+        float baseDeg = Mathf.Rad2Deg * (nose / ringR);
+
+        main.a = alpha;
+        accent.a = alpha;
+
+        for (int k = 0; k < 4; k++)
+        {
+            float psi = 90f * k + 20f + spinDeg;
+            float ad = psi - 14f * (1f - fuse);                 // the diamond sits behind its V on the ring
+            Vector2 dc = ringR * Dir(ad);
+            float axis = Mathf.LerpAngle(ad + 90f, ad + 180f, turn);     // along the ring (tips point counter-clockwise), then toward the middle
+            Vector2 vRing = ringR * Dir(ad + baseDeg + 20f * (1f - fuse));
+            Vector2 vAxis = dc + Dir(axis) * nose;
+            Vector2 vTip = Vector2.Lerp(vRing, vAxis, turn);
+
+            SetPiece(l.pieces[k], dc, axis + wob, dW / ArrowL, main, def);
+            SetPiece(l.pieces[4 + k], vTip, axis - wob, 1.6f * dW / ArrowL, accent, def);
+        }
+    }
+
+    void SetPiece(Renderer r, Vector2 pos, float angle, float size, Color col, CircleLayer def)
+    {
+        var t = r.transform;
+        t.localPosition = new Vector3(pos.x, pos.y, 0f);
+        t.localRotation = Quaternion.Euler(0f, 0f, angle);
+        t.localScale = Vector3.one * (size * QuadPadding);
+        block.Clear();
+        block.SetColor("_Color", col);
+        block.SetFloat("_Reveal", 1f);
+        block.SetFloat("_Glow", data.glow);
+        block.SetFloat("_CoreWhite", data.coreWhite);
+        block.SetFloat("_Mode", 0f);
+        r.SetPropertyBlock(block);
     }
 }

@@ -513,7 +513,7 @@ public static class UniqueCircleBuilder
 
         // ---------- how each circle comes in and goes out ----------
         // in: layer-by-layer Appear styles (default is the draw-on wipe); out: one Exit Style for the whole circle
-        Exit(vortex, CircleExit.Overload, 0.6f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
+        Exit(vortex, CircleExit.Fade, 0.3f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
         Exit(fire, CircleExit.SpinAway, 0.4f);          Exit(frost, CircleExit.Dissolve, 0.5f);        Exit(wind, CircleExit.SpinAway, 0.45f);
         Exit(earth, CircleExit.Unwind, 0.5f);           Exit(venom, CircleExit.Implode, 0.35f);        Exit(radiant, CircleExit.Shockwave, 0.45f);
         Exit(infernal, CircleExit.Launch, 0.35f);       Exit(cinder, CircleExit.Dissolve, 0.5f);       Exit(firestorm, CircleExit.Launch, 0.35f);
@@ -592,143 +592,43 @@ public static class UniqueCircleBuilder
         EditorUtility.SetDirty(circle);
     }
 
-    // ---------- the vortex (reference clip 1) ----------
-    // Mint-green whirlpool: a dense inner spiral of hair-thin lines around a dark hole, and an outer ring of thicker curly tendrils with
-    // hooked ends and yellow arrowheads on them. Loose V glyphs pop in first, the pinwheel opens from its middle in a few frames, then it
-    // holds with the tendrils re-drawn every few frames (three drawings swapped, spin on twos). On release: a white flash, the lines
-    // stretch longer and thinner while a shockwave ring and orange embers fly out.
-    static List<Vector2> TendrilPath(int variant, int i, int count)
-    {
-        var rng = new System.Random(100 + variant * 37 + i * 7);
-        float a0 = 2f * Mathf.PI * i / count + variant * 0.06f;
-        float ph = (float)rng.NextDouble() * 6.28f, ph2 = (float)rng.NextDouble() * 6.28f;
-        float rEnd = 0.30f + 0.16f * (float)rng.NextDouble();          // tendrils end at different distances, so the outline is ragged
-        float wob = 0.35f + 0.35f * (float)rng.NextDouble();
-        float turn = 1.3f + 0.9f * (float)rng.NextDouble();
-        var pts = new List<Vector2>();
-        const int n = 48;
-        for (int k = 0; k <= n; k++)
-        {
-            float t = k / (float)n;
-            float r = Mathf.Lerp(0.12f, rEnd, t);
-            float ang = a0 + turn * t + (wob * Mathf.Sin(t * 5.5f + ph) + 0.15f * Mathf.Sin(t * 11f + ph2)) * t;
-            if (t > 0.72f) { float h = (t - 0.72f) / 0.28f; ang += 1.9f * h * h; r -= 0.08f * h * h; }      // the curled, hooked end
-            pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
-        }
-        return pts;
-    }
-
+    // ---------- the vortex (reference clip 1): built one layer at a time ----------
+    // Layer 1 (outer): the arrow ring. A ring of 4 diamonds and 4 V's that turn a little apart, fuse into groups, turn to face the
+    // middle, then the whole ring scales down and locks small and circles the middle. It is drawn by CastingCircle itself (see
+    // UpdateArrowRing) from two images: the V and the gapped diamond (two V's facing each other, open at the side corners).
     static CastingCircleData BuildVortex(Color yellow)
     {
-        const int tendrils = 11, inner = 34;
-        for (int v = 0; v < 3; v++)
+        const float wingL = 0.30f;                       // wing length (fraction of the image width), the same as ArrowL in CastingCircle
+        float half = 28.5f * Mathf.Deg2Rad;          // half the opening of a V (wings are about 57 degrees apart)
+        float dx = wingL * Mathf.Cos(half), dy = wingL * Mathf.Sin(half);
+        float D = 2.07f * wingL;                         // diamond tip to tip
+
+        // a V: its tip in the middle of the image, pointing right, thick at the tip and thinning toward the wing ends
+        Make("Arrow_V", c =>
         {
-            int vv = v;
-            Make("Vortex_Outer_" + v, c =>
-            {
-                for (int i = 0; i < tendrils; i++) c.TaperPath(TendrilPath(vv, i, tendrils), 0.016f, 0.004f, 0.8f);
-            });
-
-            Make("Vortex_Inner_" + v, c =>
-            {
-                var rng = new System.Random(500 + vv);
-                for (int i = 0; i < inner; i++)
-                {
-                    float a0 = 2f * Mathf.PI * i / inner + vv * 0.03f;
-                    float ph = (float)rng.NextDouble() * 6.28f;
-                    var pts = new List<Vector2>();
-                    for (int k = 0; k <= 24; k++)
-                    {
-                        float t = k / 24f;
-                        float ang = a0 + 2.6f * Mathf.Pow(t, 0.9f) + 0.06f * Mathf.Sin(t * 9f + ph);
-                        pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Mathf.Lerp(0.035f, 0.30f, t));
-                    }
-                    c.TaperPath(pts, 0.0075f, 0.004f, 0.55f);
-                }
-            });
-
-            // yellow arrowheads sitting on the tendrils (same paths as the outer drawing, so they stay on them) and a few floating diamonds
-            Make("Vortex_Chev_" + v, c =>
-            {
-                var rng = new System.Random(700 + vv);
-                for (int i = 0; i < tendrils; i++)
-                {
-                    var path = TendrilPath(vv, i, tendrils);
-                    foreach (float t in new[] { 0.42f, 0.64f, 0.9f })
-                    {
-                        if (t < 0.5f && i % 2 == 1) continue;
-                        int k = Mathf.Clamp(Mathf.RoundToInt(t * (path.Count - 1)), 1, path.Count - 2);
-                        Vector2 dir = (path[k + 1] - path[k - 1]).normalized, nrm = new Vector2(-dir.y, dir.x);
-                        Vector2 tip = path[k] + dir * 0.02f;
-                        c.Taper(tip, tip - dir * 0.045f + nrm * 0.024f, 0.008f, 0.0012f, 0.7f);
-                        c.Taper(tip, tip - dir * 0.045f - nrm * 0.024f, 0.008f, 0.0012f, 0.7f);
-                    }
-                }
-                for (int d = 0; d < 3; d++)
-                {
-                    float a = (float)rng.NextDouble() * 6.28f;
-                    c.Poly4At(new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (0.34f + 0.1f * (float)rng.NextDouble()), 0.016f, a * Mathf.Rad2Deg, 0.005f);
-                }
-            });
-        }
-
-        // loose V glyphs that pop in before the circle: one per grid cell on an 8 x 8 grid (the Sparkle reveal), four drawings
-        for (int v = 0; v < 4; v++)
-        {
-            int vv = v;
-            Make("Vortex_Stray_" + v, c =>
-            {
-                var rng = new System.Random(900 + vv);
-                for (int gy = 0; gy < 8; gy++)
-                    for (int gx = 0; gx < 8; gx++)
-                    {
-                        var centre = new Vector2((gx + 0.5f) / 8f - 0.5f, (gy + 0.5f) / 8f - 0.5f);
-                        if (centre.magnitude > 0.44f || centre.magnitude < 0.12f || rng.NextDouble() > 0.42) continue;
-                        centre += new Vector2((float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f) * 0.02f;
-                        c.Glyph(1, centre, 0.038f + 0.012f * (float)rng.NextDouble(), (float)rng.NextDouble() * 360f);
-                    }
-            });
-        }
-
-        // exit pieces
-        Make("Vortex_Embers", c =>
-        {
-            var rng = new System.Random(1300);
-            for (int i = 0; i < 80; i++)
-            {
-                float a = (float)rng.NextDouble() * 6.28f, r = 0.08f + 0.38f * Mathf.Sqrt((float)rng.NextDouble());
-                var pos = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
-                float la = (float)rng.NextDouble() * 6.28f, len = 0.015f + 0.04f * (float)rng.NextDouble();
-                var dir = new Vector2(Mathf.Cos(la), Mathf.Sin(la));
-                if (i % 5 == 0) c.FillDot(pos, 0.006f + 0.006f * (float)rng.NextDouble());
-                else c.Taper(pos, pos + dir * len, 0.011f, 0.002f, 0.8f);
-            }
+            c.Taper(Vector2.zero, new Vector2(-dx, dy), 0.014f, 0.004f, 0.7f);
+            c.Taper(Vector2.zero, new Vector2(-dx, -dy), 0.014f, 0.004f, 0.7f);
         });
-        Make("Shock_Ring", c => { c.Ring(0.45f, 0.020f); c.Ring(0.405f, 0.006f); c.Ring(0.485f, 0.004f); });
+        // the diamond: a nose V pointing right and a tail V pointing left, tips D apart, the side corners left open
+        Make("Arrow_Diamond", c =>
+        {
+            var nose = new Vector2(D / 2f, 0f);
+            var tail = new Vector2(-D / 2f, 0f);
+            c.Taper(nose, nose + new Vector2(-dx, dy), 0.014f, 0.004f, 0.7f);
+            c.Taper(nose, nose + new Vector2(-dx, -dy), 0.014f, 0.004f, 0.7f);
+            c.Taper(tail, tail + new Vector2(dx, dy), 0.014f, 0.004f, 0.7f);
+            c.Taper(tail, tail + new Vector2(dx, -dy), 0.014f, 0.004f, 0.7f);
+        });
 
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.5f),
-            Var(L("Stray Glyphs", "Vortex_Stray_0", CircleAnchor.Front, 2.9f, 0f, 0.00f, 0.20f, CircleAppear.Sparkle), 12f, "Vortex_Stray_0", "Vortex_Stray_1"),
-            Var(L("Stray Yellow", "Vortex_Stray_2", CircleAnchor.Front, 2.9f, 0f, 0.04f, 0.20f, CircleAppear.Sparkle), 12f, "Vortex_Stray_2", "Vortex_Stray_3"),
-            Var(L("Inner Spiral", "Vortex_Inner_0", CircleAnchor.Front, 1.7f, -120f, 0.12f, 0.30f, CircleAppear.Bloom), 10f, "Vortex_Inner_0", "Vortex_Inner_1", "Vortex_Inner_2"),
-            Var(L("Tendrils", "Vortex_Outer_0", CircleAnchor.Front, 2.5f, 55f, 0.18f, 0.32f, CircleAppear.Bloom), 12f, "Vortex_Outer_0", "Vortex_Outer_1", "Vortex_Outer_2"),
-            Var(L("Arrowheads", "Vortex_Chev_0", CircleAnchor.Front, 2.5f, 55f, 0.26f, 0.30f, CircleAppear.Bloom), 12f, "Vortex_Chev_0", "Vortex_Chev_1", "Vortex_Chev_2"),
-            L("Hub", "Ring_Single", CircleAnchor.Front, 0.26f, 0f, 0.45f, 0.20f, CircleAppear.FadeIn, default, 0.9f),
-            // only while it leaves
-            ExitOnly(L("Flash", "Glow", CircleAnchor.Front, 3.2f, 0f, 0.00f, 0.55f, CircleAppear.FadeIn), 0.35f),
-            ExitOnly(L("Shockwave", "Shock_Ring", CircleAnchor.Front, 4.6f, 0f, 0.20f, 0.70f, CircleAppear.FadeIn, default, 0.8f), 0.25f),
-            ExitOnly(L("Embers", "Vortex_Embers", CircleAnchor.Front, 3.4f, 0f, 0.15f, 0.85f, CircleAppear.FadeIn), 0.5f));
+        var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
+        ring.arrowRing = true;
+        ring.arrowV = Tex["Arrow_V"];
+        ring.arrowDiamond = Tex["Arrow_Diamond"];
+        ring.arrowAccent = yellow;
+        ring.ringSpin = 90f;
 
-        vortex.depthSpacing = 0.04f;                    // the pieces sit almost in one plane
-        Accent(vortex, 1, yellow);
-        Accent(vortex, 4, yellow);
-        // the green pieces keep the spell's colour; the exit pieces have their own fixed colours
-        FixedColor(vortex, 6, new Color(1f, 0.93f, 0.7f));
-        FixedColor(vortex, 7, new Color(0.9f, 0.95f, 1f));
-        FixedColor(vortex, 8, new Color(1f, 0.55f, 0.15f));
-        vortex.layers[2].stepFps = 10f;
-        vortex.layers[3].stepFps = 10f;
-        vortex.layers[4].stepFps = 10f;
-        vortex.layers[5].shimmer = 0.3f;
+        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring);
+        vortex.depthSpacing = 0.04f;
         return vortex;
     }
 

@@ -68,6 +68,16 @@ public class CircleLayer
     public float drawTime = 0.4f;
     public CircleAppear appear = CircleAppear.RadialWipe;
 
+    [Header("Arrow ring (a ring of diamond + V groups: they turn apart, fuse, turn to face the middle, shrink and circle it)")]
+    [Tooltip("Turns this layer into the arrow ring. It then draws its own pieces from the two images below instead of the Texture above. Start At / Draw Time set when the whole sequence plays.")]
+    public bool arrowRing = false;
+    public Texture2D arrowV;
+    public Texture2D arrowDiamond;
+    [Tooltip("Colour of the big V pieces. The diamonds use the spell's colour.")]
+    public Color arrowAccent = new Color(1f, 0.85f, 0.3f);
+    [Tooltip("Degrees per second the small ring circles the middle once it has settled.")]
+    public float ringSpin = 90f;
+
     [Header("Hand-drawn animation")]
     [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]
     public Texture2D[] variants;

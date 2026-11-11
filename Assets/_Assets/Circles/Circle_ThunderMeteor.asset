@@ -40,6 +40,11 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.5
     appear: 6
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
     variants: []
     variantFps: 10
     stepFps: 0
@@ -60,6 +65,11 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.5
     appear: 6
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
     variants: []
     variantFps: 10
     stepFps: 0
@@ -80,6 +90,11 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.5
     appear: 2
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
     variants: []
     variantFps: 10
     stepFps: 0
@@ -100,6 +115,11 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.4
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
     variants: []
     variantFps: 10
     stepFps: 0
@@ -120,6 +140,11 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.5
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
     variants: []
     variantFps: 10
     stepFps: 0
