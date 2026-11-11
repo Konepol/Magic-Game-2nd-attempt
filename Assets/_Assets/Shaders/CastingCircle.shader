@@ -96,10 +96,11 @@ Shader "Magic/CastingCircle"
 
                 half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
                 half core = tex.a * inside;
-                half halo = Halo(uv) * _Glow;
+                float2 p = uv - 0.5;
+                // the halo fades to nothing before the edge of the image, so the border pixels never show as flat patches
+                half halo = Halo(uv) * _Glow * inside * saturate((0.5 - length(p)) / 0.03);
 
                 // angle around the centre, 0 at the top going clockwise to 1
-                float2 p = uv - 0.5;
                 float t = frac(atan2(p.x, p.y) / 6.2831853 + 1.0);
 
                 half mask = _Reveal >= 0.999 ? 1.0 : saturate((_Reveal - t) / _Soft);
