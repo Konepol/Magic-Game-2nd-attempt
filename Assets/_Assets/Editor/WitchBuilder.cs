@@ -49,18 +49,12 @@ public static class WitchBuilder
         Transform B(HumanBodyBones b) => animator.GetBoneTransform(b);
         Vector3 P(HumanBodyBones b) => B(b).position;
 
-        var toon = AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Assets/Shaders/ToonCharacter.shader");
+        // the look comes from the stylized shader (hard cel + kake-ami); WitchStylizedLook sets every material property the witch needs
+        var toon = AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Assets/Shaders/ToonStylized.shader");
         var bodyMat = Material(MaterialDir + "/Witch_Body.mat", toon, mat => { });
-        var wandMat = Material(MaterialDir + "/Witch_Wand.mat", toon, mat => { mat.SetColor("_RimColor", new Color(0.9f, 0.95f, 1f)); });
-        bodyMat.SetColor("_ShadeColor", new Color(0.66f, 0.72f, 0.96f));
-        bodyMat.SetFloat("_AmbientLift", 0.5f);
-        var gemMat = Material(MaterialDir + "/Witch_WandGem.mat", toon, mat =>
-        {
-            mat.SetColor("_EmissionColor", new Color(0.75f, 0.9f, 1f));
-            mat.SetFloat("_EmissionStrength", 0.9f);
-            mat.SetFloat("_RimStrength", 1.4f);
-            mat.SetFloat("_SparkleStrength", 0f);
-        });
+        var wandMat = Material(MaterialDir + "/Witch_Wand.mat", toon, mat => { });
+        var gemMat = Material(MaterialDir + "/Witch_WandGem.mat", toon, mat => { });
+        WitchStylizedLook.Apply(bodyMat, wandMat, gemMat);
 
         // ---------------- the body ----------------
         var mb = new MeshBuilder(skin.transform, new List<Transform>(skin.bones));

@@ -8,11 +8,13 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Witch_WandGem
-  m_Shader: {fileID: 4800000, guid: e087dbb11e6117e469b99a9701db0ca5, type: 3}
+  m_Shader: {fileID: 4800000, guid: 8aed73c9c5dd1de4681ccc475e8f6ccf, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _USERESTPOSITION_ON
+  - _USEVERTEXCOLOR_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -22,25 +24,76 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientLift: 0.35
+    - _AmbientLift: 0.25
     - _Bands: 3
+    - _BounceStrength: 0.124
+    - _CastSoftness: 0
+    - _CoreShadowPos: 0.408
+    - _CoreShadowStrength: 0.403
     - _EmissionStrength: 0.9
-    - _OutlineWidth: 0.008
-    - _RimPower: 2.6
+    - _HatchAngle: 30
+    - _HatchGap: 0.1
+    - _HatchSpacing: 15
+    - _HatchStart: 0.75
+    - _HatchStrength: 0
+    - _HatchThickness: 0.25
+    - _OutlineDepthPush: 0
+    - _OutlineFadeStart: 7.3
+    - _OutlineFarMin: 0.2
+    - _OutlineFromAlbedo: 0
+    - _OutlineGroup: 2
+    - _OutlineOffset: 0
+    - _OutlineShiftAmount: 0
+    - _OutlineShiftFromLight: 0
+    - _OutlineShiftX: 0
+    - _OutlineShiftY: 0
+    - _OutlineSmooth: 0
+    - _OutlineThickMax: 1.291
+    - _OutlineThinMin: 0
+    - _OutlineVarFreq: 2.13
+    - _OutlineVariation: 1
+    - _OutlineWidth: 3
+    - _PaintAmount: 0.368
+    - _PaintScale: 4
+    - _ReceiveShadow: 1
+    - _RimPower: 2.5
     - _RimStrength: 1.4
+    - _ShadeAmount: 1
+    - _ShadowDepth: 0
+    - _ShadowFloor: 0.45
+    - _ShadowHueShift: 0.5
+    - _ShadowNormalOffset: 0.06
+    - _ShadowSaturation: 1.118
+    - _ShadowStyle: 1
     - _Softness: 0.12
     - _SparkleScale: 22
     - _SparkleSpeed: 2.5
     - _SparkleStrength: 0
+    - _SpecSize: 0.1
+    - _SpecSoftness: 0.001
+    - _SpecStrength: 0.15
+    - _TerminatorPos: 0.6
+    - _TerminatorSoftness: 0.005
+    - _UseRestPosition: 1
+    - _UseVertexColor: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BounceColor: {r: 0.95, g: 0.7, b: 0.8, a: 1}
     - _EmissionColor: {r: 0.75, g: 0.9, b: 1, a: 1}
-    - _OutlineColor: {r: 0.11999995, g: 0.16999996, b: 0.39999998, a: 1}
+    - _HatchColor: {r: 0.16, g: 0.1, b: 0.3, a: 1}
+    - _LightWarmth: {r: 1, g: 0.96, b: 0.88, a: 1}
+    - _OutlineColor: {r: 1, g: 0.28951165, b: 0.16509432, a: 1}
     - _RimColor: {r: 0.75, g: 0.9, b: 1, a: 1}
     - _ShadeColor: {r: 0.54999995, g: 0.62, b: 0.92, a: 1}
+    - _ShadowTint: {r: 0.62, g: 0.62, b: 0.9, a: 1}
     - _SparkleColor: {r: 1, g: 0.93, b: 0.6, a: 1}
+    - _SpecColor2: {r: 1, g: 0.96999997, b: 0.9, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
