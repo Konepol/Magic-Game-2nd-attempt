@@ -73,6 +73,8 @@ public class CircleLayer
     public bool reverseSpin = false;
     [Min(0f), Tooltip("Multiplies every spin of this layer: 1 = as set, 2 = twice as fast, 0.5 = half speed.")]
     public float spinSpeed = 1f;
+    [Tooltip("Graph of the spin speed while this layer draws in: left = the moment it starts to appear, right = when it is fully drawn (after that it keeps the right-hand value). The height multiplies the Rotation Speed, so a tall bump at the left gives a fast spin at the start that slows down. A flat line at 1 changes nothing. On the arrow ring it shapes the settled spin (Ring Spin).")]
+    public AnimationCurve spinOverTime = AnimationCurve.Constant(0f, 1f, 1f);
 
     [Header("Arrow ring (a ring of diamond + V groups: they turn apart, fuse, turn to face the middle, shrink and circle it)")]
     [Tooltip("Turns this layer into the arrow ring. It then draws its own pieces from the two images below instead of the Texture above. Start At / Draw Time set when the whole sequence plays.")]

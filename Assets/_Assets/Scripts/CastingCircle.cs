@@ -24,6 +24,7 @@ public class CastingCircle : MonoBehaviour
         public Renderer[] pieces;        // arrow ring: 4 diamonds then 4 V's
         public float angle;
         public float hold;               // seconds this layer has been fully drawn
+        public float ringAngle;          // arrow ring: degrees it has turned since it settled
     }
 
     const float QuadPadding = 1.16f;      // must match _Pad in the Magic/CastingCircle shader
@@ -302,7 +303,8 @@ public class CastingCircle : MonoBehaviour
             SetEnabled(l, true);
 
             float spinF = def.spinSpeed * (def.reverseSpin ? -1f : 1f);      // Spin Speed and Reverse Spin on the layer
-            l.angle += def.rotationSpeed * spinF * dt;
+            float curveF = SpinCurve(def, t);
+            l.angle += def.rotationSpeed * spinF * curveF * dt;
 
             // how this layer comes in (each layer can have its own)
             float reveal = 1f, sizeMul = 1f, styleAlpha = 1f, enterSpin = 0f, flip = 0f;
@@ -434,7 +436,7 @@ public class CastingCircle : MonoBehaviour
             float diameter = def.scaleToAoeRadius && variant != null ? variant.aoeRadius * 2f * def.size : def.size * placeScale;
 
             // while held: slow outward drift and shimmer
-            if (t >= 1f) l.hold = Mathf.Min(l.hold + dt, 4f);
+            if (t >= 1f) { l.hold = Mathf.Min(l.hold + dt, 4f); l.ringAngle += def.ringSpin * spinF * curveF * dt; }
             if (def.holdDrift != 0f) sizeMul *= 1f + def.holdDrift * l.hold;
             if (def.shimmer > 0f) styleAlpha *= 1f - def.shimmer * 0.5f * (1f + 0.5f * Mathf.Sin(Time.time * 11f + l.index * 2.3f) + 0.5f * Mathf.Sin(Time.time * 17.3f + l.index * 5.1f));
 
@@ -465,7 +467,7 @@ public class CastingCircle : MonoBehaviour
             {
                 Color accent = def.arrowAccent;
                 if (overrideAmount > 0f) accent = Color.Lerp(accent, tintOverride, overrideAmount);
-                UpdateArrowRing(l, t, def.ringSpin * l.hold * spinF, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
+                UpdateArrowRing(l, t, l.ringAngle, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
             }
         }
     }
@@ -480,6 +482,13 @@ public class CastingCircle : MonoBehaviour
             case CircleAppear.RadialOut: case CircleAppear.Bloom: case CircleAppear.Pop: return 3f;
             default: return 0f;
         }
+    }
+
+    // the layer's Spin Over Time graph at this point of its drawing (a flat 1 if the graph is empty)
+    static float SpinCurve(CircleLayer def, float t)
+    {
+        var c = def.spinOverTime;
+        return c == null || c.length == 0 ? 1f : c.Evaluate(Mathf.Clamp01(t));
     }
 
     static void SetEnabled(LayerInstance l, bool on)
