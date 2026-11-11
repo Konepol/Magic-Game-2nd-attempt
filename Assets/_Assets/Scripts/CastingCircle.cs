@@ -507,6 +507,10 @@ public class CastingCircle : MonoBehaviour
         float nose = 2.07f * dW * 0.5f + 0.55f * dW;            // how far the V's tip sits ahead of the diamond's middle once fused
         float baseDeg = Mathf.Rad2Deg * (nose / ringR);
 
+        // the whole ring spins around the middle while the pieces appear, slowing to a stop as the shape completes
+        float eo = 1f - Mathf.Pow(1f - Mathf.Clamp01(s / 0.65f), 3f);
+        spinDeg += -360f * def.orbitTurns * (1f - eo);
+
         main.a = alpha;
         accent.a = alpha;
 

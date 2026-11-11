@@ -45,6 +45,7 @@ MonoBehaviour:
     arrowDiamond: {fileID: 2800000, guid: 423a8050d5a2b8d40b5c5c97f4bbe408, type: 3}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
+    orbitTurns: 1
     variants: []
     variantFps: 10
     stepFps: 0

@@ -626,6 +626,7 @@ public static class UniqueCircleBuilder
         ring.arrowDiamond = Tex["Arrow_Diamond"];
         ring.arrowAccent = yellow;
         ring.ringSpin = 90f;
+        ring.orbitTurns = 1f;
 
         var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring);
         vortex.depthSpacing = 0.04f;

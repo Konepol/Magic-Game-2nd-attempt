@@ -77,6 +77,8 @@ public class CircleLayer
     public Color arrowAccent = new Color(1f, 0.85f, 0.3f);
     [Tooltip("Degrees per second the small ring circles the middle once it has settled.")]
     public float ringSpin = 90f;
+    [Tooltip("While the pieces appear and before the shape is complete, the whole ring spins around the middle this many full turns, starting fast and slowing to a stop as the shape completes (0 = no spin).")]
+    public float orbitTurns = 1f;
 
     [Header("Hand-drawn animation")]
     [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]
