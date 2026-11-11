@@ -685,9 +685,108 @@ public static class UniqueCircleBuilder
         ring2.arrowDiamond = Tex["Arrow_DoubleV"];
         ring2.arrowAccent = yellow;
 
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner, ring2);
+        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), Concat(new[] { ring, armsOuter, armsInner, ring2 }, HexagonLayers(armsOuter, yellow)));
         vortex.depthSpacing = 0.04f;
         return vortex;
+    }
+
+    // ---------- the hexagons (vortex layer, from the user's drawing) ----------
+    // Two hexagons of the same size turned 30 degrees from each other. The small tips of one that stick out past the other are
+    // filled in solid and edged in yellow. The layer grows and spins together with the arms (it copies the Arms Outer settings).
+    static void MakeHexagonTextures()
+    {
+        const float R = 0.455f;
+        var a = new Vector2[6];
+        var b = new Vector2[6];
+        for (int i = 0; i < 6; i++)
+        {
+            float aa = (90f + 60f * i) * Mathf.Deg2Rad, bb = 60f * i * Mathf.Deg2Rad;
+            a[i] = new Vector2(Mathf.Cos(aa), Mathf.Sin(aa)) * R;
+            b[i] = new Vector2(Mathf.Cos(bb), Mathf.Sin(bb)) * R;
+        }
+
+        // the tip of hexagon A that sticks out past hexagon B: apex at A's corner, base where A's two edges cross B's flat edge
+        float apothem = R * Mathf.Cos(30f * Mathf.Deg2Rad);
+        float t = (R - apothem) / (R - R * Mathf.Sin(30f * Mathf.Deg2Rad));       // how far along A's edge the crossing is
+        float halfBase = R * Mathf.Cos(30f * Mathf.Deg2Rad) * t;
+
+        Make("Hex_Lines", c =>
+        {
+            c.Poly(6, R, 90f, 0.006f);
+            c.Poly(6, R, 0f, 0.006f);
+            for (int i = 0; i < 6; i++)
+            {
+                float rot = (60f * i) * Mathf.Deg2Rad;
+                Vector2 Rot(Vector2 v) => new Vector2(v.x * Mathf.Cos(rot) - v.y * Mathf.Sin(rot), v.x * Mathf.Sin(rot) + v.y * Mathf.Cos(rot));
+                c.FillPoly(new[] { Rot(new Vector2(0f, R)), Rot(new Vector2(halfBase, apothem)), Rot(new Vector2(-halfBase, apothem)) });
+            }
+        });
+
+        // the thin yellow edge along the two slanted sides of each filled tip
+        Make("Hex_Edge", c =>
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                float rot = (60f * i) * Mathf.Deg2Rad;
+                Vector2 Rot(Vector2 v) => new Vector2(v.x * Mathf.Cos(rot) - v.y * Mathf.Sin(rot), v.x * Mathf.Sin(rot) + v.y * Mathf.Cos(rot));
+                var tip = Rot(new Vector2(0f, R));
+                c.Seg(tip, Rot(new Vector2(halfBase, apothem)), 0.009f);
+                c.Seg(tip, Rot(new Vector2(-halfBase, apothem)), 0.009f);
+            }
+        });
+    }
+
+    // a copy of another layer's animation (size, spin, timing, growth, spin graph) with a different image
+    static CircleLayer FollowLayer(CircleLayer like, string name, string texture)
+    {
+        var copy = JsonUtility.FromJson<CircleLayer>(JsonUtility.ToJson(like));
+        copy.name = name;
+        copy.texture = Tex.TryGetValue(texture, out var t) ? t : AssetDatabase.LoadAssetAtPath<Texture2D>(ImageDir + "/" + texture + ".png");
+        copy.variants = null;
+        copy.arrowRing = false; copy.ringOrbitOnly = false; copy.exitOnly = false;
+        copy.arrowV = null; copy.arrowDiamond = null;
+        copy.spinOverTime = new AnimationCurve(like.spinOverTime.keys);
+        return copy;
+    }
+
+    static CircleLayer[] HexagonLayers(CircleLayer like, Color yellow)
+    {
+        MakeHexagonTextures();
+        var lines = FollowLayer(like, "Hexagons", "Hex_Lines");
+        var edge = FollowLayer(like, "Hexagon Edge", "Hex_Edge");
+        edge.useSpellColor = false;
+        edge.tint = yellow;
+        return new[] { lines, edge };
+    }
+
+    // adds the two hexagon layers to the Circle_Vortex asset as it is now (it keeps every Inspector adjustment: this does not rebuild the circle)
+    [MenuItem("Tools/Magic/Add Vortex Hexagon Layers")]
+    public static void AddVortexHexagonLayers()
+    {
+        Tex.Clear();
+        var d = AssetDatabase.LoadAssetAtPath<CastingCircleData>(CircleDir + "/Circle_Vortex.asset");
+        if (d == null) { Debug.LogError("Circle_Vortex.asset not found"); return; }
+        CircleLayer like = null;
+        var keep = new List<CircleLayer>();
+        foreach (var l in d.layers)
+        {
+            if (l.name == "Hexagons" || l.name == "Hexagon Edge") continue;      // adding again replaces them
+            if (l.name == "Arms Outer") like = l;
+            keep.Add(l);
+        }
+        if (like == null) { Debug.LogError("Arms Outer layer not found"); return; }
+        keep.AddRange(HexagonLayers(like, new Color(1f, 0.85f, 0.3f)));
+        d.layers = keep.ToArray();
+        EditorUtility.SetDirty(d);
+        AssetDatabase.SaveAssets();
+        Debug.Log("Hexagon layers added to Circle_Vortex.");
+    }
+
+    static CircleLayer[] Concat(CircleLayer[] first, CircleLayer[] second)
+    {
+        var all = new List<CircleLayer>(first);
+        all.AddRange(second);
+        return all.ToArray();
     }
 
     // a layer drawn as several variants that are swapped

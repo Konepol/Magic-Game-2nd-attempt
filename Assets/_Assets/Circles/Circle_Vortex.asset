@@ -208,11 +208,125 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     size: 2.6
     scaleToAoeRadius: 0
-    startAt: 0.127
+    startAt: 0.25
     drawTime: 1
-    appear: 2
+    appear: 11
     reverseSpin: 0
     spinSpeed: 2
+    spinOverTime:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 2.5012493
+        inSlope: -3.0857298
+        outSlope: -3.0857298
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.10676463
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: -0.0009231807
+        outSlope: -0.0009231807
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 1
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    arrowRing: 1
+    arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
+    arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 100
+    orbitTurns: 1
+    ringOrbitOnly: 1
+    pieceWing: 0.2
+    pieceCount: 4
+    ringRadius: 0.353
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Arrow Ring 2
+    texture: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 50
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 1
+    scaleToAoeRadius: 0
+    startAt: 0.25
+    drawTime: 1
+    appear: 11
+    reverseSpin: 1
+    spinSpeed: 1.5
+    spinOverTime:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 2.5012493
+        inSlope: -3.0857298
+        outSlope: -3.0857298
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.10676463
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: -0.0009231807
+        outSlope: -0.0009231807
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 1
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    arrowRing: 1
+    arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
+    arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 100
+    orbitTurns: 1
+    ringOrbitOnly: 1
+    pieceWing: 0.2
+    pieceCount: 4
+    ringRadius: 0.6
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Hexagons
+    texture: {fileID: 2800000, guid: 0fa7f09061fc85c44827cf4972bf4d9a, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 40
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.6
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.8
+    appear: 10
+    reverseSpin: 0
+    spinSpeed: 1
     spinOverTime:
       serializedVersion: 2
       m_Curve:
@@ -237,16 +351,73 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    arrowRing: 1
-    arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
-    arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
-    ringSpin: 100
+    ringSpin: 90
     orbitTurns: 1
-    ringOrbitOnly: 1
-    pieceWing: 0.2
+    ringOrbitOnly: 0
+    pieceWing: 0.26
     pieceCount: 4
-    ringRadius: 0.3
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
+  - name: Hexagon Edge
+    texture: {fileID: 2800000, guid: f1a504ad183c0654486ee9b33d8d9156, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    opacity: 1
+    rotationSpeed: 40
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 2.6
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.8
+    appear: 10
+    reverseSpin: 0
+    spinSpeed: 1
+    spinOverTime:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
     piecesFaceMiddle: 0
     variants: []
     variantFps: 10
