@@ -9,7 +9,7 @@ using UnityEngine;
 // spikes, fangs, sun rays, lightning ring, scattered dots, crystal, square runes) combined in a layout of its own, with its own spin,
 // tilt and ready colour. Fusions mix the images of the spells they are made of and add a layer of their own.
 // Everything is a normal editable asset. Running it again overwrites the generated images and these circles.
-public static partial class UniqueCircleBuilder
+public static class UniqueCircleBuilder
 {
     const string ImageDir = "Assets/_Assets/Images/Circles";
     const string CircleDir = "Assets/_Assets/Circles";
@@ -208,73 +208,6 @@ public static partial class UniqueCircleBuilder
             c.Runes(0.235f, 0.325f, 20, 11);
         });
 
-        // a pinwheel of curved, tapered arms that whirl out from the middle, with arrowheads flung off the tips
-        Make("Spiral_Vortex", c =>
-        {
-            c.Ring(0.47f, 0.005f);
-            for (int layer = 0; layer < 2; layer++)
-            {
-                int arms = layer == 0 ? 7 : 7;
-                float turn = layer == 0 ? 3.4f : 2.6f, r0 = layer == 0 ? 0.03f : 0.10f, r1 = layer == 0 ? 0.43f : 0.36f, off = layer == 0 ? 0f : Mathf.PI / arms;
-                for (int arm = 0; arm < arms; arm++)
-                {
-                    float baseAng = off + 2f * Mathf.PI * arm / arms;
-                    var pts = new List<Vector2>();
-                    for (int i = 0; i <= 40; i++)
-                    {
-                        float t = i / 40f;
-                        float ang = baseAng + Mathf.Pow(t, 0.8f) * turn;
-                        pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Mathf.Lerp(r0, r1, t));
-                    }
-                    c.TaperPath(pts, layer == 0 ? 0.020f : 0.012f, 0.0012f, 0.35f);
-
-                    // an arrowhead beside the tip of every long arm
-                    if (layer == 0)
-                    {
-                        Vector2 tip = pts[pts.Count - 1], back = pts[pts.Count - 5];
-                        Vector2 dir = (tip - back).normalized, nrm = new Vector2(-dir.y, dir.x);
-                        Vector2 at = tip + dir * 0.025f;
-                        c.Taper(at, at - dir * 0.045f + nrm * 0.022f, 0.008f, 0.001f, 0.6f);
-                        c.Taper(at, at - dir * 0.045f - nrm * 0.022f, 0.008f, 0.001f, 0.6f);
-                    }
-                }
-            }
-            c.RingDots(7, 0.46f, 0.009f);
-        });
-
-        // straight lines shot out from the middle like a starburst, a zig-zag ring and small diamonds
-        Make("Burst_Lines", c =>
-        {
-            int rays = 20;
-            for (int i = 0; i < rays; i++)
-            {
-                float a = 2f * Mathf.PI * i / rays;
-                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                bool longRay = i % 2 == 0;
-                c.Taper(d * (longRay ? 0.07f : 0.17f), d * (longRay ? 0.49f : 0.40f), longRay ? 0.020f : 0.012f, 0.0015f, 0.3f);
-            }
-
-            // zig-zag ring (sharp angular teeth, tapered like lightning)
-            var zig = new List<Vector2>();
-            int teeth = 16;
-            for (int i = 0; i <= teeth * 2; i++)
-            {
-                float a = 2f * Mathf.PI * i / (teeth * 2);
-                float r = 0.27f + (i % 2 == 0 ? 0.03f : -0.03f);
-                zig.Add(new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r);
-            }
-            for (int i = 0; i < zig.Count - 1; i++) c.Seg(zig[i], zig[i + 1], 0.007f);
-
-            for (int k = 0; k < 8; k++)
-            {
-                float a = 2f * Mathf.PI * (k + 0.5f) / 8f;
-                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                c.Poly4At(d * 0.36f, 0.030f, a * Mathf.Rad2Deg, 0.006f);
-                c.Poly4At(d * 0.215f, 0.018f, a * Mathf.Rad2Deg, 0.005f);
-            }
-            c.Ring(0.115f, 0.006f);
-        });
-
         // a field of separate small glyphs on an 8 x 8 grid, one per cell (the Sparkle reveal in the shader pops them in cell by cell)
         Make("Rune_Scatter", c =>
         {
@@ -309,20 +242,6 @@ public static partial class UniqueCircleBuilder
             }
             c.FillDot(Vector2.zero, 0.022f);
             c.Ring(0.06f, 0.005f);
-        });
-
-        // the first thing to appear: one small diamond rune with a smaller one inside and four ticks
-        Make("Seed_Diamond", c =>
-        {
-            c.Poly4At(Vector2.zero, 0.16f, 0f, 0.012f);
-            c.Poly4At(Vector2.zero, 0.075f, 0f, 0.010f);
-            c.FillDot(Vector2.zero, 0.012f);
-            for (int k = 0; k < 4; k++)
-            {
-                float a = Mathf.PI * 0.5f * k;
-                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                c.Seg(d * 0.33f, d * 0.43f, 0.008f);
-            }
         });
 
         // ---------- the circles ----------
@@ -479,15 +398,7 @@ public static partial class UniqueCircleBuilder
         // ---------- new casting styles (from the anime references) ----------
         var yellow = new Color(1f, 0.85f, 0.3f);
 
-        // The three new circles follow the references frame by frame (see CircleAppear / CircleExit):
-        //  Vortex:     stray glyphs appear, a tiny pinwheel opens from its middle while whirling, holds, then a white flash and the lines shatter outward
-        //  Burst:      one seed diamond, a haze, then every line pops at once shot outward (yellow first, green after), drifting and shimmering with no spin
-        //  Rune Field: a seed cross, a crosshair flash, then glyphs pop in from the middle outward and hold still and shimmering
-
-        // Spiral Vortex (new, from reference clip 1: see BuildVortex)
-        var vortex = BuildVortex(yellow);
-
-        // Rune Scatter
+        // Rune Field (an older attempt from reference clip 3: a seed cross, a crosshair flash, then glyphs pop in from the middle outward)
         var runeField = Circle("Circle_RuneField", 1.4f, Tilt(2f, 0.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.7f),
             L("Seed", "Flare_Cross", CircleAnchor.Front, 0.7f, 0f, 0.0f, 0.18f, CircleAppear.Flash),
             L("Crosshair Flash", "Flare_Cross", CircleAnchor.Front, 3.0f, 0f, 0.1f, 0.3f, CircleAppear.Flash),
@@ -498,22 +409,9 @@ public static partial class UniqueCircleBuilder
         Accent(runeField, 3, yellow);
         Hold(runeField, 2, 0f, 0.35f); Hold(runeField, 3, 0f, 0.35f); Hold(runeField, 4, 0f, 0.4f);
 
-        // Radial Burst
-        var burst = Circle("Circle_Burst", 1.3f, Tilt(3f, 1.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.9f),
-            L("Seed", "Seed_Diamond", CircleAnchor.Front, 0.7f, 0f, 0.0f, 0.2f, CircleAppear.Flash),
-            L("Haze", "Glow", CircleAnchor.Front, 4.2f, 0f, 0.12f, 0.3f, CircleAppear.FadeIn, default, 0.4f),
-            L("Flash Flare", "Flare_Cross", CircleAnchor.Front, 3.6f, 0f, 0.4f, 0.2f, CircleAppear.Flash),
-            L("Burst Yellow", "Burst_Lines", CircleAnchor.Front, 3.3f, 0f, 0.4f, 0.12f, CircleAppear.Pop),
-            L("Burst Green", "Burst_Lines", CircleAnchor.Front, 2.3f, 10f, 0.52f, 0.14f, CircleAppear.Pop),
-            L("Glyph Field", "Rune_Scatter", CircleAnchor.Front, 3.0f, 0f, 0.62f, 0.3f, CircleAppear.Cascade));
-        Accent(burst, 0, yellow);
-        Accent(burst, 3, yellow);
-        Accent(burst, 5, yellow);
-        Hold(burst, 3, 0.05f, 0.3f); Hold(burst, 4, 0.04f, 0.25f); Hold(burst, 5, 0f, 0.35f);
-
         // ---------- how each circle comes in and goes out ----------
         // in: layer-by-layer Appear styles (default is the draw-on wipe); out: one Exit Style for the whole circle
-        Exit(vortex, CircleExit.Fade, 0.3f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
+        Exit(runeField, CircleExit.Dissolve, 0.55f);
         Exit(fire, CircleExit.SpinAway, 0.4f);          Exit(frost, CircleExit.Dissolve, 0.5f);        Exit(wind, CircleExit.SpinAway, 0.45f);
         Exit(earth, CircleExit.Unwind, 0.5f);           Exit(venom, CircleExit.Implode, 0.35f);        Exit(radiant, CircleExit.Shockwave, 0.45f);
         Exit(infernal, CircleExit.Launch, 0.35f);       Exit(cinder, CircleExit.Dissolve, 0.5f);       Exit(firestorm, CircleExit.Launch, 0.35f);
@@ -528,9 +426,7 @@ public static partial class UniqueCircleBuilder
         Enter(thunder, CircleAppear.Stamp, 0, 1);       Enter(infernal, CircleAppear.Stamp, 1);
 
         // ---------- assign ----------
-        Assign(WeaponDir, "ArcaneBolt", vortex);
         Assign(WeaponDir, "ScatterShot", runeField);
-        Assign(WeaponDir, "LightningLance", burst);
         Assign(WeaponDir, "FireBurst", fire);
         Assign(WeaponDir, "FrostShard", frost);
         Assign(WeaponDir, "WindBlade", wind);
@@ -552,7 +448,7 @@ public static partial class UniqueCircleBuilder
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned (Arcane Bolt: vortex, Scatter Shot: rune field, other basic spells and 11 fusions: own circles). Lightning Lance: radial burst.");
+        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned (Scatter Shot: rune field, other basic spells and 11 fusions: own circles). The vortex circles (Circle_Vortex on Arcane Bolt, Circle_Vortex_LightningLance) are not built here: edit those assets directly.");
     }
 
     // ---------- helpers ----------
@@ -589,227 +485,6 @@ public static partial class UniqueCircleBuilder
             circle.layers[i].useSpellColor = false;
             circle.layers[i].tint = colors[i % colors.Length];
         }
-        EditorUtility.SetDirty(circle);
-    }
-
-    // ---------- the vortex (reference clip 1): built one layer at a time ----------
-    // Layer 1 (outer): the arrow ring. A ring of 4 diamonds and 4 V's that turn a little apart, fuse into groups, turn to face the
-    // middle, then the whole ring scales down and locks small and circles the middle. It is drawn by CastingCircle itself (see
-    // UpdateArrowRing) from two images: the V and the gapped diamond (two V's facing each other, open at the side corners).
-    static CastingCircleData BuildVortex(Color yellow)
-    {
-        const float wingL = 0.30f;                       // wing length (fraction of the image width), the same as ArrowL in CastingCircle
-        float half = 28.5f * Mathf.Deg2Rad;          // half the opening of a V (wings are about 57 degrees apart)
-        float dx = wingL * Mathf.Cos(half), dy = wingL * Mathf.Sin(half);
-        float D = 2.07f * wingL;                         // diamond tip to tip
-
-        // a V: its tip in the middle of the image, pointing right, thick at the tip and thinning toward the wing ends
-        Make("Arrow_V", c =>
-        {
-            c.Taper(Vector2.zero, new Vector2(-dx, dy), 0.014f, 0.004f, 0.7f);
-            c.Taper(Vector2.zero, new Vector2(-dx, -dy), 0.014f, 0.004f, 0.7f);
-        });
-        // the diamond: a nose V pointing right and a tail V pointing left, tips D apart, the side corners left open
-        Make("Arrow_Diamond", c =>
-        {
-            var nose = new Vector2(D / 2f, 0f);
-            var tail = new Vector2(-D / 2f, 0f);
-            c.Taper(nose, nose + new Vector2(-dx, dy), 0.014f, 0.004f, 0.7f);
-            c.Taper(nose, nose + new Vector2(-dx, -dy), 0.014f, 0.004f, 0.7f);
-            c.Taper(tail, tail + new Vector2(dx, dy), 0.014f, 0.004f, 0.7f);
-            c.Taper(tail, tail + new Vector2(dx, -dy), 0.014f, 0.004f, 0.7f);
-        });
-
-        // Layer 2: S-curved arms (your drawing): 8 arms leave the middle, each bending one way and then back, all turned the same way.
-        // Thick at the root, thinning to a point. Two copies (B is turned half a step with a different wiggle) make the two layers.
-        for (int v = 0; v < 2; v++)
-        {
-            int vv = v;
-            Make("Vortex_Arms_" + (v == 0 ? "A" : "B"), c =>
-            {
-                const int arms = 8;
-                for (int i = 0; i < arms; i++)
-                {
-                    float a0 = 2f * Mathf.PI * i / arms + (vv == 0 ? 0f : Mathf.PI / arms);
-                    float phase = vv == 0 ? 0f : 0.5f;
-                    var pts = new List<Vector2>();
-                    for (int k = 0; k <= 48; k++)
-                    {
-                        float t = k / 48f;
-                        float ang = a0 + 0.2f * t + 0.26f * Mathf.Sin(t * 2f * Mathf.PI * 0.9f + phase);      // one gentle S per arm
-                        float r = Mathf.Lerp(0.05f, 0.46f, t);
-                        pts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * r);
-                    }
-                    c.TaperPath(pts, 0.013f, 0.004f, 0.9f);
-                }
-            });
-        }
-
-        // a double V (your drawing): a big narrow V with a smaller V nested just inside it, both tips pointing right.
-        // Narrow: the wings are about 35 degrees apart.
-        Make("Arrow_DoubleV", c =>
-        {
-            // the front V (tip at the middle of the image, pointing right) is the SMALLER one; the bigger V sits behind it,
-            // its tip just inside the front V, the two sets of lines parallel with a clear gap
-            float h = 17f * Mathf.Deg2Rad;
-            float Lb = wingL, Ls = wingL * 0.5f;
-            var frontTip = Vector2.zero;
-            var backTip = new Vector2(-0.09f, 0f);
-            c.Taper(frontTip, frontTip + new Vector2(-Ls * Mathf.Cos(h), Ls * Mathf.Sin(h)), 0.013f, 0.004f, 0.85f);
-            c.Taper(frontTip, frontTip + new Vector2(-Ls * Mathf.Cos(h), -Ls * Mathf.Sin(h)), 0.013f, 0.004f, 0.85f);
-            c.Taper(backTip, backTip + new Vector2(-Lb * Mathf.Cos(h), Lb * Mathf.Sin(h)), 0.014f, 0.004f, 0.8f);
-            c.Taper(backTip, backTip + new Vector2(-Lb * Mathf.Cos(h), -Lb * Mathf.Sin(h)), 0.014f, 0.004f, 0.8f);
-        });
-
-        var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
-        ring.arrowRing = true;
-        ring.pointToCenter = true;
-        ring.arrowV = Tex["Arrow_V"];
-        ring.arrowDiamond = Tex["Arrow_Diamond"];
-        ring.arrowAccent = yellow;
-        ring.ringSpin = 90f;
-        ring.orbitTurns = 1f;
-
-        // the arms start small and grow until they reach their size, rotating as they grow (Bloom), then keep turning slowly
-        var armsOuter = L("Arms Outer", "Vortex_Arms_A", CircleAnchor.Front, 2.6f, 40f, 0.0f, 0.8f, CircleAppear.Bloom);
-        var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, 60f, 0.0f, 0.8f, CircleAppear.Bloom);
-
-        // Layer 3: a second, bigger ring of double-V pieces that only spins around, starting small and growing
-        var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 2.6f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
-        ring2.arrowRing = true;
-        ring2.pointToCenter = false;
-        ring2.pieceWing = 0.3f;
-        ring2.pieceCount = 4;
-        ring2.ringRadius = 0.30f;           // the pieces sit on the arms (the arms reach out to about 0.46)
-        ring2.arrowV = Tex["Arrow_V"];
-        ring2.arrowDiamond = Tex["Arrow_DoubleV"];
-        ring2.arrowAccent = yellow;
-
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), Concat(new[] { ring, armsOuter, armsInner, ring2 }, HexagonLayers(armsOuter, yellow)));
-        vortex.depthSpacing = 0.04f;
-        return vortex;
-    }
-
-    // ---------- the hexagons (vortex layer, from the user's drawing) ----------
-    // Two hexagons of the same size turned 30 degrees from each other. The small tips of one that stick out past the other are
-    // filled in solid and edged in yellow. The layer grows and spins together with the arms (it copies the Arms Outer settings).
-    static void MakeHexagonTextures()
-    {
-        const float R = 0.455f;
-        var a = new Vector2[6];
-        var b = new Vector2[6];
-        for (int i = 0; i < 6; i++)
-        {
-            float aa = (90f + 60f * i) * Mathf.Deg2Rad, bb = 60f * i * Mathf.Deg2Rad;
-            a[i] = new Vector2(Mathf.Cos(aa), Mathf.Sin(aa)) * R;
-            b[i] = new Vector2(Mathf.Cos(bb), Mathf.Sin(bb)) * R;
-        }
-
-        // the tip of hexagon A that sticks out past hexagon B: apex at A's corner, base where A's two edges cross B's flat edge
-        float apothem = R * Mathf.Cos(30f * Mathf.Deg2Rad);
-        float t = (R - apothem) / (R - R * Mathf.Sin(30f * Mathf.Deg2Rad));       // how far along A's edge the crossing is
-        float halfBase = R * Mathf.Cos(30f * Mathf.Deg2Rad) * t;
-
-        Make("Hex_Lines", c =>
-        {
-            c.Poly(6, R, 90f, 0.006f);
-            c.Poly(6, R, 0f, 0.006f);
-            for (int i = 0; i < 6; i++)
-            {
-                float rot = (60f * i) * Mathf.Deg2Rad;
-                Vector2 Rot(Vector2 v) => new Vector2(v.x * Mathf.Cos(rot) - v.y * Mathf.Sin(rot), v.x * Mathf.Sin(rot) + v.y * Mathf.Cos(rot));
-                c.FillPoly(new[] { Rot(new Vector2(0f, R)), Rot(new Vector2(halfBase, apothem)), Rot(new Vector2(-halfBase, apothem)) });
-            }
-        });
-
-        // the thin yellow edge along the two slanted sides of each filled tip
-        Make("Hex_Edge", c =>
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                float rot = (60f * i) * Mathf.Deg2Rad;
-                Vector2 Rot(Vector2 v) => new Vector2(v.x * Mathf.Cos(rot) - v.y * Mathf.Sin(rot), v.x * Mathf.Sin(rot) + v.y * Mathf.Cos(rot));
-                var tip = Rot(new Vector2(0f, R));
-                c.Seg(tip, Rot(new Vector2(halfBase, apothem)), 0.009f);
-                c.Seg(tip, Rot(new Vector2(-halfBase, apothem)), 0.009f);
-            }
-        });
-    }
-
-    // a copy of another layer's animation (size, spin, timing, growth, spin graph) with a different image
-    static CircleLayer FollowLayer(CircleLayer like, string name, string texture)
-    {
-        var copy = JsonUtility.FromJson<CircleLayer>(JsonUtility.ToJson(like));
-        copy.name = name;
-        copy.texture = Tex.TryGetValue(texture, out var t) ? t : AssetDatabase.LoadAssetAtPath<Texture2D>(ImageDir + "/" + texture + ".png");
-        copy.variants = null;
-        copy.arrowRing = false; copy.exitOnly = false;
-        copy.arrowV = null; copy.arrowDiamond = null;
-        copy.spinOverTime = new AnimationCurve(like.spinOverTime.keys);
-        return copy;
-    }
-
-    static CircleLayer[] HexagonLayers(CircleLayer like, Color yellow)
-    {
-        MakeHexagonTextures();
-        var lines = FollowLayer(like, "Hexagons", "Hex_Lines");
-        var edge = FollowLayer(like, "Hexagon Edge", "Hex_Edge");
-        edge.useSpellColor = false;
-        edge.tint = yellow;
-        return new[] { lines, edge };
-    }
-
-    // adds the two hexagon layers to the Circle_Vortex asset as it is now (it keeps every Inspector adjustment: this does not rebuild the circle)
-    [MenuItem("Tools/Magic/Add Vortex Hexagon Layers")]
-    public static void AddVortexHexagonLayers()
-    {
-        Tex.Clear();
-        var d = AssetDatabase.LoadAssetAtPath<CastingCircleData>(CircleDir + "/Circle_Vortex.asset");
-        if (d == null) { Debug.LogError("Circle_Vortex.asset not found"); return; }
-        CircleLayer like = null;
-        var keep = new List<CircleLayer>();
-        foreach (var l in d.layers)
-        {
-            if (l.name == "Hexagons" || l.name == "Hexagon Edge") continue;      // adding again replaces them
-            if (l.name == "Arms Outer") like = l;
-            keep.Add(l);
-        }
-        if (like == null) { Debug.LogError("Arms Outer layer not found"); return; }
-        keep.AddRange(HexagonLayers(like, new Color(1f, 0.85f, 0.3f)));
-        d.layers = keep.ToArray();
-        EditorUtility.SetDirty(d);
-        AssetDatabase.SaveAssets();
-        Debug.Log("Hexagon layers added to Circle_Vortex.");
-    }
-
-    static CircleLayer[] Concat(CircleLayer[] first, CircleLayer[] second)
-    {
-        var all = new List<CircleLayer>(first);
-        all.AddRange(second);
-        return all.ToArray();
-    }
-
-    // a layer drawn as several variants that are swapped
-    static CircleLayer Var(CircleLayer layer, float fps, params string[] textures)
-    {
-        layer.variants = new Texture2D[textures.Length];
-        for (int i = 0; i < textures.Length; i++) layer.variants[i] = Tex[textures[i]];
-        layer.variantFps = fps;
-        return layer;
-    }
-
-    // a layer that plays only while the circle leaves; its start and draw time are fractions of the exit
-    static CircleLayer ExitOnly(CircleLayer layer, float growFrom)
-    {
-        layer.exitOnly = true;
-        layer.exitGrow = growFrom;
-        return layer;
-    }
-
-    static void FixedColor(CastingCircleData circle, int layerIndex, Color color)
-    {
-        circle.layers[layerIndex].useSpellColor = false;
-        circle.layers[layerIndex].tint = color;
         EditorUtility.SetDirty(circle);
     }
 

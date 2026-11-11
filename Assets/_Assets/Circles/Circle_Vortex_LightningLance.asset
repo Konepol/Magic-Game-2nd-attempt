@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f48dc816c5f1d047924ea2f041c9da4, type: 3}
-  m_Name: Circle_VStyle_LightningLance
+  m_Name: Circle_Vortex_LightningLance
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.3
   exitStyle: 0
@@ -41,7 +41,7 @@ MonoBehaviour:
     drawTime: 1
     appear: 2
     reverseSpin: 0
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -70,7 +70,7 @@ MonoBehaviour:
     arrowRing: 1
     arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
     arrowDiamond: {fileID: 2800000, guid: 423a8050d5a2b8d40b5c5c97f4bbe408, type: 3}
-    arrowAccent: {r: 1, g: 1, b: 1, a: 1}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
     pointToCenter: 1
@@ -91,7 +91,7 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Arms Outer
-    texture: {fileID: 2800000, guid: 34429cb4c9d50fe4ab6d970721dc4a23, type: 3}
+    texture: {fileID: 2800000, guid: 637eab4ba59a0f64d84c59e20a477da5, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
@@ -104,7 +104,7 @@ MonoBehaviour:
     drawTime: 0.8
     appear: 10
     reverseSpin: 0
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -154,7 +154,7 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Arms Inner
-    texture: {fileID: 2800000, guid: 6078bae190f35474ebde2deece982e18, type: 3}
+    texture: {fileID: 2800000, guid: e3dc8266680c0914a9f49b3fbd112d9d, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
@@ -167,7 +167,7 @@ MonoBehaviour:
     drawTime: 0.8
     appear: 10
     reverseSpin: 0
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -230,7 +230,7 @@ MonoBehaviour:
     drawTime: 1
     appear: 11
     reverseSpin: 0
-    spinSpeed: 2.6999998
+    spinSpeed: 1.5
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -259,7 +259,7 @@ MonoBehaviour:
     arrowRing: 1
     arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
     arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
-    arrowAccent: {r: 1, g: 1, b: 1, a: 1}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 100
     orbitTurns: 1
     pointToCenter: 0
@@ -293,7 +293,7 @@ MonoBehaviour:
     drawTime: 1
     appear: 11
     reverseSpin: 1
-    spinSpeed: 2.6999998
+    spinSpeed: 1.5
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -322,7 +322,7 @@ MonoBehaviour:
     arrowRing: 1
     arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
     arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
-    arrowAccent: {r: 1, g: 1, b: 1, a: 1}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 100
     orbitTurns: 1
     pointToCenter: 0
@@ -331,7 +331,7 @@ MonoBehaviour:
     ringOrbitOnly: 1
     convertedToPointToCenter: 1
     pieceWing: 0.2
-    pieceCount: 8
+    pieceCount: 6
     pieceTurn: -3
     piecePivot: 1
     ringRadius: 0.293
@@ -343,7 +343,7 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Hexagons
-    texture: {fileID: 2800000, guid: dfad1d77bab9fa64faa815a5af5b745c, type: 3}
+    texture: {fileID: 2800000, guid: 0fa7f09061fc85c44827cf4972bf4d9a, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
@@ -356,7 +356,7 @@ MonoBehaviour:
     drawTime: 0.745
     appear: 10
     reverseSpin: 0
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -406,9 +406,9 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Hexagon Edge
-    texture: {fileID: 2800000, guid: 837b48d5dd9c9054291f3198615eef9b, type: 3}
+    texture: {fileID: 2800000, guid: f1a504ad183c0654486ee9b33d8d9156, type: 3}
     useSpellColor: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
     opacity: 1
     rotationSpeed: 40
     anchor: 0
@@ -419,7 +419,7 @@ MonoBehaviour:
     drawTime: 0.745
     appear: 10
     reverseSpin: 0
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -469,7 +469,7 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Hexagons
-    texture: {fileID: 2800000, guid: dfad1d77bab9fa64faa815a5af5b745c, type: 3}
+    texture: {fileID: 2800000, guid: 0fa7f09061fc85c44827cf4972bf4d9a, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
@@ -482,7 +482,7 @@ MonoBehaviour:
     drawTime: 0.8
     appear: 10
     reverseSpin: 1
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
@@ -532,9 +532,9 @@ MonoBehaviour:
     holdDrift: 0
     shimmer: 0
   - name: Hexagon Edge
-    texture: {fileID: 2800000, guid: 837b48d5dd9c9054291f3198615eef9b, type: 3}
+    texture: {fileID: 2800000, guid: f1a504ad183c0654486ee9b33d8d9156, type: 3}
     useSpellColor: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
     opacity: 1
     rotationSpeed: 40
     anchor: 0
@@ -545,7 +545,7 @@ MonoBehaviour:
     drawTime: 0.8
     appear: 10
     reverseSpin: 1
-    spinSpeed: 1.8
+    spinSpeed: 1
     spinOrigin: {x: 0, y: 0}
     spinOverTime:
       serializedVersion: 2
