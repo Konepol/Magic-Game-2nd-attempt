@@ -91,7 +91,7 @@ public class CircleLayer : ISerializationCallbackReceiver
     public float orbitTurns = 1f;
     [Tooltip("Arrow ring. Checked: the full sequence (the pieces turn apart, fuse into groups, turn to point at the middle, then the ring shrinks and locks around the middle). Unchecked: the pieces do not point at the middle; they stay on the ring pointing along it and only spin and grow (Piece Count, Piece Wing and Ring Radius apply).")]
     public bool pointToCenter = true;
-    [Range(0.02f, 0.5f), Tooltip("Point To Center ring: how far from the middle the ring ends up once it has shrunk and locked, as a fraction of the layer's size. The ring starts at 0.5 (the edge), so a smaller number shrinks it more. 0.19 is the old fixed amount.")]
+    [Min(0.01f), Tooltip("Point To Center ring: how far from the middle the ring ends up once it has shrunk and locked, as a fraction of the layer's size. The ring starts at Ring Radius (0.5 = the edge of the layer), so a smaller number shrinks it more; there is no upper limit. 0.19 is the old fixed amount.")]
     public float finalRadius = 0.19f;
     [Range(0.1f, 1f), Tooltip("Point To Center ring: how big the pieces are once the ring has shrunk, compared with their size before it shrinks (1 = they do not get smaller). 0.5 is the old fixed amount.")]
     public float finalPieceScale = 0.5f;
@@ -105,7 +105,7 @@ public class CircleLayer : ISerializationCallbackReceiver
     public float pieceTurn = 0f;
     [Range(-1f, 1f), Tooltip("Orbit-only ring: the point on each piece that sits on the ring and that Piece Turn rotates around. 0 = the middle of the piece, +1 = its tip (the front end), -1 = its back end.")]
     public float piecePivot = 0f;
-    [Range(0.05f, 0.6f), Tooltip("Arrow ring: how far from the middle the ring sits, as a fraction of the layer's size (0.5 = at the edge). With Point To Center checked this is where the ring starts, before it shrinks to Final Radius; unchecked, it is where the pieces stay.")]
+    [Min(0.01f), Tooltip("Arrow ring: how far from the middle the ring sits, as a fraction of the layer's size (0.5 = at the edge). With Point To Center checked this is where the ring starts, before it shrinks to Final Radius; unchecked, it is where the pieces stay.")]
     public float ringRadius = 0.5f;
 
     // layers saved with the old Ring Orbit Only toggle keep their behaviour: Point To Center is its inverse

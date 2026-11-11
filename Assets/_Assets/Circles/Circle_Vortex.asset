@@ -81,8 +81,8 @@ MonoBehaviour:
     pieceWing: 0.26
     pieceCount: 4
     pieceTurn: 0
-    piecePivot: 0
-    ringRadius: 0.357
+    piecePivot: 0.02
+    ringRadius: 0.6
     variants: []
     variantFps: 10
     stepFps: 0
