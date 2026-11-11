@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.55
     appear: 7
+    holdDrift: 0
+    shimmer: 0
   - name: Bolt Ring
     texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
     useSpellColor: 1
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.15
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Spiral
     texture: {fileID: 2800000, guid: 0e8e48b637e0f1f41a4983406a0a0ac5, type: 3}
     useSpellColor: 1
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 2
+    holdDrift: 0
+    shimmer: 0
   - name: Crystal Core
     texture: {fileID: 2800000, guid: df4228a658e7c0d46b045482afec19b6, type: 3}
     useSpellColor: 1
@@ -79,3 +85,5 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.35
     appear: 1
+    holdDrift: 0
+    shimmer: 0

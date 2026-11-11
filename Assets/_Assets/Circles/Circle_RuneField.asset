@@ -19,63 +19,86 @@ MonoBehaviour:
   coreWhite: 0.35
   depthSpacing: 0.3
   groundLayerSpacing: 0.03
-  tiltDegrees: 8
-  tiltSpeed: 1
+  tiltDegrees: 2
+  tiltSpeed: 0.8
   groundTiltMinHeight: 0.5
   readyColor: {r: 1, g: 0.95, b: 0.6, a: 1}
   readyColorBlend: 0.45
   readyFlash: 0.7
   readyPulse: 0
   layers:
+  - name: Seed
+    texture: {fileID: 2800000, guid: 000a847ff9ebbb4478343e9bf8c5be0d, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.18
+    appear: 11
+    holdDrift: 0
+    shimmer: 0
+  - name: Crosshair Flash
+    texture: {fileID: 2800000, guid: 000a847ff9ebbb4478343e9bf8c5be0d, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3
+    scaleToAoeRadius: 0
+    startAt: 0.1
+    drawTime: 0.3
+    appear: 11
+    holdDrift: 0
+    shimmer: 0
   - name: Field Far
     texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: 5
+    rotationSpeed: 2
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
     size: 3
     scaleToAoeRadius: 0
-    startAt: 0
-    drawTime: 0.55
-    appear: 4
+    startAt: 0.2
+    drawTime: 0.5
+    appear: 9
+    holdDrift: 0
+    shimmer: 0.35
   - name: Field Mid
     texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
     useSpellColor: 0
     tint: {r: 1, g: 0.85, b: 0.3, a: 1}
     opacity: 1
-    rotationSpeed: -9
+    rotationSpeed: -3
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
     size: 2.2
     scaleToAoeRadius: 0
-    startAt: 0.2
-    drawTime: 0.55
-    appear: 4
+    startAt: 0.3
+    drawTime: 0.5
+    appear: 9
+    holdDrift: 0
+    shimmer: 0.35
   - name: Field Near
     texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: 14
+    rotationSpeed: 4
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
     size: 1.4
     scaleToAoeRadius: 0
-    startAt: 0.4
-    drawTime: 0.55
-    appear: 4
-  - name: Core Burst
-    texture: {fileID: 2800000, guid: 7988d2d052a296042a5c74b2b6f5dbaf, type: 3}
-    useSpellColor: 0
-    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
-    opacity: 1
-    rotationSpeed: 60
-    anchor: 0
-    offset: {x: 0, y: 0, z: 0}
-    size: 0.9
-    scaleToAoeRadius: 0
-    startAt: 0.6
-    drawTime: 0.35
-    appear: 3
+    startAt: 0.42
+    drawTime: 0.5
+    appear: 9
+    holdDrift: 0
+    shimmer: 0.4

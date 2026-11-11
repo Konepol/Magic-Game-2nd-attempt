@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.6
     appear: 1
+    holdDrift: 0
+    shimmer: 0
   - name: Scatter Back
     texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
     useSpellColor: 1
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.5
     appear: 2
+    holdDrift: 0
+    shimmer: 0
   - name: Ring
     texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
     useSpellColor: 1
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Side Scatter A
     texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
     useSpellColor: 1
@@ -79,6 +85,8 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.3
     appear: 1
+    holdDrift: 0
+    shimmer: 0
   - name: Side Scatter B
     texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
     useSpellColor: 1
@@ -92,3 +100,5 @@ MonoBehaviour:
     startAt: 0.6
     drawTime: 0.3
     appear: 1
+    holdDrift: 0
+    shimmer: 0

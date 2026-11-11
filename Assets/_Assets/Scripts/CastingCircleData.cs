@@ -20,6 +20,11 @@ public enum CircleAppear
     SpinIn,       // grows while whirling, the spin slowing to a stop
     Stamp,        // starts big and faint, then slams down onto its place
     FlipIn,       // lies edge-on and swings up to face you
+    RadialOut,    // drawn from the middle outward in a travelling ring, the leading edge burning bright
+    Cascade,      // for a glyph-grid layer: glyphs pop in from the middle outward, each with a flash
+    Bloom,        // grows from the middle outward while it whirls and settles (a pinwheel opening)
+    Flash,        // a quick flare: swells, peaks and is gone again (a seed glyph or a crosshair flash)
+    Pop,          // everything at once, shot outward from the middle in a few frames
 }
 
 // How a whole circle leaves when the spell is released.
@@ -32,6 +37,7 @@ public enum CircleExit
     Unwind,       // un-draws itself, the last drawn part first
     Dissolve,     // breaks into specks
     Launch,       // shoots forward toward where the spell is going
+    Shatter,      // white flash, then the lines are pulled outward and break into specks
 }
 
 [Serializable]
@@ -60,6 +66,12 @@ public class CircleLayer
     [Range(0.02f, 1f), Tooltip("How much of the cast time this layer takes to draw.")]
     public float drawTime = 0.4f;
     public CircleAppear appear = CircleAppear.RadialWipe;
+
+    [Header("While it holds")]
+    [Tooltip("The layer slowly grows by this fraction of its size per second while the cast is held (0.05 = 5% a second).")]
+    public float holdDrift = 0f;
+    [Range(0f, 1f), Tooltip("Flickers the layer's brightness.")]
+    public float shimmer = 0f;
 }
 
 // A set of circle layers that draw themselves over a spell's cast time. Assign one to a spell to give it a casting circle.

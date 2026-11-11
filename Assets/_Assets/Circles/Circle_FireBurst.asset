@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.6
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Flame Petals Counter
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
     useSpellColor: 1
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.25
     drawTime: 0.5
     appear: 1
+    holdDrift: 0
+    shimmer: 0
   - name: Rays
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 2
+    holdDrift: 0
+    shimmer: 0
   - name: Floor Petals
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
     useSpellColor: 1
@@ -79,6 +85,8 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.6
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Floor Rays
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -92,3 +100,5 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.4
     appear: 1
+    holdDrift: 0
+    shimmer: 0

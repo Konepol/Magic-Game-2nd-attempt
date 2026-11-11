@@ -19,7 +19,7 @@ MonoBehaviour:
   coreWhite: 0.35
   depthSpacing: 0.3
   groundLayerSpacing: 0.03
-  tiltDegrees: 10
+  tiltDegrees: 3
   tiltSpeed: 1.8
   groundTiltMinHeight: 0.5
   readyColor: {r: 1, g: 0.95, b: 0.6, a: 1}
@@ -27,42 +27,93 @@ MonoBehaviour:
   readyFlash: 0.9
   readyPulse: 0
   layers:
-  - name: Burst
-    texture: {fileID: 2800000, guid: 7988d2d052a296042a5c74b2b6f5dbaf, type: 3}
+  - name: Seed
+    texture: {fileID: 2800000, guid: f6a6e879a2318314d8872df37a2c35f0, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 0.7
+    scaleToAoeRadius: 0
+    startAt: 0
+    drawTime: 0.2
+    appear: 11
+    holdDrift: 0
+    shimmer: 0
+  - name: Haze
+    texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
+    useSpellColor: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    opacity: 0.4
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 4.2
+    scaleToAoeRadius: 0
+    startAt: 0.12
+    drawTime: 0.3
+    appear: 2
+    holdDrift: 0
+    shimmer: 0
+  - name: Flash Flare
+    texture: {fileID: 2800000, guid: 000a847ff9ebbb4478343e9bf8c5be0d, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: 25
+    rotationSpeed: 0
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 3
+    size: 3.6
     scaleToAoeRadius: 0
-    startAt: 0
-    drawTime: 0.45
-    appear: 3
-  - name: Burst Counter
+    startAt: 0.4
+    drawTime: 0.2
+    appear: 11
+    holdDrift: 0
+    shimmer: 0
+  - name: Burst Yellow
     texture: {fileID: 2800000, guid: 7988d2d052a296042a5c74b2b6f5dbaf, type: 3}
     useSpellColor: 0
     tint: {r: 1, g: 0.85, b: 0.3, a: 1}
     opacity: 1
-    rotationSpeed: -60
+    rotationSpeed: 0
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 1.8
+    size: 3.3
     scaleToAoeRadius: 0
-    startAt: 0.15
-    drawTime: 0.45
-    appear: 3
-  - name: Glyph Field
-    texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
+    startAt: 0.4
+    drawTime: 0.12
+    appear: 12
+    holdDrift: 0.05
+    shimmer: 0.3
+  - name: Burst Green
+    texture: {fileID: 2800000, guid: 7988d2d052a296042a5c74b2b6f5dbaf, type: 3}
     useSpellColor: 1
     tint: {r: 1, g: 1, b: 1, a: 1}
     opacity: 1
-    rotationSpeed: 6
+    rotationSpeed: 10
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
-    size: 2.6
+    size: 2.3
     scaleToAoeRadius: 0
-    startAt: 0.4
-    drawTime: 0.5
-    appear: 4
+    startAt: 0.52
+    drawTime: 0.14
+    appear: 12
+    holdDrift: 0.04
+    shimmer: 0.25
+  - name: Glyph Field
+    texture: {fileID: 2800000, guid: 42757307e1fc74c41a84d387c02f9265, type: 3}
+    useSpellColor: 0
+    tint: {r: 1, g: 0.85, b: 0.3, a: 1}
+    opacity: 1
+    rotationSpeed: 0
+    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    size: 3
+    scaleToAoeRadius: 0
+    startAt: 0.62
+    drawTime: 0.3
+    appear: 9
+    holdDrift: 0
+    shimmer: 0.35

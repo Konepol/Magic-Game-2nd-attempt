@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.5
     appear: 6
+    holdDrift: 0
+    shimmer: 0
   - name: Area Scatter
     texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
     useSpellColor: 0
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.15
     drawTime: 0.5
     appear: 6
+    holdDrift: 0
+    shimmer: 0
   - name: Area Square
     texture: {fileID: 2800000, guid: 8e760b7cb053b27418785a0eba908305, type: 3}
     useSpellColor: 0
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Area Glow
     texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
     useSpellColor: 0
@@ -79,6 +85,8 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.5
     appear: 2
+    holdDrift: 0
+    shimmer: 0
   - name: Hand Spikes
     texture: {fileID: 2800000, guid: 87945a3ada04b6b44ab0b4df9cd6fb01, type: 3}
     useSpellColor: 0
@@ -92,6 +100,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.4
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Floor Scatter
     texture: {fileID: 2800000, guid: f84d295d95db7144d83b4900e5538614, type: 3}
     useSpellColor: 0
@@ -105,3 +115,5 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.5
     appear: 1
+    holdDrift: 0
+    shimmer: 0

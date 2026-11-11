@@ -292,6 +292,39 @@ public static class UniqueCircleBuilder
                 }
         });
 
+        // a crosshair flare: long thin tapered lines through the middle (horizontal, vertical, short diagonals) and a bright core
+        Make("Flare_Cross", c =>
+        {
+            for (int k = 0; k < 4; k++)
+            {
+                float a = Mathf.PI * 0.5f * k;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                c.Taper(d * 0.02f, d * 0.49f, 0.016f, 0.0015f, 0.2f);
+            }
+            for (int k = 0; k < 4; k++)
+            {
+                float a = Mathf.PI * 0.25f + Mathf.PI * 0.5f * k;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                c.Taper(d * 0.02f, d * 0.22f, 0.010f, 0.0012f, 0.3f);
+            }
+            c.FillDot(Vector2.zero, 0.022f);
+            c.Ring(0.06f, 0.005f);
+        });
+
+        // the first thing to appear: one small diamond rune with a smaller one inside and four ticks
+        Make("Seed_Diamond", c =>
+        {
+            c.Poly4At(Vector2.zero, 0.16f, 0f, 0.012f);
+            c.Poly4At(Vector2.zero, 0.075f, 0f, 0.010f);
+            c.FillDot(Vector2.zero, 0.012f);
+            for (int k = 0; k < 4; k++)
+            {
+                float a = Mathf.PI * 0.5f * k;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                c.Seg(d * 0.33f, d * 0.43f, 0.008f);
+            }
+        });
+
         // ---------- the circles ----------
         // basic spells
         var scatter = Circle("Circle_Scatter", 1.3f, Tilt(5f, 1.5f), Ready(new Color(1f, 0.95f, 0.7f), 0.4f),
@@ -446,34 +479,48 @@ public static class UniqueCircleBuilder
         // ---------- new casting styles (from the anime references) ----------
         var yellow = new Color(1f, 0.85f, 0.3f);
 
-        // Spiral Vortex: whirling tapered pinwheels that snap open from the hand, with a field of glyphs popping in around them
-        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(6f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.8f),
-            L("Vortex", "Spiral_Vortex", CircleAnchor.Front, 2.4f, 230f, 0.0f, 0.5f, CircleAppear.Burst),
-            L("Vortex Counter", "Spiral_Vortex", CircleAnchor.Front, 1.5f, -340f, 0.15f, 0.5f, CircleAppear.Burst),
-            L("Ring", "Ring_Double", CircleAnchor.Front, 2.8f, -10f, 0.1f, 0.5f),
-            L("Glyph Field", "Rune_Scatter", CircleAnchor.Front, 3.2f, 8f, 0.4f, 0.6f, CircleAppear.Sparkle));
-        Accent(vortex, 1, yellow);
-        Accent(vortex, 3, yellow);
+        // The three new circles follow the references frame by frame (see CircleAppear / CircleExit):
+        //  Vortex:     stray glyphs appear, a tiny pinwheel opens from its middle while whirling, holds, then a white flash and the lines shatter outward
+        //  Burst:      one seed diamond, a haze, then every line pops at once shot outward (yellow first, green after), drifting and shimmering with no spin
+        //  Rune Field: a seed cross, a crosshair flash, then glyphs pop in from the middle outward and hold still and shimmering
 
-        // Rune Scatter: no ring at all, three loose fields of glyphs at different depths, green with a yellow accent
-        var runeField = Circle("Circle_RuneField", 1.4f, Tilt(8f, 1.0f), Ready(new Color(1f, 0.95f, 0.6f), 0.7f),
-            L("Field Far", "Rune_Scatter", CircleAnchor.Front, 3.0f, 5f, 0.0f, 0.55f, CircleAppear.Sparkle),
-            L("Field Mid", "Rune_Scatter", CircleAnchor.Front, 2.2f, -9f, 0.2f, 0.55f, CircleAppear.Sparkle),
-            L("Field Near", "Rune_Scatter", CircleAnchor.Front, 1.4f, 14f, 0.4f, 0.55f, CircleAppear.Sparkle),
-            L("Core Burst", "Burst_Lines", CircleAnchor.Front, 0.9f, 60f, 0.6f, 0.35f, CircleAppear.Burst));
-        Accent(runeField, 1, yellow);
+        // Spiral Vortex
+        var vortex = Circle("Circle_Vortex", 1.3f, Tilt(3f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.8f),
+            L("Stray Glyphs", "Rune_Scatter", CircleAnchor.Front, 2.8f, 4f, 0.0f, 0.35f, CircleAppear.Cascade),
+            L("Vortex", "Spiral_Vortex", CircleAnchor.Front, 2.4f, 230f, 0.1f, 0.45f, CircleAppear.Bloom),
+            L("Vortex Counter", "Spiral_Vortex", CircleAnchor.Front, 1.5f, -340f, 0.25f, 0.45f, CircleAppear.Bloom),
+            L("Ring", "Ring_Double", CircleAnchor.Front, 2.8f, -10f, 0.45f, 0.3f, CircleAppear.RadialOut));
+        Accent(vortex, 0, yellow);
+        Accent(vortex, 2, yellow);
+        Hold(vortex, 0, 0f, 0.35f); Hold(vortex, 1, 0.02f, 0f); Hold(vortex, 2, 0.03f, 0.2f);
+
+        // Rune Scatter
+        var runeField = Circle("Circle_RuneField", 1.4f, Tilt(2f, 0.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.7f),
+            L("Seed", "Flare_Cross", CircleAnchor.Front, 0.7f, 0f, 0.0f, 0.18f, CircleAppear.Flash),
+            L("Crosshair Flash", "Flare_Cross", CircleAnchor.Front, 3.0f, 0f, 0.1f, 0.3f, CircleAppear.Flash),
+            L("Field Far", "Rune_Scatter", CircleAnchor.Front, 3.0f, 2f, 0.2f, 0.5f, CircleAppear.Cascade),
+            L("Field Mid", "Rune_Scatter", CircleAnchor.Front, 2.2f, -3f, 0.3f, 0.5f, CircleAppear.Cascade),
+            L("Field Near", "Rune_Scatter", CircleAnchor.Front, 1.4f, 4f, 0.42f, 0.5f, CircleAppear.Cascade));
+        Accent(runeField, 0, yellow);
         Accent(runeField, 3, yellow);
+        Hold(runeField, 2, 0f, 0.35f); Hold(runeField, 3, 0f, 0.35f); Hold(runeField, 4, 0f, 0.4f);
 
-        // Radial Burst: straight light lines, a zig-zag ring and diamonds shooting out from the middle (Lightning Lance)
-        var burst = Circle("Circle_Burst", 1.3f, Tilt(10f, 1.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.9f),
-            L("Burst", "Burst_Lines", CircleAnchor.Front, 3.0f, 25f, 0.0f, 0.45f, CircleAppear.Burst),
-            L("Burst Counter", "Burst_Lines", CircleAnchor.Front, 1.8f, -60f, 0.15f, 0.45f, CircleAppear.Burst),
-            L("Glyph Field", "Rune_Scatter", CircleAnchor.Front, 2.6f, 6f, 0.4f, 0.5f, CircleAppear.Sparkle));
-        Accent(burst, 1, yellow);
+        // Radial Burst
+        var burst = Circle("Circle_Burst", 1.3f, Tilt(3f, 1.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.9f),
+            L("Seed", "Seed_Diamond", CircleAnchor.Front, 0.7f, 0f, 0.0f, 0.2f, CircleAppear.Flash),
+            L("Haze", "Glow", CircleAnchor.Front, 4.2f, 0f, 0.12f, 0.3f, CircleAppear.FadeIn, default, 0.4f),
+            L("Flash Flare", "Flare_Cross", CircleAnchor.Front, 3.6f, 0f, 0.4f, 0.2f, CircleAppear.Flash),
+            L("Burst Yellow", "Burst_Lines", CircleAnchor.Front, 3.3f, 0f, 0.4f, 0.12f, CircleAppear.Pop),
+            L("Burst Green", "Burst_Lines", CircleAnchor.Front, 2.3f, 10f, 0.52f, 0.14f, CircleAppear.Pop),
+            L("Glyph Field", "Rune_Scatter", CircleAnchor.Front, 3.0f, 0f, 0.62f, 0.3f, CircleAppear.Cascade));
+        Accent(burst, 0, yellow);
+        Accent(burst, 3, yellow);
+        Accent(burst, 5, yellow);
+        Hold(burst, 3, 0.05f, 0.3f); Hold(burst, 4, 0.04f, 0.25f); Hold(burst, 5, 0f, 0.35f);
 
         // ---------- how each circle comes in and goes out ----------
         // in: layer-by-layer Appear styles (default is the draw-on wipe); out: one Exit Style for the whole circle
-        Exit(vortex, CircleExit.Implode, 0.35f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
+        Exit(vortex, CircleExit.Shatter, 0.3f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
         Exit(fire, CircleExit.SpinAway, 0.4f);          Exit(frost, CircleExit.Dissolve, 0.5f);        Exit(wind, CircleExit.SpinAway, 0.45f);
         Exit(earth, CircleExit.Unwind, 0.5f);           Exit(venom, CircleExit.Implode, 0.35f);        Exit(radiant, CircleExit.Shockwave, 0.45f);
         Exit(infernal, CircleExit.Launch, 0.35f);       Exit(cinder, CircleExit.Dissolve, 0.5f);       Exit(firestorm, CircleExit.Launch, 0.35f);
@@ -549,6 +596,14 @@ public static class UniqueCircleBuilder
             circle.layers[i].useSpellColor = false;
             circle.layers[i].tint = colors[i % colors.Length];
         }
+        EditorUtility.SetDirty(circle);
+    }
+
+    // slow outward drift and flicker while the cast is held
+    static void Hold(CastingCircleData circle, int layerIndex, float drift, float shimmer)
+    {
+        circle.layers[layerIndex].holdDrift = drift;
+        circle.layers[layerIndex].shimmer = shimmer;
         EditorUtility.SetDirty(circle);
     }
 

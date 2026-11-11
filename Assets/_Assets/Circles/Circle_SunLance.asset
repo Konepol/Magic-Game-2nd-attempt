@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.55
     appear: 7
+    holdDrift: 0
+    shimmer: 0
   - name: Bolt Ring
     texture: {fileID: 2800000, guid: 578bf9e23810dc642802dbcf314d99e8, type: 3}
     useSpellColor: 0
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.15
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Flame Petals
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
     useSpellColor: 0
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.45
     appear: 1
+    holdDrift: 0
+    shimmer: 0
   - name: Halo
     texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
     useSpellColor: 0
@@ -79,6 +85,8 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Glow
     texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
     useSpellColor: 0
@@ -92,3 +100,5 @@ MonoBehaviour:
     startAt: 0.4
     drawTime: 0.5
     appear: 2
+    holdDrift: 0
+    shimmer: 0

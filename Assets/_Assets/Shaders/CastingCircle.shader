@@ -1,6 +1,8 @@
-// Unlit, glowing (additive) circle texture with a clockwise "draw-on" reveal, used by the casting circles.
+// Unlit, glowing (additive) circle texture used by the casting circles.
 // The glow is made from blurred (low mip level) copies of the texture's own alpha, so every stroke gets a soft halo
 // and a hotter, whiter core without needing a baked glow in the image.
+// _Mode picks how the image is revealed:  0 clockwise draw-on, 1 glyphs pop in at random (8 x 8 grid cells),
+// 2 glyphs pop in from the middle outward (cells), 3 a ring of reveal that travels from the middle outward.
 Shader "Magic/CastingCircle"
 {
     Properties
@@ -11,8 +13,9 @@ Shader "Magic/CastingCircle"
         _Soft ("Reveal Edge Softness", Range(0.001, 0.3)) = 0.04
         _Glow ("Stroke Glow", Range(0, 4)) = 1.2
         _CoreWhite ("Hot Core (whitens the stroke centre)", Range(0, 1)) = 0.35
-        _Sparkle ("Sparkle Reveal (1 = glyphs pop in one by one)", Range(0, 1)) = 0
+        _Mode ("Reveal Mode (0 clockwise, 1 random glyphs, 2 glyphs from the middle, 3 radial)", Range(0, 3)) = 0
         _Dissolve ("Dissolve (0 = whole, 1 = gone)", Range(0, 1)) = 0
+        _Stretch ("Stretch Outward (the lines are pulled away from the middle)", Range(0, 1)) = 0
         _Pad ("Quad Padding (the quad is this much bigger than the image so the glow is not cut off)", Float) = 1.16
     }
 
@@ -42,8 +45,9 @@ Shader "Magic/CastingCircle"
                 half _Soft;
                 half _Glow;
                 half _CoreWhite;
-                half _Sparkle;
+                half _Mode;
                 half _Dissolve;
+                half _Stretch;
                 half _Pad;
             CBUFFER_END
 
@@ -86,7 +90,6 @@ Shader "Magic/CastingCircle"
 
             half Halo(float2 uv)
             {
-                // two blurs of different widths: a tight inner glow and a wide soft one
                 // taps sit closer together than the blur width of the mip they read, so they merge into one smooth glow
                 half h1 = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv, 2.5).a;
                 half h2 = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, uv, 4.0).a;
@@ -103,29 +106,45 @@ Shader "Magic/CastingCircle"
             half4 frag(Varyings input) : SV_Target
             {
                 float2 uv = input.uv;
+                // exit: the lines are pulled outward from the middle
+                uv = 0.5 + (uv - 0.5) / (1.0 + _Stretch * 0.9);
+
                 half inside = (uv.x > 0 && uv.x < 1 && uv.y > 0 && uv.y < 1) ? 1 : 0;
 
                 half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
                 half core = tex.a * inside;
+
                 float2 p = uv - 0.5;
+                float r = length(p) / 0.5;      // 0 in the middle, 1 at the edge of the image
                 // the halo fades to nothing before the edge of the image, so the border pixels never show as flat patches
                 half halo = Halo(uv) * _Glow * inside * saturate((0.5 - length(p)) / 0.03);
 
-                // angle around the centre, 0 at the top going clockwise to 1
-                float t = frac(atan2(p.x, p.y) / 6.2831853 + 1.0);
-
-                half mask = _Reveal >= 0.999 ? 1.0 : saturate((_Reveal - t) / _Soft);
+                half mask = 1.0;
                 half flash = 0;
 
-                // sparkle reveal: the image is a grid of 8 x 8 cells holding one glyph each; each cell pops in at its own moment
-                if (_Sparkle > 0.5)
+                if (_Mode < 0.5)
                 {
+                    // angle around the centre, 0 at the top going clockwise to 1
+                    float t = frac(atan2(p.x, p.y) / 6.2831853 + 1.0);
+                    mask = _Reveal >= 0.999 ? 1.0 : saturate((_Reveal - t) / _Soft);
+                }
+                else if (_Mode < 2.5)
+                {
+                    // glyph grid: each 8 x 8 cell pops in at its own moment (random, or in order of distance from the middle)
                     float2 cell = floor(uv * 8.0);
                     float h = Hash21(cell + 3.7);
-                    half local = saturate((_Reveal - h * 0.7) / 0.3);
+                    float key = _Mode < 1.5 ? h * 0.7 : saturate((length((cell + 0.5) / 8.0 - 0.5) / 0.5) * 0.8 + h * 0.25);
+                    half local = saturate((_Reveal * (_Mode < 1.5 ? 1.0 : 1.3) - key) / (_Mode < 1.5 ? 0.3 : 0.25));
                     mask = local * (1.0 + 0.6 * (1.0 - local));
                     flash = saturate(local * (1.0 - local) * 4.0);
                     mask *= 0.78 + 0.22 * sin(_Time.y * 7.0 + h * 40.0);
+                }
+                else
+                {
+                    // a reveal that travels outward from the middle; the leading edge burns brighter
+                    float front = _Reveal * 1.15;
+                    mask = saturate((front - r) / 0.08);
+                    flash = _Reveal < 0.999 ? saturate(1.0 - abs(front - r) / 0.1) * 0.7 : 0.0;
                 }
 
                 // dissolve: patches of the circle burn away; a bright rim shows on the patches that are about to go

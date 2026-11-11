@@ -40,6 +40,8 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.6
     appear: 7
+    holdDrift: 0
+    shimmer: 0
   - name: Triangle
     texture: {fileID: 2800000, guid: a533d5e1202d0234c894db7ab31affa6, type: 3}
     useSpellColor: 1
@@ -53,6 +55,8 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.5
     appear: 1
+    holdDrift: 0
+    shimmer: 0
   - name: Rune Band
     texture: {fileID: 2800000, guid: 4685829d196a13e4484910200391b238, type: 3}
     useSpellColor: 1
@@ -66,6 +70,8 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 0
+    holdDrift: 0
+    shimmer: 0
   - name: Crystal Core
     texture: {fileID: 2800000, guid: df4228a658e7c0d46b045482afec19b6, type: 3}
     useSpellColor: 1
@@ -79,3 +85,5 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.35
     appear: 1
+    holdDrift: 0
+    shimmer: 0

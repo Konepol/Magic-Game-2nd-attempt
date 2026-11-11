@@ -22,6 +22,7 @@ public class CastingCircle : MonoBehaviour
         public Transform root;            // moved, rotated and scaled as one
         public Renderer face;
         public float angle;
+        public float hold;               // seconds this layer has been fully drawn
     }
 
     const float QuadPadding = 1.16f;      // must match _Pad in the Magic/CastingCircle shader
@@ -194,7 +195,7 @@ public class CastingCircle : MonoBehaviour
         float alphaMul = 1f, scaleMul = 1f;
         Color tintOverride = Color.clear;
         float overrideAmount = 0f;
-        float exitK = 0f, exitSpin = 0f, exitDissolve = 0f, exitLaunch = 0f;
+        float exitK = 0f, exitSpin = 0f, exitDissolve = 0f, exitLaunch = 0f, exitStretch = 0f;
 
         switch (mode)
         {
@@ -235,6 +236,11 @@ public class CastingCircle : MonoBehaviour
                         break;
                     case CircleExit.Dissolve:      // breaks into specks
                         exitDissolve = k;
+                        break;
+                    case CircleExit.Shatter:       // white flash, then the lines are pulled outward and break into specks
+                        alphaMul = 1f - k2; scaleMul = 1f + 0.3f * k;
+                        tintOverride = Color.white; overrideAmount = Mathf.Clamp01(1f - k * 4f) * 0.9f;
+                        exitDissolve = Mathf.Clamp01((k - 0.12f) / 0.88f); exitStretch = k2;
                         break;
                     case CircleExit.Launch:        // shoots forward toward where the spell is going
                         alphaMul = 1f - k2; scaleMul = Mathf.Lerp(1f, 0.45f, k); exitLaunch = k2;
@@ -283,7 +289,26 @@ public class CastingCircle : MonoBehaviour
                     styleAlpha = Mathf.Min(1f, t * 8f);
                     break;
                 }
-                case CircleAppear.Sparkle: reveal = t; break;
+                case CircleAppear.Sparkle: case CircleAppear.Cascade: reveal = t; break;
+                case CircleAppear.RadialOut: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
+                case CircleAppear.Pop: reveal = t; styleAlpha = Mathf.Min(1f, t * 10f); break;
+                case CircleAppear.Bloom:
+                {
+                    // opens from the middle outward, growing and whirling, the spin dying away as it settles
+                    float u = 1f - t;
+                    reveal = t;
+                    sizeMul = Mathf.Lerp(0.3f, 1f, 1f - u * u);
+                    enterSpin = u * u * 360f * dir;
+                    styleAlpha = Mathf.Min(1f, t * 5f);
+                    break;
+                }
+                case CircleAppear.Flash:
+                {
+                    // rises to a peak and is gone again, swelling as it goes
+                    sizeMul = Mathf.Lerp(0.3f, 1.25f, 1f - (1f - t) * (1f - t));
+                    styleAlpha = Mathf.Sin(t * Mathf.PI);
+                    break;
+                }
                 case CircleAppear.SpinIn:
                 {
                     // grows while whirling, the spin slowing to a stop as it settles
@@ -359,6 +384,11 @@ public class CastingCircle : MonoBehaviour
 
             float diameter = def.scaleToAoeRadius && variant != null ? variant.aoeRadius * 2f * def.size : def.size * placeScale;
 
+            // while held: slow outward drift and shimmer
+            if (t >= 1f) l.hold = Mathf.Min(l.hold + dt, 4f);
+            if (def.holdDrift != 0f) sizeMul *= 1f + def.holdDrift * l.hold;
+            if (def.shimmer > 0f) styleAlpha *= 1f - def.shimmer * 0.5f * (1f + 0.5f * Mathf.Sin(Time.time * 11f + l.index * 2.3f) + 0.5f * Mathf.Sin(Time.time * 17.3f + l.index * 5.1f));
+
             l.root.localScale = Vector3.one * (diameter * sizeMul * scaleMul);
 
             Color c = def.useSpellColor ? spellColor * def.tint : def.tint;
@@ -371,8 +401,21 @@ public class CastingCircle : MonoBehaviour
             block.SetFloat("_Dissolve", exitDissolve);
             block.SetFloat("_Glow", data.glow);
             block.SetFloat("_CoreWhite", data.coreWhite);
-            block.SetFloat("_Sparkle", def.appear == CircleAppear.Sparkle ? 1f : 0f);
+            block.SetFloat("_Stretch", exitStretch);
+            block.SetFloat("_Mode", RevealMode(def.appear));
             l.face.SetPropertyBlock(block);
+        }
+    }
+
+    // which reveal the shader uses: 0 clockwise draw-on, 1 random glyphs, 2 glyphs from the middle, 3 travelling ring from the middle
+    static float RevealMode(CircleAppear a)
+    {
+        switch (a)
+        {
+            case CircleAppear.Sparkle: return 1f;
+            case CircleAppear.Cascade: return 2f;
+            case CircleAppear.RadialOut: case CircleAppear.Bloom: case CircleAppear.Pop: return 3f;
+            default: return 0f;
         }
     }
 
