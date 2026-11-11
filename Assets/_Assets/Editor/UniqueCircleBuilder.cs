@@ -645,12 +645,18 @@ public static class UniqueCircleBuilder
             });
         }
 
-        // a triangle: a V (same wing angle) closed by a line across the wing ends; its tip is in the middle of the image, pointing right
-        Make("Arrow_Triangle", c =>
+        // a double V (your drawing): a big narrow V with a smaller V nested just inside it, both tips pointing right.
+        // Narrow: the wings are about 35 degrees apart.
+        Make("Arrow_DoubleV", c =>
         {
-            c.Taper(Vector2.zero, new Vector2(-dx, dy), 0.014f, 0.006f, 0.9f);
-            c.Taper(Vector2.zero, new Vector2(-dx, -dy), 0.014f, 0.006f, 0.9f);
-            c.Seg(new Vector2(-dx, dy), new Vector2(-dx, -dy), 0.006f);
+            float hb = 17f * Mathf.Deg2Rad, hs = 17f * Mathf.Deg2Rad;
+            float Lb = wingL, Ls = wingL * 0.55f;
+            var bigTip = Vector2.zero;
+            var smallTip = new Vector2(-0.10f, 0f);        // set back inside the big V, its lines parallel to the big V's with a clear gap
+            c.Taper(bigTip, bigTip + new Vector2(-Lb * Mathf.Cos(hb), Lb * Mathf.Sin(hb)), 0.014f, 0.004f, 0.8f);
+            c.Taper(bigTip, bigTip + new Vector2(-Lb * Mathf.Cos(hb), -Lb * Mathf.Sin(hb)), 0.014f, 0.004f, 0.8f);
+            c.Taper(smallTip, smallTip + new Vector2(-Ls * Mathf.Cos(hs), Ls * Mathf.Sin(hs)), 0.012f, 0.004f, 0.8f);
+            c.Taper(smallTip, smallTip + new Vector2(-Ls * Mathf.Cos(hs), -Ls * Mathf.Sin(hs)), 0.012f, 0.004f, 0.8f);
         });
 
         var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
@@ -665,13 +671,15 @@ public static class UniqueCircleBuilder
         var armsOuter = L("Arms Outer", "Vortex_Arms_A", CircleAnchor.Front, 2.6f, 40f, 0.0f, 0.8f, CircleAppear.Bloom);
         var armsInner = L("Arms Inner", "Vortex_Arms_B", CircleAnchor.Front, 1.6f, 60f, 0.0f, 0.8f, CircleAppear.Bloom);
 
-        // Layer 3: a second, bigger ring of V's and triangles that only spins around, starting small and growing
+        // Layer 3: a second, bigger ring of double-V pieces that only spins around, starting small and growing
         var ring2 = L("Arrow Ring 2", "Arrow_V", CircleAnchor.Front, 3.4f, 50f, 0.0f, 0.8f, CircleAppear.Bloom);
         ring2.arrowRing = true;
         ring2.ringOrbitOnly = true;
-        ring2.pieceWing = 0.26f;
+        ring2.pieceWing = 0.3f;
+        ring2.pieceCount = 4;
+        ring2.piecesFaceMiddle = false;
         ring2.arrowV = Tex["Arrow_V"];
-        ring2.arrowDiamond = Tex["Arrow_Triangle"];
+        ring2.arrowDiamond = Tex["Arrow_DoubleV"];
         ring2.arrowAccent = yellow;
 
         var vortex = Circle("Circle_Vortex", 1.3f, Tilt(2f, 1.4f), Ready(new Color(1f, 0.95f, 0.6f), 0.4f), ring, armsOuter, armsInner, ring2);

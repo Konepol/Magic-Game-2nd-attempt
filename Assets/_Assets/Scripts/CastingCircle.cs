@@ -112,7 +112,7 @@ public class CastingCircle : MonoBehaviour
                     Kill(pq.GetComponent<Collider>());
                     pq.transform.SetParent(root, false);
                     var pr = pq.GetComponent<Renderer>();
-                    pr.sharedMaterial = MaterialFor(p < 4 ? def.arrowDiamond : def.arrowV);
+                    pr.sharedMaterial = MaterialFor(p < 4 || def.ringOrbitOnly ? def.arrowDiamond : def.arrowV);
                     pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     pr.receiveShadows = false;
                     pr.enabled = false;
@@ -499,13 +499,13 @@ public class CastingCircle : MonoBehaviour
     void UpdateOrbitRing(LayerInstance l, Color main, Color accent, float alpha)
     {
         float wing = l.def.pieceWing;
+        int count = Mathf.Clamp(l.def.pieceCount, 1, 8);
         main.a = alpha;
-        accent.a = alpha;
-        for (int k = 0; k < 4; k++)
+        for (int k = 0; k < 8; k++)
         {
-            float psiV = 90f * k + 10f, psiT = 90f * k + 55f;
-            SetPiece(l.pieces[4 + k], 0.5f * Dir(psiV), psiV + 90f, wing / ArrowL, accent, l.def);
-            SetPiece(l.pieces[k], 0.5f * Dir(psiT), psiT + 90f, wing / ArrowL, main, l.def);
+            if (k >= count) { SetPiece(l.pieces[k], Vector2.zero, 0f, 0f, main, l.def); continue; }
+            float psi = 360f * k / count + 45f;
+            SetPiece(l.pieces[k], 0.5f * Dir(psi), psi + (l.def.piecesFaceMiddle ? 180f : 90f), wing / ArrowL, main, l.def);
         }
     }
 

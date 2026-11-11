@@ -79,10 +79,14 @@ public class CircleLayer
     public float ringSpin = 90f;
     [Tooltip("While the pieces appear and before the shape is complete, the whole ring spins around the middle this many full turns, starting fast and slowing to a stop as the shape completes (0 = no spin).")]
     public float orbitTurns = 1f;
-    [Tooltip("Orbit-only ring: V's alternate with a second piece (the 'Arrow Diamond' image, a triangle here) on the ring, tips pointing along it. No fusing, turning to the middle or shrinking: the layer just spins (Rotation Speed) and grows (Appear).")]
+    [Tooltip("Orbit-only ring: Piece Count pieces (all drawn from the 'Arrow Diamond' image) sit on the ring. No fusing, turning to the middle or shrinking: the layer just spins (Rotation Speed) and grows (Appear).")]
     public bool ringOrbitOnly = false;
     [Tooltip("Orbit-only ring: wing length of the pieces, as a fraction of the layer's size.")]
     public float pieceWing = 0.26f;
+    [Range(1, 8), Tooltip("Orbit-only ring: how many pieces.")]
+    public int pieceCount = 4;
+    [Tooltip("Orbit-only ring: off = the tips point along the ring (counter-clockwise); on = the tips point at the middle.")]
+    public bool piecesFaceMiddle = false;
 
     [Header("Hand-drawn animation")]
     [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]

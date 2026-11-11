@@ -48,6 +48,8 @@ MonoBehaviour:
     orbitTurns: 1
     ringOrbitOnly: 0
     pieceWing: 0.26
+    pieceCount: 4
+    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -76,6 +78,8 @@ MonoBehaviour:
     orbitTurns: 1
     ringOrbitOnly: 0
     pieceWing: 0.26
+    pieceCount: 4
+    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -104,6 +108,8 @@ MonoBehaviour:
     orbitTurns: 1
     ringOrbitOnly: 0
     pieceWing: 0.26
+    pieceCount: 4
+    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
@@ -126,12 +132,14 @@ MonoBehaviour:
     appear: 10
     arrowRing: 1
     arrowV: {fileID: 2800000, guid: 4f8f98fa92461de438757419bc535664, type: 3}
-    arrowDiamond: {fileID: 2800000, guid: 8b534fe62cbff41469957a1367307ecd, type: 3}
+    arrowDiamond: {fileID: 2800000, guid: 998600c52c33cb443b5b5cc47760e1a3, type: 3}
     arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
     ringSpin: 90
     orbitTurns: 1
     ringOrbitOnly: 1
-    pieceWing: 0.26
+    pieceWing: 0.3
+    pieceCount: 4
+    piecesFaceMiddle: 0
     variants: []
     variantFps: 10
     stepFps: 0
