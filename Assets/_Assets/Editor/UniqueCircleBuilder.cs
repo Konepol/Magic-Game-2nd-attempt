@@ -649,14 +649,16 @@ public static class UniqueCircleBuilder
         // Narrow: the wings are about 35 degrees apart.
         Make("Arrow_DoubleV", c =>
         {
-            float hb = 17f * Mathf.Deg2Rad, hs = 17f * Mathf.Deg2Rad;
-            float Lb = wingL, Ls = wingL * 0.55f;
-            var bigTip = Vector2.zero;
-            var smallTip = new Vector2(-0.10f, 0f);        // set back inside the big V, its lines parallel to the big V's with a clear gap
-            c.Taper(bigTip, bigTip + new Vector2(-Lb * Mathf.Cos(hb), Lb * Mathf.Sin(hb)), 0.014f, 0.004f, 0.8f);
-            c.Taper(bigTip, bigTip + new Vector2(-Lb * Mathf.Cos(hb), -Lb * Mathf.Sin(hb)), 0.014f, 0.004f, 0.8f);
-            c.Taper(smallTip, smallTip + new Vector2(-Ls * Mathf.Cos(hs), Ls * Mathf.Sin(hs)), 0.012f, 0.004f, 0.8f);
-            c.Taper(smallTip, smallTip + new Vector2(-Ls * Mathf.Cos(hs), -Ls * Mathf.Sin(hs)), 0.012f, 0.004f, 0.8f);
+            // the front V (tip at the middle of the image, pointing right) is the SMALLER one; the bigger V sits behind it,
+            // its tip just inside the front V, the two sets of lines parallel with a clear gap
+            float h = 17f * Mathf.Deg2Rad;
+            float Lb = wingL, Ls = wingL * 0.5f;
+            var frontTip = Vector2.zero;
+            var backTip = new Vector2(-0.09f, 0f);
+            c.Taper(frontTip, frontTip + new Vector2(-Ls * Mathf.Cos(h), Ls * Mathf.Sin(h)), 0.013f, 0.004f, 0.85f);
+            c.Taper(frontTip, frontTip + new Vector2(-Ls * Mathf.Cos(h), -Ls * Mathf.Sin(h)), 0.013f, 0.004f, 0.85f);
+            c.Taper(backTip, backTip + new Vector2(-Lb * Mathf.Cos(h), Lb * Mathf.Sin(h)), 0.014f, 0.004f, 0.8f);
+            c.Taper(backTip, backTip + new Vector2(-Lb * Mathf.Cos(h), -Lb * Mathf.Sin(h)), 0.014f, 0.004f, 0.8f);
         });
 
         var ring = L("Arrow Ring", "Arrow_V", CircleAnchor.Front, 3.0f, 0f, 0.0f, 1.0f, CircleAppear.FadeIn);
