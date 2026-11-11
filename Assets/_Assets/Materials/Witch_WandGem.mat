@@ -31,56 +31,56 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientLift: 0.25
+    - _AmbientLift: 0.3
     - _Bands: 3
-    - _BounceStrength: 0.124
-    - _CastSoftness: 0
-    - _CoreShadowPos: 0.408
-    - _CoreShadowStrength: 0.403
+    - _BounceStrength: 0.1
+    - _CastSoftness: 0.2
+    - _CoreShadowPos: 0.22
+    - _CoreShadowStrength: 0.45
     - _EmissionStrength: 0.9
-    - _HatchAngle: 30
-    - _HatchGap: 0.1
-    - _HatchSpacing: 15
-    - _HatchStart: 0.75
+    - _HatchAngle: 45
+    - _HatchGap: 0.18
+    - _HatchSpacing: 9
+    - _HatchStart: 0.5
     - _HatchStrength: 0
-    - _HatchThickness: 0.25
-    - _OutlineDepthPush: 0
-    - _OutlineFadeStart: 7.3
-    - _OutlineFarMin: 0.2
-    - _OutlineFromAlbedo: 0
+    - _HatchThickness: 0.5
+    - _OutlineDepthPush: 6
+    - _OutlineFadeStart: 8
+    - _OutlineFarMin: 0.15
+    - _OutlineFromAlbedo: 0.6
     - _OutlineGroup: 2
     - _OutlineOffset: 0
-    - _OutlineShiftAmount: 0
+    - _OutlineShiftAmount: 1
     - _OutlineShiftFromLight: 0
     - _OutlineShiftX: 0
     - _OutlineShiftY: 0
-    - _OutlineSmooth: 0
-    - _OutlineThickMax: 1.291
-    - _OutlineThinMin: 0
-    - _OutlineVarFreq: 2.13
-    - _OutlineVariation: 1
-    - _OutlineWidth: 3
-    - _PaintAmount: 0.368
+    - _OutlineSmooth: 0.6
+    - _OutlineThickMax: 2.2
+    - _OutlineThinMin: 0.25
+    - _OutlineVarFreq: 2.5
+    - _OutlineVariation: 0.6
+    - _OutlineWidth: 4
+    - _PaintAmount: 0.35
     - _PaintScale: 4
     - _ReceiveShadow: 1
-    - _RimPower: 2.5
-    - _RimStrength: 1.4
+    - _RimPower: 3
+    - _RimStrength: 0.3
     - _ShadeAmount: 1
-    - _ShadowDepth: 0
+    - _ShadowDepth: 0.5
     - _ShadowFloor: 0.45
-    - _ShadowHueShift: 0.5
+    - _ShadowHueShift: 0.55
     - _ShadowNormalOffset: 0.06
-    - _ShadowSaturation: 1.118
+    - _ShadowSaturation: 1.25
     - _ShadowStyle: 1
     - _Softness: 0.12
     - _SparkleScale: 22
     - _SparkleSpeed: 2.5
     - _SparkleStrength: 0
-    - _SpecSize: 0.1
-    - _SpecSoftness: 0.001
-    - _SpecStrength: 0.15
-    - _TerminatorPos: 0.6
-    - _TerminatorSoftness: 0.005
+    - _SpecSize: 0.12
+    - _SpecSoftness: 0.03
+    - _SpecStrength: 0.5
+    - _TerminatorPos: 0.5
+    - _TerminatorSoftness: 0.3
     - _UseRestPosition: 1
     - _UseVertexColor: 1
     m_Colors:
@@ -89,7 +89,7 @@ Material:
     - _EmissionColor: {r: 0.75, g: 0.9, b: 1, a: 1}
     - _HatchColor: {r: 0.16, g: 0.1, b: 0.3, a: 1}
     - _LightWarmth: {r: 1, g: 0.96, b: 0.88, a: 1}
-    - _OutlineColor: {r: 1, g: 0.28951165, b: 0.16509432, a: 1}
+    - _OutlineColor: {r: 0.1, g: 0.08, b: 0.2, a: 1}
     - _RimColor: {r: 0.75, g: 0.9, b: 1, a: 1}
     - _ShadeColor: {r: 0.54999995, g: 0.62, b: 0.92, a: 1}
     - _ShadowTint: {r: 0.62, g: 0.62, b: 0.9, a: 1}
