@@ -12,6 +12,7 @@ Shader "Magic/CastingCircle"
         _Glow ("Stroke Glow", Range(0, 4)) = 1.2
         _CoreWhite ("Hot Core (whitens the stroke centre)", Range(0, 1)) = 0.35
         _Sparkle ("Sparkle Reveal (1 = glyphs pop in one by one)", Range(0, 1)) = 0
+        _Dissolve ("Dissolve (0 = whole, 1 = gone)", Range(0, 1)) = 0
         _Pad ("Quad Padding (the quad is this much bigger than the image so the glow is not cut off)", Float) = 1.16
     }
 
@@ -42,6 +43,7 @@ Shader "Magic/CastingCircle"
                 half _Glow;
                 half _CoreWhite;
                 half _Sparkle;
+                half _Dissolve;
                 half _Pad;
             CBUFFER_END
 
@@ -71,6 +73,15 @@ Shader "Magic/CastingCircle"
                 p = frac(p * float2(123.34, 456.21));
                 p += dot(p, p + 45.32);
                 return frac(p.x * p.y);
+            }
+
+            float ValueNoise(float2 p)
+            {
+                float2 i = floor(p);
+                float2 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);
+                return lerp(lerp(Hash21(i), Hash21(i + float2(1, 0)), f.x),
+                            lerp(Hash21(i + float2(0, 1)), Hash21(i + float2(1, 1)), f.x), f.y);
             }
 
             half Halo(float2 uv)
@@ -117,8 +128,18 @@ Shader "Magic/CastingCircle"
                     mask *= 0.78 + 0.22 * sin(_Time.y * 7.0 + h * 40.0);
                 }
 
+                // dissolve: patches of the circle burn away; a bright rim shows on the patches that are about to go
+                half rim = 0;
+                if (_Dissolve > 0.001)
+                {
+                    float n = ValueNoise(uv * 26.0) * 0.7 + ValueNoise(uv * 70.0) * 0.3;
+                    float th = lerp(-0.1, 1.1, _Dissolve);
+                    mask *= saturate((n - th) / 0.06);
+                    rim = saturate(1.0 - abs(n - th - 0.05) / 0.08);
+                }
+
                 half3 hot = lerp(_Color.rgb, half3(1, 1, 1), saturate(core * core * core) * _CoreWhite);
-                hot = lerp(hot, half3(1, 1, 1), flash * 0.6);
+                hot = lerp(hot, half3(1, 1, 1), max(flash * 0.6, rim * 0.8));
                 half3 rgb = hot * (1.0 + 0.25 * _Glow * core);
 
                 half a = saturate(core + halo) * _Color.a * mask;

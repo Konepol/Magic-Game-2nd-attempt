@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Circle_Radiant
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.4
+  exitStyle: 2
+  exitDuration: 0.45
   glow: 1.2
   coreWhite: 0.35
   depthSpacing: 0.3

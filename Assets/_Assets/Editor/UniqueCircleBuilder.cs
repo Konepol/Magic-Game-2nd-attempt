@@ -471,6 +471,22 @@ public static class UniqueCircleBuilder
             L("Glyph Field", "Rune_Scatter", CircleAnchor.Front, 2.6f, 6f, 0.4f, 0.5f, CircleAppear.Sparkle));
         Accent(burst, 1, yellow);
 
+        // ---------- how each circle comes in and goes out ----------
+        // in: layer-by-layer Appear styles (default is the draw-on wipe); out: one Exit Style for the whole circle
+        Exit(vortex, CircleExit.Implode, 0.35f);        Exit(runeField, CircleExit.Dissolve, 0.55f);   Exit(burst, CircleExit.Shockwave, 0.4f);
+        Exit(fire, CircleExit.SpinAway, 0.4f);          Exit(frost, CircleExit.Dissolve, 0.5f);        Exit(wind, CircleExit.SpinAway, 0.45f);
+        Exit(earth, CircleExit.Unwind, 0.5f);           Exit(venom, CircleExit.Implode, 0.35f);        Exit(radiant, CircleExit.Shockwave, 0.45f);
+        Exit(infernal, CircleExit.Launch, 0.35f);       Exit(cinder, CircleExit.Dissolve, 0.5f);       Exit(firestorm, CircleExit.Launch, 0.35f);
+        Exit(thunder, CircleExit.Shockwave, 0.4f);      Exit(glacier, CircleExit.Launch, 0.35f);       Exit(blizzard, CircleExit.Launch, 0.35f);
+        Exit(cyclone, CircleExit.SpinAway, 0.45f);      Exit(tremor, CircleExit.Unwind, 0.55f);        Exit(plague, CircleExit.Implode, 0.4f);
+        Exit(zero, CircleExit.Dissolve, 0.6f);          Exit(sun, CircleExit.Launch, 0.4f);
+
+        Enter(wind, CircleAppear.SpinIn, 0, 1);         Enter(cyclone, CircleAppear.SpinIn, 0);        Enter(venom, CircleAppear.SpinIn, 0, 1);
+        Enter(firestorm, CircleAppear.SpinIn, 0);       Enter(frost, CircleAppear.FlipIn, 0, 1);       Enter(glacier, CircleAppear.FlipIn, 0);
+        Enter(blizzard, CircleAppear.FlipIn, 0);        Enter(plague, CircleAppear.FlipIn, 0);         Enter(sun, CircleAppear.FlipIn, 0);
+        Enter(earth, CircleAppear.Stamp, 0, 1);         Enter(tremor, CircleAppear.Stamp, 0, 1);       Enter(zero, CircleAppear.Stamp, 0, 1);
+        Enter(thunder, CircleAppear.Stamp, 0, 1);       Enter(infernal, CircleAppear.Stamp, 1);
+
         // ---------- assign ----------
         Assign(WeaponDir, "ArcaneBolt", vortex);
         Assign(WeaponDir, "ScatterShot", runeField);
@@ -533,6 +549,21 @@ public static class UniqueCircleBuilder
             circle.layers[i].useSpellColor = false;
             circle.layers[i].tint = colors[i % colors.Length];
         }
+        EditorUtility.SetDirty(circle);
+    }
+
+    static void Exit(CastingCircleData circle, CircleExit style, float seconds)
+    {
+        circle.exitStyle = style;
+        circle.exitDuration = seconds;
+        EditorUtility.SetDirty(circle);
+    }
+
+    // sets how the listed layers come in
+    static void Enter(CastingCircleData circle, CircleAppear appear, params int[] layerIndexes)
+    {
+        foreach (int i in layerIndexes)
+            if (i < circle.layers.Length) circle.layers[i].appear = appear;
         EditorUtility.SetDirty(circle);
     }
 

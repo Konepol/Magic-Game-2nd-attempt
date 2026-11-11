@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Circle_InfernalBolt
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.5
+  exitStyle: 6
+  exitDuration: 0.35
   glow: 1.2
   coreWhite: 0.35
   depthSpacing: 0.3
@@ -50,7 +52,7 @@ MonoBehaviour:
     scaleToAoeRadius: 0
     startAt: 0.1
     drawTime: 0.6
-    appear: 0
+    appear: 6
   - name: Triangle
     texture: {fileID: 2800000, guid: a533d5e1202d0234c894db7ab31affa6, type: 3}
     useSpellColor: 1

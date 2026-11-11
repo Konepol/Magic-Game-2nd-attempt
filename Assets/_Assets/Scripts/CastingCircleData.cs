@@ -17,6 +17,21 @@ public enum CircleAppear
     FadeIn,       // fades in
     Burst,        // snaps out from the middle with an overshoot, like a vortex opening
     Sparkle,      // for a layer holding a grid of glyphs (8 x 8 cells): each glyph pops in at its own moment, then shimmers
+    SpinIn,       // grows while whirling, the spin slowing to a stop
+    Stamp,        // starts big and faint, then slams down onto its place
+    FlipIn,       // lies edge-on and swings up to face you
+}
+
+// How a whole circle leaves when the spell is released.
+public enum CircleExit
+{
+    Fade,         // fades with a slight swell
+    Implode,      // sucked into the middle, spinning faster and faster
+    Shockwave,    // flashes white and rushes outward like a ripple
+    SpinAway,     // whips round and shrinks away
+    Unwind,       // un-draws itself, the last drawn part first
+    Dissolve,     // breaks into specks
+    Launch,       // shoots forward toward where the spell is going
 }
 
 [Serializable]
@@ -53,6 +68,11 @@ public class CastingCircleData : ScriptableObject
 {
     [Tooltip("How far in front of the hand the 'Front' anchor sits, in metres.")]
     public float frontDistance = 1.3f;
+
+    [Header("Leaving (when the spell is released)")]
+    public CircleExit exitStyle = CircleExit.Fade;
+    [Tooltip("How long the exit takes in seconds. 0 = use the length the game asks for (short for quick taps).")]
+    public float exitDuration = 0f;
 
     [Header("Stroke glow")]
     [Range(0f, 4f), Tooltip("Soft halo around every stroke, and a hotter white core. 0 = flat lines.")]
