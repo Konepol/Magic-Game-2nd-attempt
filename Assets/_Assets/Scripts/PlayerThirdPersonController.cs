@@ -451,13 +451,10 @@ namespace StarterAssets
             float damping = Grounded ? CarryDamping * 2f : _broomFall ? BroomFallAirDamping : CarryDamping;
             CarryVelocity = Vector3.Lerp(CarryVelocity, Vector3.zero, 1f - Mathf.Exp(-damping * Time.deltaTime));
 
+            // move the player: walking, falling and the momentum carried over from the broom, in one move
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                            new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime +
-                            CarryVelocity * Time.deltaTime);      // <- added
-
-            // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
-                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+                             new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime +
+                             CarryVelocity * Time.deltaTime);
 
             // update animator if using character
             if (_hasAnimator)

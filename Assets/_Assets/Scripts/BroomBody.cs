@@ -28,12 +28,13 @@ public class BroomBodySettings
     public float freeTime = 0.8f;
 
     [Header("Coming back")]
-    public float returnMinSpeed = 10f;
-    public float returnMaxSpeed = 55f;
-    [Tooltip("Return speed per metre of distance, on top of the rider's own speed.")]
-    public float returnGain = 3f;
+    [Tooltip("Speed the broom homes in at when it is far away, on top of her own speed. Keep it above her flying speed so it always catches up.")]
+    public float returnMinSpeed = 60f;
+    public float returnMaxSpeed = 100f;
+    [Tooltip("Return speed per metre of distance once it is far enough away, on top of the rider's own speed.")]
+    public float returnGain = 4f;
     [Tooltip("How hard the broom swings round toward her (m/s per second).")]
-    public float returnAccel = 90f;
+    public float returnAccel = 160f;
     public float arriveDistance = 0.6f;
     public float dockTime = 0.25f;
 }
@@ -227,7 +228,8 @@ public class BroomBody : MonoBehaviour
         float d = to.magnitude;
 
         // she may be falling or flying: chase at her speed plus some, swooping in with the speed it already had
-        float chase = Mathf.Clamp(d * s.returnGain, s.returnMinSpeed, s.returnMaxSpeed);
+        // fast while it is far away, easing off over the last few metres so it settles on her instead of flying past
+        float chase = Mathf.Min(Mathf.Max(s.returnMinSpeed * Mathf.Clamp01(d / 8f), d * s.returnGain), s.returnMaxSpeed);
         Vector3 wanted = (d > 0.001f ? to / d : Vector3.zero) * chase + rider;
         velocity = Vector3.MoveTowards(velocity, wanted, s.returnAccel * dt);
         model.position += velocity * dt;
