@@ -233,11 +233,95 @@ namespace StarterAssets
             }
         }
 
+        [Header("Broom Free Look (no up/down limit while flying)")]
+        [Tooltip("How strongly the horizon is pulled level while flying. 0 = never levels.")]
+        public float FlightLevelStrength = 4f;
+
+        [Tooltip("Fastest the view rolls while levelling, in degrees per second.")]
+        public float FlightMaxRollSpeed = 200f;
+
+        [Tooltip("Seconds of level upside-down flight before the view rolls upright again. 0 = stay upside down.")]
+        public float FlightRightSelfAfter = 2f;
+
+        [Tooltip("Seconds to straighten the view after getting off the broom.")]
+        public float FlightExitBlendTime = 0.35f;
+
+        private Quaternion _freeLook = Quaternion.identity;
+        private Quaternion _exitOffset = Quaternion.identity;
+        private bool _freeLookActive;
+        private float _invertedTime;
+        private Unity.Cinemachine.CinemachineBrain _brain;
+
+        // on the broom the view is a free rotation instead of yaw + clamped pitch, so it can go over the top
+        private void SwitchFreeLook(bool on, bool locked)
+        {
+            _freeLookActive = on;
+            if (_brain == null) _brain = _mainCamera.GetComponent<Unity.Cinemachine.CinemachineBrain>();
+            // the follow camera builds its rig around "up"; give it the view's own up so the rig stays put when upside down
+            if (_brain != null) _brain.WorldUpOverride = on ? CinemachineCameraTarget.transform : null;
+
+            if (on)
+            {
+                _freeLook = Quaternion.Euler(_cinemachineTargetPitch, _cinemachineTargetYaw, 0f);
+                _exitOffset = Quaternion.identity;
+                _invertedTime = 0f;
+                return;
+            }
+
+            // back to yaw + pitch: keep looking the same way, and blend out whatever roll is left
+            Vector3 fwd = _freeLook * Vector3.forward;
+            Vector3 flat = new Vector3(fwd.x, 0f, fwd.z);
+            if (flat.sqrMagnitude < 0.0001f)
+            {
+                Vector3 up = _freeLook * Vector3.up;
+                flat = fwd.y > 0f ? new Vector3(-up.x, 0f, -up.z) : new Vector3(up.x, 0f, up.z);
+            }
+            _cinemachineTargetYaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
+            _cinemachineTargetPitch = Mathf.Clamp(-Mathf.Asin(Mathf.Clamp(fwd.y, -1f, 1f)) * Mathf.Rad2Deg, BottomClamp, TopClamp);
+            if (!locked)
+                _exitOffset = Quaternion.Inverse(Quaternion.Euler(_cinemachineTargetPitch, _cinemachineTargetYaw, 0f)) * _freeLook;
+        }
+
+        private void FreeLook()
+        {
+            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            {
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+                // turn around the view's own axes, so the mouse does the same thing on screen at any angle
+                _freeLook *= Quaternion.Euler(_input.look.y * deltaTimeMultiplier, _input.look.x * deltaTimeMultiplier, 0f);
+            }
+
+            // keep the horizon level: right way up, or exactly upside down after going over the top
+            Vector3 fwd = _freeLook * Vector3.forward;
+            Vector3 up = _freeLook * Vector3.up;
+            bool inverted = up.y < 0f;
+            _invertedTime = inverted && Mathf.Abs(fwd.y) < 0.5f ? _invertedTime + Time.deltaTime : 0f;
+            bool righting = inverted && FlightRightSelfAfter > 0f && _invertedTime >= FlightRightSelfAfter;
+
+            Vector3 levelUp = Vector3.ProjectOnPlane(inverted && !righting ? Vector3.down : Vector3.up, fwd);
+            float level = levelUp.magnitude;   // 1 flying level, 0 pointing straight up or down (no levelling there)
+            if (FlightLevelStrength > 0f && level > 0.01f)
+            {
+                float error = Vector3.SignedAngle(up, levelUp, fwd);
+                float step = Mathf.Clamp(error * FlightLevelStrength, -FlightMaxRollSpeed, FlightMaxRollSpeed) * level * Time.deltaTime;
+                step = Mathf.Clamp(step, -Mathf.Abs(error), Mathf.Abs(error));
+                _freeLook = Quaternion.AngleAxis(step, fwd) * _freeLook;
+            }
+
+            _freeLook.Normalize();
+            CinemachineCameraTarget.transform.rotation = _freeLook;
+        }
+
         private void CameraRotation()
         {
+            bool locked = LockOn != null && LockOn.IsLocked;
+            bool freeLook = IsFlying && !locked;
+            if (freeLook != _freeLookActive) SwitchFreeLook(freeLook, locked);
+            if (freeLook) { FreeLook(); return; }
+
             // while locked on: ignore look input and copy the live camera's view instead,
             // so the free camera is already in the right place when you unlock
-            if (LockOn != null && LockOn.IsLocked)
+            if (locked)
             {
                 _cinemachineTargetYaw = _mainCamera.transform.eulerAngles.y;
                 _cinemachineTargetPitch = Mathf.Clamp(
@@ -261,9 +345,16 @@ namespace StarterAssets
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
+            // just got off the broom: ease out the leftover roll instead of snapping upright
+            if (Quaternion.Angle(_exitOffset, Quaternion.identity) > 0.1f)
+                _exitOffset = Quaternion.Slerp(_exitOffset, Quaternion.identity,
+                    1f - Mathf.Exp(-3f * Time.deltaTime / Mathf.Max(FlightExitBlendTime, 0.01f)));
+            else
+                _exitOffset = Quaternion.identity;
+
             // Cinemachine will follow this target
             CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
-                _cinemachineTargetYaw, 0.0f);
+                _cinemachineTargetYaw, 0.0f) * _exitOffset;
         }
 
         private void Move()
