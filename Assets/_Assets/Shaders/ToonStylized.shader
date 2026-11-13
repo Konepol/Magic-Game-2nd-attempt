@@ -125,6 +125,7 @@ Shader "Magic/ToonStylized"
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fog
 
             #include "ToonOutline.hlsl"      // only for the noise helpers (Noise3)
 
@@ -143,6 +144,7 @@ Shader "Magic/ToonStylized"
                 half3 normalWS : TEXCOORD1;
                 float2 uv : TEXCOORD2;
                 float3 posOS : TEXCOORD3;
+                half fogFactor : TEXCOORD4;
                 half4 color : COLOR;
             };
 
@@ -184,6 +186,7 @@ Shader "Magic/ToonStylized"
                 o.normalWS = TransformObjectToWorldNormal(i.normalOS);
                 o.uv = TRANSFORM_TEX(i.uv.xy, _BaseMap);
                 o.color = i.color;
+                o.fogFactor = ComputeFogFactor(p.positionCS.z);
                 return o;
             }
 
@@ -210,6 +213,8 @@ Shader "Magic/ToonStylized"
 
                 float4 shadowCoord = TransformWorldToShadowCoord(i.positionWS + n * 0.03);
                 Light l = GetMainLight(shadowCoord);
+                // beyond the shadow distance there is no shadow map: fade to fully lit instead of reading rubbish (far scenery went dark)
+                l.shadowAttenuation = lerp(l.shadowAttenuation, 1.0, GetMainLightShadowFade(i.positionWS));
 
                 half ndl = dot(n, l.direction) * 0.5 + 0.5;                          // half-lambert
                 half cast = smoothstep(0.0, 1.0, l.shadowAttenuation);               // soft-shadow filter already blurs the edge; this widens it
@@ -275,6 +280,7 @@ Shader "Magic/ToonStylized"
                 col += _SparkleColor.rgb * Sparkle(i.posOS) * i.color.a * _SparkleStrength;
 
                 col += _EmissionColor.rgb * _EmissionStrength;
+                col = MixFog(col, i.fogFactor);            // scene fog (off in a scene without fog), so far scenery fades into the haze
                 return half4(col, 1);
             }
             ENDHLSL
@@ -292,6 +298,7 @@ Shader "Magic/ToonStylized"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_fog
             #include "ToonOutline.hlsl"
             OutlineVaryings vert(OutlineAttributes i) { return OutlineVert(i); }
             half4 frag(OutlineVaryings i) : SV_Target { return OutlineFrag(i); }

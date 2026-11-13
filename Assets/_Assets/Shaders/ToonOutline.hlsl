@@ -14,6 +14,7 @@ struct OutlineVaryings
 {
     float4 positionCS : SV_POSITION;
     half3 tint : TEXCOORD0;
+    half fogFactor : TEXCOORD1;
 };
 
 float Hash31(float3 p)
@@ -89,9 +90,10 @@ OutlineVaryings OutlineVert(OutlineAttributes i)
     half3 albedo = SAMPLE_TEXTURE2D_LOD(_BaseMap, sampler_BaseMap, TRANSFORM_TEX(i.uv.xy, _BaseMap), 0).rgb * _BaseColor.rgb
                    * lerp(half3(1, 1, 1), i.color.rgb, _UseVertexColor);
     o.tint = OutlineTint(albedo);
+    o.fogFactor = ComputeFogFactor(o.positionCS.z);
     return o;
 }
 
-half4 OutlineFrag(OutlineVaryings i) : SV_Target { return half4(i.tint, 1); }
+half4 OutlineFrag(OutlineVaryings i) : SV_Target { return half4(MixFog(i.tint, i.fogFactor), 1); }   // lines fade into the scene fog with the body
 
 #endif
