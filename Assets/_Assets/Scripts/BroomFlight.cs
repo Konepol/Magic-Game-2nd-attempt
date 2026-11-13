@@ -75,8 +75,8 @@ public class BroomFlight : MonoBehaviour
     bool freeAimHold = false;
 
     [Header("Height Limit")]
-    [SerializeField] float flightCeiling = 150f;      // above the ground below you
-    [SerializeField] float ceilingSoftZone = 25f;     // start slowing the climb this far below the limit
+    [SerializeField] float flightCeiling = 400f;      // above the ground below you
+    [SerializeField] float ceilingSoftZone = 50f;     // start slowing the climb this far below the limit
     [SerializeField] LayerMask groundMask = ~0;       // exclude the Player layer
     [SerializeField] float groundCheckDistance = 500f;
 
