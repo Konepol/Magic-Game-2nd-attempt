@@ -89,6 +89,7 @@ namespace StarterAssets
         [Tooltip("Gravity never gets heavier than this many times normal")]
         public float FallGravityMax = 3f;
 
+        private Vector3 _appliedCarry;   // the carry used by the last move
         private bool _broomFall;
         private float _broomFallTime;
 
@@ -97,6 +98,8 @@ namespace StarterAssets
         {
             GroundedCheck();   // the flag is stale after a flight
             CarryVelocity = carry;
+            // the controller still reports the flight's velocity: that is not her walking speed, so it must not be read back as such
+            _appliedCarry = new Vector3(_controller.velocity.x, 0f, _controller.velocity.z);
             _verticalVelocity = verticalSpeed;
             _broomFall = true;
             _broomFallTime = 0f;
@@ -407,7 +410,10 @@ namespace StarterAssets
             if (_input.move == Vector2.zero || rooted) targetSpeed = 0.0f;
 
             // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            // (the carried broom momentum is part of the controller's velocity but not of her own walking speed: left in, the speed
+            // below would feed on it every frame and throw her far)
+            Vector3 ownVelocity = _controller.velocity - _appliedCarry;
+            float currentHorizontalSpeed = new Vector3(ownVelocity.x, 0.0f, ownVelocity.z).magnitude;
 
             float speedOffset = 0.1f;
             float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
@@ -467,6 +473,7 @@ namespace StarterAssets
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
                              new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime +
                              CarryVelocity * Time.deltaTime);
+            _appliedCarry = CarryVelocity;
 
             // update animator if using character
             if (_hasAnimator)
@@ -600,6 +607,7 @@ namespace StarterAssets
             _broomFall = false;
             _broomFallTime = 0f;
             CarryVelocity = Vector3.zero;
+            _appliedCarry = Vector3.zero;
             _verticalVelocity = 0f;      // clears stored fall speed
             _speed = 0f;                 // clears stored ground speed
             _animationBlend = 0f;
