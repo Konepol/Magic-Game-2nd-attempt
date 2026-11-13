@@ -60,7 +60,7 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("Max seconds between the two taps.")]
     float doubleTapWindow = 0.28f;
 
-    [SerializeField, Tooltip("Sideways dashes (A/A, D/D) are a sidestep on top of the flight, so they need to be much faster than the flight itself to read as a dash.")]
+    [SerializeField, Tooltip("The strong sidestep (double-tap A or D while W is NOT held). With W held the sidestep uses Dash Speed and Dash Duration above. It is on top of the flight, so it must be much faster than the flight to read as a dash.")]
     float sideDashSpeed = 70f;
     [SerializeField] float sideDashDuration = 0.3f;
     [SerializeField, Range(0f, 1f), Tooltip("Extra sidestep speed as a share of the current flight speed, so a fast flight still gets a clear sidestep.")]
@@ -212,8 +212,10 @@ public class BroomFlight : MonoBehaviour
             rollSign = tapped == 1 ? -1f : 1f;   // rolling right is negative Z
             rollTime = 0f;
         }
-        dashLength = dashSide ? sideDashDuration : dashDuration;
-        sideSpeedNow = sideDashSpeed + velocity.magnitude * sideDashSpeedShare;
+        // holding W while sidestepping keeps the short, light sidestep; without W it is the strong one
+        bool strong = dashSide && move.y <= 0.1f;
+        dashLength = strong ? sideDashDuration : dashDuration;
+        sideSpeedNow = strong ? sideDashSpeed + velocity.magnitude * sideDashSpeedShare : dashSpeed;
         dashTimer = dashLength;
         dashCooldownLeft = dashCooldown;
         DashCount++;
