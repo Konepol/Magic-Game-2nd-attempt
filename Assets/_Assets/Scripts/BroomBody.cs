@@ -35,6 +35,8 @@ public class BroomBodySettings
     public float returnGain = 4f;
     [Tooltip("How hard the broom swings round toward her (m/s per second).")]
     public float returnAccel = 160f;
+    [Tooltip("The broom is always back within this many seconds of turning round: it speeds up as needed, and at the limit it is simply there.")]
+    public float maxReturnTime = 1.2f;
     public float arriveDistance = 0.6f;
     public float dockTime = 0.25f;
 }
@@ -67,7 +69,7 @@ public class BroomBody : MonoBehaviour
     Quaternion seatRot, stowRot;
     Vector3 velocity, startPos, startScale;
     Quaternion startRot;
-    float timer;
+    float timer, returnTimer;
     Func<Vector3> riderVelocity;
 
     public void Init(Transform player, Transform broomModel, Animator animator, BroomBodySettings settings, Func<Vector3> riderVelocity)
@@ -151,6 +153,7 @@ public class BroomBody : MonoBehaviour
     {
         model.SetParent(null, true);
         velocity = Vector3.zero;
+        returnTimer = 0f;
         State = Phase.Returning;
     }
 
@@ -159,6 +162,7 @@ public class BroomBody : MonoBehaviour
     {
         if (!IsAway) return;
         CallQueued = !CallQueued;
+        returnTimer = 0f;                          // a new destination: the time limit starts again
         if (CallQueued) State = Phase.Returning;   // no more flying on, it turns now
     }
 
@@ -216,7 +220,11 @@ public class BroomBody : MonoBehaviour
         model.position += step;
         Face(velocity, 10f);
 
-        if (timer >= s.freeTime || velocity.magnitude < 5f) State = Phase.Returning;
+        if (timer >= s.freeTime || velocity.magnitude < 5f)
+        {
+            returnTimer = 0f;
+            State = Phase.Returning;
+        }
     }
 
     void TickReturn()
@@ -230,10 +238,23 @@ public class BroomBody : MonoBehaviour
         // she may be falling or flying: chase at her speed plus some, swooping in with the speed it already had
         // fast while it is far away, easing off over the last few metres so it settles on her instead of flying past
         float chase = Mathf.Min(Mathf.Max(s.returnMinSpeed * Mathf.Clamp01(d / 8f), d * s.returnGain), s.returnMaxSpeed);
+
+        // the time limit: whatever it takes to be there when the time is up (it may go faster than the usual top return speed)
+        returnTimer += dt;
+        float remaining = s.maxReturnTime - returnTimer;
+        if (remaining > 0f) chase = Mathf.Max(chase, d / Mathf.Max(remaining, 0.05f));
+
         Vector3 wanted = (d > 0.001f ? to / d : Vector3.zero) * chase + rider;
         velocity = Vector3.MoveTowards(velocity, wanted, s.returnAccel * dt);
         model.position += velocity * dt;
         Face(velocity, 10f);
+
+        if (remaining <= 0f && d > s.arriveDistance)   // out of time: it is simply there
+        {
+            MagicFX.Pop(model.position, 0.4f, Lavender, 3);
+            model.position = target;
+            d = 0f;
+        }
 
         Vector3 size = CallQueued ? seatScale : seatScale * s.stowScale;
         model.localScale = Vector3.Lerp(model.localScale, size, 1f - Mathf.Exp(-6f * dt));

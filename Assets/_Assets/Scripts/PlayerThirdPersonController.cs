@@ -83,7 +83,7 @@ namespace StarterAssets
 
         [Header("After Leaving The Broom")]
         [Tooltip("Higher = the momentum she leaves the broom with fades faster in the air (on the ground the usual damping applies)")]
-        public float BroomFallAirDamping = 0.8f;
+        public float BroomFallAirDamping = 2.5f;
         [Tooltip("How much heavier gravity gets for each second of the fall that follows leaving the broom")]
         public float FallGravityRamp = 1.2f;
         [Tooltip("Gravity never gets heavier than this many times normal")]

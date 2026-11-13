@@ -113,6 +113,10 @@ public class BroomFlight : MonoBehaviour
     float dropCarry = 1f;
     [SerializeField, Tooltip("Fastest she can be thrown off the broom, in each direction.")]
     float dropMaxSpeed = 30f;
+    [SerializeField, Tooltip("Furthest her kept speed can carry her sideways through the air, in metres. The speed is limited so she never travels more than this.")]
+    float dropMaxDistance = 10f;
+    [SerializeField, Tooltip("Fastest she can be thrown upward when she steps off (falling can still be as fast as the limit above).")]
+    float dropMaxUp = 6f;
     [SerializeField, Tooltip("Little hop off the broom when stepping off slowly, close to the ground.")]
     float dismountHop = 2f;
 
@@ -415,12 +419,19 @@ public class BroomFlight : MonoBehaviour
     public void Dismount()
     {
         Log("DISMOUNT");
+
+        // she keeps the speed she had and drops; she never lands softly out of a fast flight.
+        // Stepping off in the middle of a forward dash counts as the flight speed she dashed out of, not the burst itself.
+        Vector3 flightVelocity = velocity;
+        if (dashTimer > 0f && !dashSide && flightVelocity.magnitude > dashExitSpeed)
+            flightVelocity = flightVelocity.normalized * dashExitSpeed;
         dashTimer = 0f;
 
-        // she keeps the speed she had and drops; she never lands softly out of a fast flight
-        Vector3 flightVelocity = velocity;
-        Vector3 carry = Vector3.ClampMagnitude(new Vector3(flightVelocity.x, 0f, flightVelocity.z) * dropCarry, dropMaxSpeed);
-        float drop = Mathf.Clamp(flightVelocity.y * dropCarry, -dropMaxSpeed, dropMaxSpeed);
+        // the carried speed fades in the air at a fixed rate, so the distance it covers is speed / damping:
+        // limiting the speed keeps the distance within dropMaxDistance however fast she was going
+        float carryLimit = Mathf.Min(dropMaxSpeed, dropMaxDistance * Mathf.Max(tpc.BroomFallAirDamping, 0.01f));
+        Vector3 carry = Vector3.ClampMagnitude(new Vector3(flightVelocity.x, 0f, flightVelocity.z) * dropCarry, carryLimit);
+        float drop = Mathf.Clamp(flightVelocity.y * dropCarry, -dropMaxSpeed, dropMaxUp);
         bool broomFliesOn = flightVelocity.magnitude > companion.leaveSpeed;
         // stepping off slowly close to the ground: a small hop instead of just dropping
         if (!broomFliesOn && transform.position.y - lastGroundY < 2f && drop < dismountHop) drop = dismountHop;
