@@ -333,6 +333,18 @@ namespace StarterAssets
             CinemachineCameraTarget.transform.rotation = _freeLook;
         }
 
+        // Map Bounds turns the view while it takes her back into the map, so she looks where she is being taken
+        // and is already heading the right way when the controls come back.
+        public void TurnViewTowards(Vector3 direction, float degreesPerSecond)
+        {
+            if (direction.sqrMagnitude < 0.0001f) return;
+            float step = degreesPerSecond * Time.deltaTime;
+            if (_freeLookActive)
+                _freeLook = Quaternion.RotateTowards(_freeLook, Quaternion.LookRotation(direction, Vector3.up), step);
+            else
+                _cinemachineTargetYaw = Mathf.MoveTowardsAngle(_cinemachineTargetYaw, Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg, step);
+        }
+
         private void CameraRotation()
         {
             bool locked = LockOn != null && LockOn.IsLocked;

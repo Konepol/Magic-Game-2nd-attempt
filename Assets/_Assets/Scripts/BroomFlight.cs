@@ -145,6 +145,9 @@ public class BroomFlight : MonoBehaviour
 
     public bool IsFlying { get; private set; }
 
+    // Set by MapBounds while it takes her back into the map: the broom ignores the controls and flies this way. Zero = normal flight.
+    public Vector3 ForcedCourse { get; set; }
+
     // read-only state for the HUD
     public bool IsExhausted => exhausted;
     public bool CanMount => !exhausted;                         // mounting costs nothing, but running dry locks the broom until some mana is back
@@ -491,10 +494,19 @@ public class BroomFlight : MonoBehaviour
         }
         if (freeAim) look = heldFrame;
 
-        Vector3 lookForward = look * Vector3.forward;
-        Vector3 lookUp = look * Vector3.up;
         Vector2 move = charging ? Vector2.zero : input.move;
         float lift = charging ? 0f : (ascendAction.action.IsPressed() ? 1f : 0f) - (descendAction.action.IsPressed() ? 1f : 0f);
+
+        // being taken back into the map: as if the view pointed that way and W was held, whatever the player does
+        if (ForcedCourse.sqrMagnitude > 0.0001f)
+        {
+            look = Quaternion.LookRotation(ForcedCourse.normalized, Vector3.up);
+            move = Vector2.up;
+            lift = 0f;
+        }
+
+        Vector3 lookForward = look * Vector3.forward;
+        Vector3 lookUp = look * Vector3.up;
         Vector3 wish = lookForward * move.y + look * Vector3.right * move.x + lookUp * lift;
         bool hasInput = wish.sqrMagnitude > 0.01f;
         Vector3 wishDir = hasInput ? wish.normalized : lookForward;
