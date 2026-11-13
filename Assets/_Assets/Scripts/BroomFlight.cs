@@ -217,7 +217,7 @@ public class BroomFlight : MonoBehaviour
         if (lines == null) return;
         Vector3 v = IsFlying ? velocity : Vector3.zero;
         lines.SetState(Mathf.InverseLerp(maxSpeed * speedLinesStart, jetFlight ? topSpeed : dashSpeed, v.magnitude),
-            transform.position + Vector3.up, v);
+            v, mainCamera.transform);
     }
 
     void LateUpdate() => UpdateSpeedLines();

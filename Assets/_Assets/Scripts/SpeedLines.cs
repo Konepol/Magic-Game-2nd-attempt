@@ -1,19 +1,28 @@
 using UnityEngine;
 
-// Streaks that rush past the player against the direction of travel when flying fast.
-// Built at runtime, so it needs no assets; BroomFlight feeds it the player position and velocity every frame.
+// Streaks that rush past the camera, against the direction of travel, when flying fast.
+// They are anchored to the camera (not the player), so they always frame the edge of the screen whatever the zoom,
+// and they are driven by real speed: the faster you fly, the faster, longer and denser the streaks.
+// Built at runtime, so it needs no assets; BroomFlight feeds it every frame.
 public class SpeedLines : MonoBehaviour
 {
-    [SerializeField] float maxRate = 90f;       // streaks per second at full intensity
-    [SerializeField] float ringRadius = 5f;     // streaks rush through a ring this wide around the flight path
-    [SerializeField] float distance = 12f;      // streaks start this far ahead of the player and end this far behind
-    [SerializeField] float streakSpeed = 40f;   // how fast they rush past
-    [SerializeField] float streakLength = 3f;
-    [SerializeField] float turnRate = 8f;       // how quickly the lines swing round to a new flight direction
+    [SerializeField] float maxRate = 140f;             // streaks per second at full intensity
+    [SerializeField] float innerRadius = 2.5f;         // the streaks pass the camera between these two distances,
+    [SerializeField] float outerRadius = 7f;           // so the middle of the screen stays clear
+    [SerializeField] float distance = 18f;             // they start this far ahead of the camera and end this far behind
+    [SerializeField] float streakSpeedFactor = 1.6f;   // how fast they rush past, as a multiple of the flight speed
+    [SerializeField] float minStreakSpeed = 30f;
+    [SerializeField] float lengthPerSpeed = 0.05f;     // metres of streak per m/s it travels
+    [SerializeField] float turnRate = 10f;             // how quickly the lines swing round to a new flight direction
+    [SerializeField] float fadeRate = 5f;              // how quickly they thicken and thin out
+    [SerializeField] Color color = new Color(1f, 1f, 1f, 0.65f);
 
     ParticleSystem ps;
+    ParticleSystem.MainModule main;
     ParticleSystem.EmissionModule emission;
+    ParticleSystem.VelocityOverLifetimeModule drift;
     Vector3 direction = Vector3.forward;
+    float shown;   // smoothed intensity
 
     public static SpeedLines Create()
     {
@@ -25,30 +34,29 @@ public class SpeedLines : MonoBehaviour
         ps = gameObject.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // so the main module can be changed
 
-        var main = ps.main;
+        main = ps.main;
         main.playOnAwake = false;
         main.loop = true;
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;       // streaks travel with the player
-        main.startLifetime = 2f * distance / streakSpeed;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;       // streaks travel with the camera
         main.startSpeed = 0f;
         main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.07f);
-        main.startColor = new Color(1f, 1f, 1f, 0.7f);
-        main.maxParticles = 300;
+        main.startColor = color;
+        main.maxParticles = 400;
 
         emission = ps.emission;
         emission.rateOverTime = 0f;
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Circle;
-        shape.radius = ringRadius;
-        shape.radiusThickness = 0.3f;                                      // only the outer ring, so the player stays clear
+        shape.radius = outerRadius;
+        shape.radiusThickness = 1f - Mathf.Clamp01(innerRadius / Mathf.Max(outerRadius, 0.01f));
 
-        var velocity = ps.velocityOverLifetime;
-        velocity.enabled = true;
-        velocity.space = ParticleSystemSimulationSpace.Local;
-        velocity.x = 0f;
-        velocity.y = 0f;
-        velocity.z = -streakSpeed;                                         // local -Z is against the flight direction
+        drift = ps.velocityOverLifetime;
+        drift.enabled = true;
+        drift.space = ParticleSystemSimulationSpace.Local;
+        drift.x = 0f;
+        drift.y = 0f;
+        SetStreakSpeed(minStreakSpeed);
 
         var fade = ps.colorOverLifetime;
         fade.enabled = true;
@@ -60,8 +68,8 @@ public class SpeedLines : MonoBehaviour
 
         var rend = ps.GetComponent<ParticleSystemRenderer>();
         rend.renderMode = ParticleSystemRenderMode.Stretch;
-        rend.lengthScale = streakLength;
-        rend.velocityScale = 0.05f;
+        rend.lengthScale = 1f;
+        rend.velocityScale = lengthPerSpeed;                               // length follows how fast the streak moves
         rend.cameraVelocityScale = 0f;
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows = false;
@@ -71,14 +79,27 @@ public class SpeedLines : MonoBehaviour
         ps.Play();
     }
 
-    // intensity: 0 = no lines, 1 = full. center: the player. velocity: where the player is heading.
-    public void SetState(float intensity, Vector3 center, Vector3 velocity)
+    // local -Z is against the flight direction; the lifetime is whatever carries a streak from front to back
+    void SetStreakSpeed(float streakSpeed)
     {
-        emission.rateOverTime = Mathf.Clamp01(intensity) * maxRate;
+        drift.z = -streakSpeed;
+        main.startLifetime = 2f * distance / streakSpeed;
+    }
 
-        if (velocity.sqrMagnitude > 0.01f)
-            direction = Vector3.Slerp(direction, velocity.normalized, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
+    // intensity: 0 = no lines, 1 = full. velocity: how the player is moving. view: the camera the lines wrap around.
+    public void SetState(float intensity, Vector3 velocity, Transform view)
+    {
+        shown = Mathf.MoveTowards(shown, Mathf.Clamp01(intensity), fadeRate * Time.deltaTime);
+        emission.rateOverTime = shown * maxRate;
+        if (shown <= 0f && ps.particleCount == 0) return;   // nothing on screen: leave it where it is
 
-        transform.SetPositionAndRotation(center + direction * distance, Quaternion.LookRotation(direction));
+        float speed = velocity.magnitude;
+        if (speed > 0.1f)
+            direction = Vector3.Slerp(direction, velocity / speed, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
+
+        SetStreakSpeed(Mathf.Max(minStreakSpeed, speed * streakSpeedFactor));
+        main.startColor = new Color(color.r, color.g, color.b, color.a * Mathf.Lerp(0.45f, 1f, shown));   // faint at first, solid at full speed
+
+        transform.SetPositionAndRotation(view.position + direction * distance, Quaternion.LookRotation(direction));
     }
 }
