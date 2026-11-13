@@ -105,9 +105,26 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("After running out of mana on the broom, the broom cannot be mounted (or boosted) again until the mana is back to this.")]
     float remountThreshold = 30f;
 
-    [Header("Dismount")]
-    [SerializeField, Range(0f, 1f)] float dismountCarry = 0.5f;   // fraction of the glide speed handed over
-    [SerializeField] float maxCarrySpeed = 10f;
+    [Header("Broom Companion (carried on her back; see BroomBody)")]
+    [SerializeField] BroomBodySettings companion = new BroomBodySettings();
+
+    [Header("Dismount (she keeps the speed she had and drops; see also the fall settings on the controller)")]
+    [SerializeField, Range(0f, 1f), Tooltip("Share of the flying speed she keeps when she steps off.")]
+    float dropCarry = 1f;
+    [SerializeField, Tooltip("Fastest she can be thrown off the broom, in each direction.")]
+    float dropMaxSpeed = 30f;
+    [SerializeField, Tooltip("Little hop off the broom when stepping off slowly, close to the ground.")]
+    float dismountHop = 2f;
+
+    [Header("Casting On The Broom")]
+    [SerializeField, Tooltip("Aiming ahead: the broom does not turn, and her wand arm and upper body swing round to the aim. Off = the old behaviour.")]
+    bool aimUpperBody = true;
+    [SerializeField, Tooltip("Aiming more than this many degrees away from where the broom is heading counts as 'behind': the whole broom turns to the aim, like before.")]
+    float backCastAngle = 110f;
+    [SerializeField, Tooltip("It stops turning again once the aim is this many degrees inside the limit, so it cannot flicker on the line.")]
+    float backCastRelease = 15f;
+    [SerializeField, Tooltip("Most the upper body twists toward the aim, in degrees.")]
+    float maxUpperBodyTwist = 80f;
 
     [Header("Speed Lines")]
     [SerializeField] bool speedLines = true;
@@ -169,6 +186,17 @@ public class BroomFlight : MonoBehaviour
     public int DashCount { get; private set; }     // goes up by one each dash, so effects can react to it
     public Transform BroomModel => broomModel != null ? broomModel.transform : null;
     CameraZoom cameraZoom;
+
+    BroomBody body;
+    bool backCast;
+    public bool FrontCast { get; private set; }    // casting while the aim is ahead of the broom: it keeps its course and the upper body aims
+
+    // the broom flew on without her and is still out there (its trail keeps going)
+    public bool BroomAirborne => body != null && body.IsAway;
+    public float BroomSpeed => IsFlying ? velocity.magnitude : body != null && body.IsAway ? body.Velocity.magnitude : 0f;
+    public float BroomSpeedFraction => Mathf.InverseLerp(maxSpeed, Mathf.Max(boostTopSpeed, maxSpeed + 1f), BroomSpeed);
+    // how she is moving: the broom chases this when it comes back
+    public Vector3 RiderVelocity => IsFlying ? velocity : controller.velocity;
 
     public float Speed => IsFlying ? velocity.magnitude : 0f;
     // 0 at cruise speed or slower, 1 at the boost top speed
@@ -237,7 +265,14 @@ public class BroomFlight : MonoBehaviour
         cameraZoom = FindAnyObjectByType<CameraZoom>();   // it owns the camera distance, so the pull-back goes through it
 
         if (mainCamera == null) mainCamera = Camera.main;
-        if (broomModel != null) broomModel.SetActive(false);
+
+        // the broom is always there: carried on her back until she calls it
+        if (broomModel != null)
+        {
+            body = gameObject.AddComponent<BroomBody>();
+            body.Init(transform, broomModel.transform, playerAnimator != null ? playerAnimator : GetComponent<Animator>(), companion, () => RiderVelocity);
+            body.ReachedRider += OnBroomArrived;
+        }
 
         if (speedLines) lines = SpeedLines.Create();
 
@@ -247,12 +282,16 @@ public class BroomFlight : MonoBehaviour
 
     void Start()
     {
+        if (aimUpperBody && caster == null) caster = GetComponentInChildren<PlayerSpellCaster>();
+        if (aimUpperBody && caster != null) gameObject.AddComponent<RiderAim>().Init(this, caster, playerAnimator != null ? playerAnimator : GetComponent<Animator>(), maxUpperBodyTwist);
+
         if (flipIndicator && tpc.LockOn != null && tpc.LockOn.Indicator != null)
             FlipIndicator.Create(this, tpc.LockOn, mainCamera);
     }
 
     void OnDestroy()
     {
+        if (body != null) body.ReachedRider -= OnBroomArrived;
         if (lines != null) Destroy(lines.gameObject);
     }
 
@@ -321,29 +360,52 @@ public class BroomFlight : MonoBehaviour
             return;
         }
 
+        // the broom flew on without her and is still out there: calling it queues the mount, which happens the moment it reaches her
+        // (pressing again sends it back to her back instead)
+        if (body != null && body.IsAway)
+        {
+            body.ToggleCall();
+            Log(body.CallQueued ? "Broom called: it carries her on when it arrives" : "Call cancelled: the broom goes back to her back");
+            return;
+        }
+
         Mount();
     }
 
-    void Mount()
+    // the called broom has reached her: she lands on it with the speed it arrived with
+    void OnBroomArrived(Vector3 arrivalVelocity)
     {
-        Log("MOUNT");
+        if (IsFlying) return;
+        if (GroundingAura.Active || !CanMount) { Log("Broom arrived but she cannot ride it now: it goes back to her back"); return; }
+        Mount(true, arrivalVelocity);
+    }
+
+    void Mount(bool broomArrived = false, Vector3 arrivalVelocity = default)
+    {
+        Log(broomArrived ? "MOUNT (broom arrived)" : "MOUNT");
         // carry the fall speed into the broom (ignore the small constant push-down the controller keeps while grounded)
         float carried = tpc.Grounded ? 0f : Mathf.Min(0f, tpc.VerticalVelocity);
+        bool fromGround = tpc.Grounded;
         tpc.ResetMotion();
-        velocity = Vector3.up * carried;
+        // from the back: a little hop (the broom swings in under her while she is up). From a call: the speed the broom brought.
+        velocity = broomArrived ? arrivalVelocity : Vector3.up * (carried + (fromGround ? companion.mountHop : 0f));
         bodyRot = transform.rotation;
         bank = bankVel = 0f;
-        cruising = false;   // always start in a hover
+        cruising = broomArrived && jetFlight && velocity.magnitude > maxSpeed * 0.8f;   // a fast broom carries on in jet flight, else a hover
         freeAim = false;
         rollTime = 100f;
-        Log("Mounted with carried fall speed " + carried.ToString("F1"));
+        Log("Mounted with speed " + velocity.magnitude.ToString("F1"));
         IsFlying = true;
         tpc.IsFlying = true;
         boostFactor = 1f;
         lastGroundY = transform.position.y;
         UpdateGroundY();
         input.jump = false;
-        if (broomModel != null) broomModel.SetActive(true);
+        if (body != null)
+        {
+            if (broomArrived) body.SeatNow();
+            else body.BeginMount();
+        }
         SetAnimator(true);
     }
 
@@ -351,7 +413,14 @@ public class BroomFlight : MonoBehaviour
     {
         Log("DISMOUNT");
         dashTimer = 0f;
-        Vector3 carry = Vector3.ClampMagnitude(new Vector3(velocity.x, 0f, velocity.z) * dismountCarry, maxCarrySpeed);
+
+        // she keeps the speed she had and drops; she never lands softly out of a fast flight
+        Vector3 flightVelocity = velocity;
+        Vector3 carry = Vector3.ClampMagnitude(new Vector3(flightVelocity.x, 0f, flightVelocity.z) * dropCarry, dropMaxSpeed);
+        float drop = Mathf.Clamp(flightVelocity.y * dropCarry, -dropMaxSpeed, dropMaxSpeed);
+        bool broomFliesOn = flightVelocity.magnitude > companion.leaveSpeed;
+        // stepping off slowly close to the ground: a small hop instead of just dropping
+        if (!broomFliesOn && transform.position.y - lastGroundY < 2f && drop < dismountHop) drop = dismountHop;
 
         // stand the body back upright, facing the way the broom was heading
         Vector3 heading = Vector3.ProjectOnPlane(bodyRot * Vector3.forward, Vector3.up);
@@ -360,12 +429,16 @@ public class BroomFlight : MonoBehaviour
 
         velocity = Vector3.zero;
         boostFactor = 1f;
-        tpc.ResetMotion();               // this clears CarryVelocity, so it must come first
-        tpc.CarryVelocity = carry;       // horizontal only
+        tpc.ResetMotion();               // this clears the carry and the fall speed, so it must come first
         IsFlying = false;
         tpc.IsFlying = false;
+        tpc.BeginBroomFall(carry, drop); // she keeps her speed, and the longer she falls the faster she drops
         input.jump = false;
-        if (broomModel != null) broomModel.SetActive(false);
+        if (body != null)
+        {
+            if (broomFliesOn) body.Release(flightVelocity);   // it flies on without her, then comes back
+            else body.SendBack();                             // it goes straight back to her back
+        }
         SetAnimator(false);
         transform.rotation = Quaternion.LookRotation(heading, Vector3.up);
     }
@@ -576,9 +649,17 @@ public class BroomFlight : MonoBehaviour
     void RotateBody(Vector3 lookForward, Vector3 lookUp)
     {
         Vector3 forward;
-        if (strafeWhileCasting && caster != null && caster.TryGetFacingDirection(out Vector3 faceDir))
+        Vector3 faceDir = Vector3.zero;
+        bool aiming = strafeWhileCasting && caster != null && caster.TryGetFacingDirection(out faceDir);
+
+        // aiming ahead of the broom: it keeps its course while the wand arm and upper body swing to the aim (see RiderAim).
+        // aiming behind it (or with the upper body aim off): the whole broom turns to the aim.
+        backCast = aiming && (!aimUpperBody || IsBackCast(caster.AimDirection));
+        FrontCast = aiming && !backCast;
+
+        if (backCast)
         {
-            // casting: face the aim (locked target or camera direction) while still moving any direction, like strafing on foot
+            // casting behind: face the aim (locked target or camera direction) while still moving any direction, like strafing on foot
             forward = faceDir;
         }
         else
@@ -612,6 +693,15 @@ public class BroomFlight : MonoBehaviour
         Quaternion idle = Quaternion.Euler(Mathf.Sin(Time.time * 1.7f) * 1.5f * sway, 0f, Mathf.Sin(Time.time * 1.1f) * 2.5f * sway);
 
         transform.rotation = bodyRot * idle * Quaternion.Euler(0f, 0f, bank + roll);
+    }
+
+    // is the aim behind the broom? Measured from where it is heading (its travel direction, or its nose while hovering).
+    // Once turned round, it only counts as ahead again when well inside the limit, so it cannot flicker on the line.
+    bool IsBackCast(Vector3 aim)
+    {
+        Vector3 heading = velocity.sqrMagnitude > 4f ? velocity.normalized : bodyRot * Vector3.forward;
+        float limit = backCast ? backCastAngle - backCastRelease : backCastAngle;
+        return Vector3.Angle(heading, aim) > limit;
     }
 
     // an up direction that is safe to use when the facing direction lines up with the view's up

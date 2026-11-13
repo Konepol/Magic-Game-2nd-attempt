@@ -47,16 +47,19 @@ public class BroomFX : MonoBehaviour
         Transform model = broom.BroomModel;
         if (model == null) return;
 
+        // measured in the model's own space (its nose is +Z), so it does not matter where the broom is right now
         bool any = false;
         Bounds local = new Bounds();
-        foreach (var r in model.GetComponentsInChildren<Renderer>())
+        foreach (var mf in model.GetComponentsInChildren<MeshFilter>())
         {
-            if (r is ParticleSystemRenderer || r is TrailRenderer) continue;
-            Bounds b = r.bounds;
-            for (int i = 0; i < 8; i++)   // the renderer's box, corner by corner, in the player's own space
+            var mr = mf.GetComponent<MeshRenderer>();
+            if (mf.sharedMesh == null || mr == null || !mr.enabled) continue;
+            Bounds b = mf.sharedMesh.bounds;
+            Matrix4x4 toModel = model.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+            for (int i = 0; i < 8; i++)   // the mesh's box, corner by corner
             {
                 Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
-                Vector3 p = transform.InverseTransformPoint(corner);
+                Vector3 p = toModel.MultiplyPoint3x4(corner);
                 if (!any) { local = new Bounds(p, Vector3.zero); any = true; }
                 else local.Encapsulate(p);
             }
@@ -65,7 +68,7 @@ public class BroomFX : MonoBehaviour
 
         tail = new GameObject("BroomTail").transform;
         tail.SetParent(model, false);
-        tail.position = transform.TransformPoint(new Vector3(local.center.x, local.center.y, local.min.z));
+        tail.localPosition = new Vector3(local.center.x, local.center.y, local.min.z);
 
         // the ribbon: a soft glow that tapers away behind the broom
         ribbon = tail.gameObject.AddComponent<TrailRenderer>();
@@ -131,25 +134,33 @@ public class BroomFX : MonoBehaviour
     {
         if (broom == null) return;
 
+        // the trail follows the broom, not the rider: it also runs while the broom flies on without her
         bool flying = broom.IsFlying;
-        if (flying && !wasFlying)
+        bool shown = flying || broom.BroomAirborne;
+        if (shown && !wasFlying)
         {
             if (tail == null) BuildTail();
             if (ribbon != null) ribbon.Clear();
             seenDashes = broom.DashCount;
         }
-        wasFlying = flying;
-        if (!flying || tail == null) return;
+        wasFlying = shown;
+        if (tail == null) return;
+        if (!shown)
+        {
+            ribbon.widthMultiplier = 0f;
+            dustEmission.rateOverDistance = 0f;
+            return;
+        }
 
         // nothing while hovering, a thin thread at cruise speed, a wide bright ribbon at full boost
-        float fast = broom.SpeedFraction;
-        float moving = Mathf.Clamp01(broom.Speed / 6f);
-        float boost = broom.IsBoosting ? 1.5f : 1f;
+        float fast = broom.BroomSpeedFraction;
+        float moving = Mathf.Clamp01(broom.BroomSpeed / 6f);
+        float boost = flying && broom.IsBoosting ? 1.5f : 1f;
         ribbon.widthMultiplier = moving * Mathf.Lerp(0.14f, ribbonWidth, fast) * boost;
         dustEmission.rateOverDistance = starsPerMetre * Mathf.Lerp(0.5f, 1f, fast) * boost;
 
         // every dash: a little burst of stars where the broom kicked off
-        if (broom.DashCount != seenDashes)
+        if (flying && broom.DashCount != seenDashes)
         {
             seenDashes = broom.DashCount;
             MagicFX.Pop(tail.position, popRadius, color, popStars);

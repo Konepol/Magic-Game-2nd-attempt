@@ -12,6 +12,7 @@ public class WandAim : MonoBehaviour
     PlayerSpellCaster caster;
     Transform hand, lowerArm, wand;
     float until, weight;
+    public bool holdAim;   // keeps the wand on the aim for as long as it is set (RiderAim, while she casts ahead on the broom)
 
     void Awake()
     {
@@ -44,7 +45,7 @@ public class WandAim : MonoBehaviour
     {
         if (caster == null || hand == null || wand == null) return;
 
-        float target = Time.time < until ? 1f : 0f;
+        float target = Time.time < until || holdAim ? 1f : 0f;
         weight = Mathf.MoveTowards(weight, target, Time.deltaTime * (target > weight ? 14f : 4f));
         if (weight <= 0.001f) return;
 

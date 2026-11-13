@@ -81,6 +81,27 @@ namespace StarterAssets
         [Tooltip("Higher = the carried momentum fades faster")]
         public float CarryDamping = 3f;
 
+        [Header("After Leaving The Broom")]
+        [Tooltip("Higher = the momentum she leaves the broom with fades faster in the air (on the ground the usual damping applies)")]
+        public float BroomFallAirDamping = 0.8f;
+        [Tooltip("How much heavier gravity gets for each second of the fall that follows leaving the broom")]
+        public float FallGravityRamp = 1.2f;
+        [Tooltip("Gravity never gets heavier than this many times normal")]
+        public float FallGravityMax = 3f;
+
+        private bool _broomFall;
+        private float _broomFallTime;
+
+        // she stepped off the broom: she keeps her speed (horizontal carry and vertical speed), and a long fall drops faster and faster
+        public void BeginBroomFall(Vector3 carry, float verticalSpeed)
+        {
+            GroundedCheck();   // the flag is stale after a flight
+            CarryVelocity = carry;
+            _verticalVelocity = verticalSpeed;
+            _broomFall = true;
+            _broomFallTime = 0f;
+        }
+
         [Header("Lock On")]
         public TargetLockOn LockOn;
 
@@ -427,7 +448,7 @@ namespace StarterAssets
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
             // fade the carried momentum (faster on the ground so you don't slide forever)
-            float damping = Grounded ? CarryDamping * 2f : CarryDamping;
+            float damping = Grounded ? CarryDamping * 2f : _broomFall ? BroomFallAirDamping : CarryDamping;
             CarryVelocity = Vector3.Lerp(CarryVelocity, Vector3.zero, 1f - Mathf.Exp(-damping * Time.deltaTime));
 
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
@@ -459,6 +480,9 @@ namespace StarterAssets
                     _animator.SetBool(_animIDJump, false);
                     _animator.SetBool(_animIDFreeFall, false);
                 }
+
+                // landed after leaving the broom: the fall is over (not while still hopping up off it)
+                if (_broomFall && _verticalVelocity <= 0.0f) { _broomFall = false; _broomFallTime = 0f; }
 
                 // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
@@ -511,7 +535,13 @@ namespace StarterAssets
             // apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
             if (_verticalVelocity < _terminalVelocity)
             {
-                _verticalVelocity += Gravity * Time.deltaTime;
+                float gravity = Gravity;
+                if (_broomFall && !Grounded)
+                {
+                    _broomFallTime += Time.deltaTime;
+                    gravity *= Mathf.Min(1f + FallGravityRamp * _broomFallTime, FallGravityMax);
+                }
+                _verticalVelocity += gravity * Time.deltaTime;
             }
         }
 
@@ -558,6 +588,8 @@ namespace StarterAssets
 
         public void ResetMotion()
         {
+            _broomFall = false;
+            _broomFallTime = 0f;
             CarryVelocity = Vector3.zero;
             _verticalVelocity = 0f;      // clears stored fall speed
             _speed = 0f;                 // clears stored ground speed
