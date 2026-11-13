@@ -69,6 +69,7 @@ public class BroomBody : MonoBehaviour
     // for the mounting animation (see BroomMountAnim)
     public Transform Model => model;
     public Vector3 SeatPosition => seatPos;                    // where it sits under her, in the player's space
+    public float MountTime => s != null ? Mathf.Max(s.mountTime, 0.01f) : 0.45f;
     public float MountProgress => State == Phase.Mounting && s != null ? Mathf.Clamp01(timer / Mathf.Max(s.mountTime, 0.01f)) : 1f;
 
     // she called the broom and it has reached her: the velocity it arrived with, so the flight carries on from it
