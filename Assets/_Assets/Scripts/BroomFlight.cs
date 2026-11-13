@@ -138,6 +138,9 @@ public class BroomFlight : MonoBehaviour
     [Header("Broom Effects (sparkle trail, dash burst, rider lean: see BroomFX)")]
     [SerializeField] bool broomEffects = true;
 
+    [Header("Mount And Dismount Animation (see BroomMountAnim)")]
+    [SerializeField] bool mountAnimation = true;
+
     [Header("Bank (lean into turns)")]
     [SerializeField] float maxBank = 30f;
     [SerializeField, Tooltip("Degrees of roll per degree/second of turning.")]
@@ -148,6 +151,11 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] bool debugLogs = true;
 
     public bool IsFlying { get; private set; }
+
+    // she got on: did a called broom pick her up (true) or did she take it from her back, and was she standing on the ground
+    public event System.Action<bool, bool> Mounted;
+    // she got off: how she sat at that moment (she is already upright when this is sent), and does the broom fly on without her
+    public event System.Action<Quaternion, bool> Dismounted;
 
     // Set by MapBounds while it takes her back into the map: the broom ignores the controls and flies this way. Zero = normal flight.
     public Vector3 ForcedCourse { get; set; }
@@ -279,6 +287,7 @@ public class BroomFlight : MonoBehaviour
             body = gameObject.AddComponent<BroomBody>();
             body.Init(transform, broomModel.transform, playerAnimator != null ? playerAnimator : GetComponent<Animator>(), companion, () => RiderVelocity);
             body.ReachedRider += OnBroomArrived;
+            if (mountAnimation) gameObject.AddComponent<BroomMountAnim>();
         }
 
         if (speedLines) lines = SpeedLines.Create();
@@ -414,11 +423,13 @@ public class BroomFlight : MonoBehaviour
             else body.BeginMount();
         }
         SetAnimator(true);
+        Mounted?.Invoke(broomArrived, fromGround);
     }
 
     public void Dismount()
     {
         Log("DISMOUNT");
+        Quaternion sittingRotation = transform.rotation;
 
         // she keeps the speed she had and drops; she never lands softly out of a fast flight.
         // Stepping off in the middle of a forward dash counts as the flight speed she dashed out of, not the burst itself.
@@ -455,6 +466,7 @@ public class BroomFlight : MonoBehaviour
         }
         SetAnimator(false);
         transform.rotation = Quaternion.LookRotation(heading, Vector3.up);
+        Dismounted?.Invoke(sittingRotation, broomFliesOn);
     }
 
     void SetAnimator(bool flying)

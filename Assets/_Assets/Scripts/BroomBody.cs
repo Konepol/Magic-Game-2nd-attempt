@@ -66,6 +66,11 @@ public class BroomBody : MonoBehaviour
     public bool IsAway => State == Phase.Free || State == Phase.Returning;
     public bool CallQueued { get; private set; }
 
+    // for the mounting animation (see BroomMountAnim)
+    public Transform Model => model;
+    public Vector3 SeatPosition => seatPos;                    // where it sits under her, in the player's space
+    public float MountProgress => State == Phase.Mounting && s != null ? Mathf.Clamp01(timer / Mathf.Max(s.mountTime, 0.01f)) : 1f;
+
     // she called the broom and it has reached her: the velocity it arrived with, so the flight carries on from it
     public event Action<Vector3> ReachedRider;
 
@@ -193,8 +198,8 @@ public class BroomBody : MonoBehaviour
         float t = Mathf.Clamp01(timer / Mathf.Max(s.mountTime, 0.01f));
         float e = t * t * (3f - 2f * t);
 
-        // out to the side and up, then in under her
-        Vector3 control = Vector3.Lerp(startPos, seatPos, 0.5f) + new Vector3(0.5f, 0.7f, 0f);
+        // out to her left and up, then in under her: the side of the hand that holds the handle (her right hand has the wand)
+        Vector3 control = Vector3.Lerp(startPos, seatPos, 0.5f) + new Vector3(-0.5f, 0.7f, 0f);
         Vector3 a = Vector3.Lerp(startPos, control, e), b = Vector3.Lerp(control, seatPos, e);
         model.localPosition = Vector3.Lerp(a, b, e);
         model.localRotation = Quaternion.Slerp(startRot, seatRot, e);
