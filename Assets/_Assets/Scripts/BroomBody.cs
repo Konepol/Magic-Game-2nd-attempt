@@ -34,8 +34,17 @@ public class BroomBodySettings
     public float returnAccel = 160f;
     [Tooltip("Speed it creeps up on her at for the last few metres.")]
     public float arriveSpeed = 4f;
-    [Tooltip("When she called it, the most speed the broom brings with it over her own, so she is never thrown into a fast flight by it.")]
-    public float arrivalMaxExtraSpeed = 12f;
+    [Tooltip("Speed over her own that a called broom still has when it reaches her seat, coming in from behind: she mounts it moving forward with this.")]
+    public float mountArriveSpeed = 12f;
+    [Tooltip("The most speed the broom brings with it over her own, so she is never thrown into a fast flight by it.")]
+    public float arrivalMaxExtraSpeed = 14f;
+    [Header("Coming back: the curve")]
+    [Tooltip("How far behind her the return path bends, when the broom is far away. Shrinks to nothing as it gets close.")]
+    public float curveBehind = 6f;
+    [Tooltip("How far out to one side it swings to get round her when it comes from in front.")]
+    public float curveSide = 4f;
+    [Tooltip("Distance over which the bend fades out.")]
+    public float curveRange = 20f;
     public float arriveDistance = 0.6f;
     public float dockTime = 0.25f;
 }
@@ -68,7 +77,7 @@ public class BroomBody : MonoBehaviour
     Quaternion seatRot, stowRot;
     Vector3 velocity, startPos, startScale;
     Quaternion startRot;
-    float timer;
+    float timer, swingSide = 1f;
     Func<Vector3> riderVelocity;
 
     public void Init(Transform player, Transform broomModel, Animator animator, BroomBodySettings settings, Func<Vector3> riderVelocity)
@@ -229,10 +238,23 @@ public class BroomBody : MonoBehaviour
         float d = to.magnitude;
 
         // she may be falling or flying: chase at her speed plus some, swooping in with the speed it already had
-        // the speed it can still brake from in the distance left: fast when far away, slow when close, so it arrives gently
-        float chase = Mathf.Clamp(Mathf.Sqrt(s.returnAccel * d), s.arriveSpeed, s.returnMaxSpeed);
+        // the way in curves round behind her: it aims for a point behind her that slides onto her as it gets close, so it
+        // sweeps in from behind in the direction she faces. Coming from in front, it swings out to one side to go round her.
+        Vector3 fwd = Vector3.ProjectOnPlane(root.forward, Vector3.up);
+        fwd = fwd.sqrMagnitude > 0.0001f ? fwd.normalized : root.forward;
+        Vector3 right = Vector3.Cross(Vector3.up, fwd);
+        float away = Vector3.Dot(right, model.position - target);
+        if (Mathf.Abs(away) > 1f) swingSide = Mathf.Sign(away);   // keeps its side, so it cannot flip from one to the other
+        float curve = Mathf.Clamp01((d - s.arriveDistance) / Mathf.Max(s.curveRange, 0.01f));
+        float inFront = d > 0.001f ? Mathf.Clamp01(Vector3.Dot(fwd, -to / d)) : 0f;
+        Vector3 aim = target - fwd * (s.curveBehind * curve) + right * (swingSide * s.curveSide * curve * inFront);
+        Vector3 toAim = aim - model.position;
 
-        Vector3 wanted = (d > 0.001f ? to / d : Vector3.zero) * chase + rider;
+        // the speed it can still brake from in the distance left: fast when far away, slow when close, so it arrives gently.
+        // Called to her seat it keeps more speed to the end: that is what carries her forward when she mounts.
+        float chase = Mathf.Clamp(Mathf.Sqrt(s.returnAccel * d), CallQueued ? s.mountArriveSpeed : s.arriveSpeed, s.returnMaxSpeed);
+
+        Vector3 wanted = (toAim.sqrMagnitude > 0.0001f ? toAim.normalized : Vector3.zero) * chase + rider;
         velocity = Vector3.MoveTowards(velocity, wanted, s.returnAccel * dt);
         model.position += velocity * dt;
         Face(velocity, 10f);
