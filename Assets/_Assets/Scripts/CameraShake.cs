@@ -35,6 +35,12 @@ public class CameraShake : MonoBehaviour
         if (instance != null) instance.trauma = Mathf.Clamp01(instance.trauma + amount);
     }
 
+    // a steady rumble: call every frame to keep the shake at least this strong
+    public static void Hold(float amount)
+    {
+        if (instance != null) instance.trauma = Mathf.Max(instance.trauma, Mathf.Clamp01(amount));
+    }
+
     // shake that fades with distance from the camera
     public static void AddAt(Vector3 point, float amount, float range = 45f)
     {

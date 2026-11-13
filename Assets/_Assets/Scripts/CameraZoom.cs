@@ -27,6 +27,9 @@ public class CameraZoom : MonoBehaviour
 
     public float Zoom => currentZoom;
 
+    // added on top of the zoomed distance (the broom drops the camera back at speed)
+    [System.NonSerialized] public float ExtraDistance;
+
     void Awake()
     {
         int n = cameras.Length;
@@ -79,7 +82,7 @@ public class CameraZoom : MonoBehaviour
             }
             else if (followers[i] != null)
             {
-                followers[i].CameraDistance = baseDistances[i] * currentZoom;
+                followers[i].CameraDistance = baseDistances[i] * currentZoom + ExtraDistance;
             }
         }
     }

@@ -26,6 +26,25 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] bool strafeWhileCasting = true;   // casting turns the broom to face your aim (locked target or camera direction) while you keep moving
     [SerializeField, Range(0.05f, 1f)] float castSpeedMultiplier = 0.4f;   // speed while casting a spell (charging mana stops you completely instead)
 
+    // Max Speed above doubles as the cruise speed the broom holds by itself in jet flight.
+    [Header("Jet Flight (W or boost starts it, S brakes back to a hover)")]
+    [SerializeField, Tooltip("Off = the broom only hovers and strafes, like before.")]
+    bool jetFlight = true;
+    [SerializeField, Tooltip("Speed the broom settles at while holding W. It is approached gradually, not hit like a wall.")]
+    float topSpeed = 45f;
+    [SerializeField, Tooltip("Speed the broom settles at while boosting.")]
+    float boostTopSpeed = 80f;
+    [SerializeField, Tooltip("Speed lost per second while holding S.")]
+    float brakeDecel = 40f;
+    [SerializeField, Tooltip("Speed gained per second in a straight dive, and lost in a straight climb.")]
+    float diveGain = 12f;
+    [SerializeField, Tooltip("Degrees per second the flight direction swings round to the view at cruise speed or slower.")]
+    float cruiseTurnRate = 240f;
+    [SerializeField, Tooltip("The faster you fly the wider you turn, but never slower than this many degrees per second.")]
+    float minTurnRate = 70f;
+    [SerializeField, Range(0f, 1f), Tooltip("How far A/D and Space/Ctrl push the flight path off to the side of the view.")]
+    float sideSlip = 0.6f;
+
     [Header("Boost (hold Shift)")]
     [SerializeField] float boostMultiplier = 1.8f;
     [SerializeField] float boostBlendSpeed = 4f;      // how fast the boost ramps up and down
@@ -42,15 +61,22 @@ public class BroomFlight : MonoBehaviour
     float doubleTapWindow = 0.28f;
 
     [Header("Height Limit")]
-    [SerializeField] float maxHeightAboveGround = 40f;
-    [SerializeField] float softLimitZone = 5f;        // start slowing the climb this far below the limit
+    [SerializeField] float flightCeiling = 150f;      // above the ground below you
+    [SerializeField] float ceilingSoftZone = 25f;     // start slowing the climb this far below the limit
     [SerializeField] LayerMask groundMask = ~0;       // exclude the Player layer
     [SerializeField] float groundCheckDistance = 500f;
 
-    [Header("Boost FOV Kick")]
+    [Header("Sense Of Speed (grows from cruise speed up to the boost top speed)")]
     [SerializeField] CinemachineCamera[] fovCameras;     // free camera + LockOnCam
-    [SerializeField] float fovKick = 12f;                // extra degrees at full boost
+    [SerializeField] float fovKickAtTopSpeed = 20f;      // extra degrees of view
     [SerializeField] float fovBlendSpeed = 2.5f;         // amount per second (1 = full kick)
+    [SerializeField, Tooltip("Extra distance the follow camera drops back.")]
+    float cameraPullBack = 1.5f;
+    [SerializeField, Range(0f, 1f), Tooltip("Camera rumble at the boost top speed.")]
+    float speedShake = 0.3f;
+
+    [Header("Flip Indicator (small horizon beside the crosshair)")]
+    [SerializeField] bool flipIndicator = true;
 
     [Header("Mana (mounting is free)")]
     [SerializeField, Tooltip("Mana per second spent while flying.")]
@@ -110,8 +136,14 @@ public class BroomFlight : MonoBehaviour
     // each direction (0 up, 1 right, 2 down, 3 left) is tracked on its own, so tapping one while holding another still counts
     readonly bool[] prevHeld = new bool[4];
     readonly float[] lastTapTimes = { -10f, -10f, -10f, -10f };
-    float dashTimer, dashCooldownLeft;
+    float dashTimer, dashCooldownLeft, dashSpeedNow, dashExitSpeed;
     Vector3 dashDir;
+    bool cruising;                 // jet flight (true) or hovering (false)
+    CameraZoom cameraZoom;
+
+    public float Speed => IsFlying ? velocity.magnitude : 0f;
+    // 0 at cruise speed or slower, 1 at the boost top speed
+    float SpeedAmount => IsFlying ? Mathf.InverseLerp(maxSpeed, Mathf.Max(boostTopSpeed, maxSpeed + 1f), velocity.magnitude) : 0f;
 
     public bool IsDashing => dashTimer > 0f;
     public Vector3 DashDirection => dashDir;
@@ -160,11 +192,18 @@ public class BroomFlight : MonoBehaviour
         baseFov = new float[fovCameras.Length];
         for (int i = 0; i < fovCameras.Length; i++)
             baseFov[i] = fovCameras[i].Lens.FieldOfView;
+        cameraZoom = FindAnyObjectByType<CameraZoom>();   // it owns the camera distance, so the pull-back goes through it
 
         if (mainCamera == null) mainCamera = Camera.main;
         if (broomModel != null) broomModel.SetActive(false);
 
         if (speedLines) lines = SpeedLines.Create();
+    }
+
+    void Start()
+    {
+        if (flipIndicator && tpc.LockOn != null && tpc.LockOn.Indicator != null)
+            FlipIndicator.Create(this, tpc.LockOn, mainCamera);
     }
 
     void OnDestroy()
@@ -177,7 +216,7 @@ public class BroomFlight : MonoBehaviour
     {
         if (lines == null) return;
         Vector3 v = IsFlying ? velocity : Vector3.zero;
-        lines.SetState(Mathf.InverseLerp(maxSpeed * speedLinesStart, dashSpeed, v.magnitude),
+        lines.SetState(Mathf.InverseLerp(maxSpeed * speedLinesStart, jetFlight ? topSpeed : dashSpeed, v.magnitude),
             transform.position + Vector3.up, v);
     }
 
@@ -243,6 +282,7 @@ public class BroomFlight : MonoBehaviour
         velocity = Vector3.up * carried;
         bodyRot = transform.rotation;
         bank = bankVel = 0f;
+        cruising = false;   // always start in a hover
         Log("Mounted with carried fall speed " + carried.ToString("F1"));
         IsFlying = true;
         tpc.IsFlying = true;
@@ -317,32 +357,54 @@ public class BroomFlight : MonoBehaviour
         bool hasInput = wish.sqrMagnitude > 0.01f;
         Vector3 wishDir = hasInput ? wish.normalized : lookForward;
 
-        // boost only counts while moving, and ramps smoothly
+        // ---------- jet or hover ----------
+        // W (or boost) puts the broom into jet flight: it keeps flying forward by itself until you brake to a stop with S.
+        // Stopped, locked on or charging mana, it hovers and strafes instead.
         bool canBoost = mana != null && mana.Current > 0f && !exhausted;
-        bool boosting = input.sprint && hasInput && canBoost && !charging && !casting;
+        bool wantBoost = input.sprint && canBoost && !charging && !casting;
+        bool locked = tpc.LockOn != null && tpc.LockOn.IsLocked;
+        if (!jetFlight || locked || charging) cruising = false;
+        else if (move.y > 0.1f || wantBoost) cruising = true;
+
+        // boost ramps smoothly; when hovering it only counts while moving
+        bool boosting = wantBoost && (cruising || hasInput);
         float targetBoost = boosting ? boostMultiplier : 1f;
         boostFactor = Mathf.MoveTowards(boostFactor, targetBoost, boostBlendSpeed * Time.deltaTime);
 
+        float speedBefore = velocity.magnitude;
+        bool wasDashing = dashTimer > 0f;
         UpdateDash(move, wishDir, charging);
         if (dashTimer > 0f)
         {
-            velocity = dashDir * dashSpeed;
+            if (!wasDashing)   // a dash is always a clear burst, however fast you were already going
+            {
+                dashSpeedNow = Mathf.Max(dashSpeed, speedBefore * 1.25f);
+                dashExitSpeed = Mathf.Max(speedBefore, maxSpeed * dashExitMultiplier);
+            }
+            velocity = dashDir * dashSpeedNow;
             dashTimer -= Time.deltaTime;
             if (dashTimer <= 0f)   // leave the dash faster than normal flight; the extra speed bleeds off below
-                velocity = dashDir * Mathf.Max(maxSpeed * dashExitMultiplier, maxSpeed * boostFactor * castMul);
+                velocity = dashDir * dashExitSpeed;
+        }
+        else if (cruising)
+        {
+            FlyJet(look, move, lift, castMul);
         }
         else
         {
             float speed = velocity.magnitude;
             float cap = maxSpeed * boostFactor * castMul;
             bool overspeed = speed > cap + 0.01f;
+            // extra speed fades slowly, but coming out of jet flight far too fast it is shed quickly
+            float ratio = Mathf.Max(1f, speed / Mathf.Max(2f * cap, 0.01f));
+            float fade = Mathf.Min(overspeedDecay * ratio * ratio, brakeDecel);
 
             if (hasInput && overspeed)
             {
-                // steer toward the input while keeping the speed, and let the extra speed fade slowly
+                // steer toward the input while keeping the speed
                 // (this is also what turns a carried fall into forward flight)
                 Vector3 steered = Vector3.MoveTowards(velocity, wishDir * speed, acceleration * boostFactor * Time.deltaTime);
-                velocity = steered.normalized * Mathf.MoveTowards(speed, cap, overspeedDecay * Time.deltaTime);
+                velocity = steered.normalized * Mathf.MoveTowards(speed, cap, fade * Time.deltaTime);
             }
             else if (hasInput)
             {
@@ -350,18 +412,18 @@ public class BroomFlight : MonoBehaviour
             }
             else
             {
-                float decel = overspeed ? overspeedDecay : maxSpeed / Mathf.Max(coastTime, 0.01f);
+                float decel = overspeed ? fade : maxSpeed / Mathf.Max(coastTime, 0.01f);
                 velocity = Vector3.MoveTowards(velocity, Vector3.zero, decel * Time.deltaTime);
             }
         }
 
         // ---------- height limit ----------
         UpdateGroundY();
-        float ceiling = lastGroundY + maxHeightAboveGround;
+        float ceiling = lastGroundY + flightCeiling;
         float remaining = ceiling - transform.position.y;
 
         // soft limit: the allowed climb speed shrinks to 0 as we near the ceiling
-        float allowedUp = maxSpeed * boostMultiplier * Mathf.Clamp01(remaining / Mathf.Max(softLimitZone, 0.01f));
+        float allowedUp = Mathf.Max(boostTopSpeed, dashSpeed) * Mathf.Clamp01(remaining / Mathf.Max(ceilingSoftZone, 0.01f));
         if (velocity.y > allowedUp) velocity.y = allowedUp;
 
         // above the ceiling (e.g. the ground dropped away): ease back down
@@ -378,6 +440,51 @@ public class BroomFlight : MonoBehaviour
         if (flags != CollisionFlags.None) velocity = controller.velocity;
 
         RotateBody(lookForward, lookUp);
+    }
+
+    // Jet flight: the broom always moves along its own flight direction. The view turns freely and the flight
+    // direction swings round to it, quickly when slow and in wide arcs when fast. There is no speed cap: thrust
+    // fights drag that grows with speed, so it settles near the top speed instead of hitting a wall.
+    void FlyJet(Quaternion look, Vector2 move, float lift, float castMul)
+    {
+        float dt = Time.deltaTime;
+        float speed = velocity.magnitude;
+
+        // A/D and Space/Ctrl push the flight path off to the side of the view
+        Vector3 steer = (look * new Vector3(move.x * sideSlip, lift * sideSlip, 1f)).normalized;
+        Vector3 dir = speed > 0.5f ? velocity / speed : steer;
+        float turnRate = Mathf.Max(minTurnRate, cruiseTurnRate * maxSpeed / Mathf.Max(speed, maxSpeed));
+        dir = Vector3.RotateTowards(dir, steer, turnRate * Mathf.Deg2Rad * dt, 0f);
+
+        float cruise = maxSpeed * castMul;
+        float boostAmount = Mathf.InverseLerp(1f, boostMultiplier, boostFactor);
+        bool braking = move.y < -0.1f;
+
+        if (braking)
+        {
+            speed = Mathf.MoveTowards(speed, 0f, brakeDecel * dt);
+            if (speed < 1f) cruising = false;   // stopped: back to hovering
+        }
+        else if (move.y > 0.1f || boostAmount > 0f)
+        {
+            float terminal = Mathf.Lerp(topSpeed, boostTopSpeed, boostAmount) * castMul;
+            float r = speed / Mathf.Max(terminal, 0.01f);
+            speed += Mathf.Max(acceleration * boostFactor * (1f - r * r), -brakeDecel) * dt;
+        }
+        else if (speed < cruise)
+        {
+            speed = Mathf.MoveTowards(speed, cruise, acceleration * dt);
+        }
+        else
+        {
+            float r = speed / Mathf.Max(cruise, 0.01f);
+            speed = Mathf.MoveTowards(speed, cruise, Mathf.Min(overspeedDecay * r * r, brakeDecel) * dt);
+        }
+
+        // diving adds speed, climbing costs it
+        if (!braking) speed = Mathf.Max(0f, speed - dir.y * diveGain * dt);
+
+        velocity = dir * speed;
     }
 
     // The whole body follows the view's frame, so going over the top really turns the rider upside down.
@@ -428,8 +535,13 @@ public class BroomFlight : MonoBehaviour
     
     void UpdateFov()
     {
-        float target = IsFlying ? Mathf.Max(Mathf.InverseLerp(1f, boostMultiplier, boostFactor), dashTimer > 0f ? 1f : 0f) : 0f;
+        // driven by real speed; without jet flight, by the boost and the dash like before
+        float target = !IsFlying ? 0f
+            : jetFlight ? SpeedAmount
+            : Mathf.Max(Mathf.InverseLerp(1f, boostMultiplier, boostFactor), dashTimer > 0f ? 1f : 0f);
         fovAmount = Mathf.MoveTowards(fovAmount, target, fovBlendSpeed * Time.deltaTime);
+
+        if (fovAmount > 0f && speedShake > 0f) CameraShake.Hold(speedShake * fovAmount);
 
         if (Mathf.Approximately(fovAmount, prevFovAmount)) return;   // don't touch the lens when idle
         prevFovAmount = fovAmount;
@@ -437,9 +549,10 @@ public class BroomFlight : MonoBehaviour
         for (int i = 0; i < fovCameras.Length; i++)
         {
             var lens = fovCameras[i].Lens;                  // LensSettings is a struct: copy, edit, assign back
-            lens.FieldOfView = baseFov[i] + fovKick * fovAmount;
+            lens.FieldOfView = baseFov[i] + fovKickAtTopSpeed * fovAmount;
             fovCameras[i].Lens = lens;
         }
+        if (cameraZoom != null) cameraZoom.ExtraDistance = cameraPullBack * fovAmount;
     }
 
     // mounting is free; flying (and boosting) spends mana while regeneration runs slowed down.

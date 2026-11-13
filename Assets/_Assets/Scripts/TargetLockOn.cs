@@ -35,6 +35,7 @@ public class TargetLockOn : MonoBehaviour
     [Header("Debug")]
     [SerializeField] bool debugLogs = true;
 
+    public RectTransform Indicator => indicator;
     public Transform CurrentTarget { get; private set; }
     public bool IsLocked => CurrentTarget != null;
 
