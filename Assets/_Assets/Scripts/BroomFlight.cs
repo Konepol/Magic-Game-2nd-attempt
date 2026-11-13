@@ -60,6 +60,12 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("Max seconds between the two taps.")]
     float doubleTapWindow = 0.28f;
 
+    [SerializeField, Tooltip("Sideways dashes (A/A, D/D) are a sidestep on top of the flight, so they need to be much faster than the flight itself to read as a dash.")]
+    float sideDashSpeed = 70f;
+    [SerializeField] float sideDashDuration = 0.3f;
+    [SerializeField, Range(0f, 1f), Tooltip("Extra sidestep speed as a share of the current flight speed, so a fast flight still gets a clear sidestep.")]
+    float sideDashSpeedShare = 0.4f;
+
     [SerializeField, Tooltip("A sideways dash also spins the broom once around.")]
     bool dashRoll = true;
     [SerializeField] float dashRollTime = 0.4f;
@@ -147,7 +153,7 @@ public class BroomFlight : MonoBehaviour
     // each direction (0 up, 1 right, 2 down, 3 left) is tracked on its own, so tapping one while holding another still counts
     readonly bool[] prevHeld = new bool[4];
     readonly float[] lastTapTimes = { -10f, -10f, -10f, -10f };
-    float dashTimer, dashCooldownLeft, dashSpeedNow, dashExitSpeed;
+    float dashTimer, dashCooldownLeft, dashSpeedNow, dashExitSpeed, dashLength, sideSpeedNow;
     Vector3 dashDir;
     bool cruising;                 // jet flight (true) or hovering (false)
     bool dashSide;                 // the current dash is a sidestep: it is added on top of the flight instead of replacing it
@@ -206,7 +212,9 @@ public class BroomFlight : MonoBehaviour
             rollSign = tapped == 1 ? -1f : 1f;   // rolling right is negative Z
             rollTime = 0f;
         }
-        dashTimer = dashDuration;
+        dashLength = dashSide ? sideDashDuration : dashDuration;
+        sideSpeedNow = sideDashSpeed + velocity.magnitude * sideDashSpeedShare;
+        dashTimer = dashLength;
         dashCooldownLeft = dashCooldown;
         DashCount++;
         Log("DASH");
@@ -438,8 +446,8 @@ public class BroomFlight : MonoBehaviour
         Vector3 sideVelocity = Vector3.zero;
         if (dashTimer > 0f && dashSide)
         {
-            float t = 1f - dashTimer / Mathf.Max(dashDuration, 0.01f);
-            sideVelocity = dashDir * (dashSpeed * Mathf.Lerp(1f, 0.3f, t * t));
+            float t = 1f - dashTimer / Mathf.Max(dashLength, 0.01f);
+            sideVelocity = dashDir * (sideSpeedNow * Mathf.Lerp(1f, 0.3f, t * t));
             dashTimer -= Time.deltaTime;
         }
 

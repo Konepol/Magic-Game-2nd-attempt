@@ -17,8 +17,12 @@ public class FlipIndicator : MonoBehaviour
     [SerializeField] float courseSize = 26f;          // the free-aim course marker
     [SerializeField] Color courseColor = new Color(0.78f, 0.72f, 1f, 0.95f);
 
-    RectTransform course;
-    Image courseImage;
+    [SerializeField] float edgeMargin = 70f;          // how far in from the screen edge the course marker stops when it is out of view
+
+    RectTransform course, courseArrow;
+    Image courseImage, courseArrowImage;
+    float offScreenAmount;                            // 0 = marker in view, 1 = pinned to the screen edge
+    Vector2 arrowDir = Vector2.up;
     BroomFlight broom;
     TargetLockOn lockOn;
     Camera cam;
@@ -73,6 +77,32 @@ public class FlipIndicator : MonoBehaviour
         course.sizeDelta = new Vector2(courseSize, courseSize);
         courseImage = course.GetComponent<Image>();
         courseImage.color = Color.clear;
+
+        // when the course is out of view the ring is pinned to the screen edge and this arrow points the way to it
+        courseArrowImage = Part("CourseArrow", MakeArrow(32));
+        courseArrow = courseArrowImage.rectTransform;
+        courseArrow.SetParent(course, false);
+        courseArrow.sizeDelta = new Vector2(courseSize * 0.7f, courseSize * 0.7f);
+        courseArrowImage.color = Color.clear;
+    }
+
+    // a soft triangle pointing up
+    static Sprite MakeArrow(int pixels)
+    {
+        var tex = new Texture2D(pixels, pixels, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        var colors = new Color[pixels * pixels];
+        for (int y = 0; y < pixels; y++)
+            for (int x = 0; x < pixels; x++)
+            {
+                float v = (y + 0.5f) / pixels;                                   // 0 at the base, 1 at the tip
+                float halfWidth = (1f - v) * 0.5f;                               // the triangle narrows to the tip
+                float d = Mathf.Abs((x + 0.5f) / pixels - 0.5f);
+                float a = Mathf.Clamp01((halfWidth - d) * pixels * 0.5f + 0.5f);
+                colors[y * pixels + x] = new Color(1f, 1f, 1f, a);
+            }
+        tex.SetPixels(colors);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, pixels, pixels), new Vector2(0.5f, 0.5f), 100f);
     }
 
     Image Part(string name, Sprite sprite)
@@ -110,15 +140,42 @@ public class FlipIndicator : MonoBehaviour
         if (course != null) Destroy(course.gameObject);
     }
 
-    // the course marker: on screen where the broom is heading, only while free aiming and only if that is in view
+    // the course marker: while free aiming it is always on screen, where the broom is heading.
+    // When that is out of view (or behind the camera) it is pinned to the screen edge with an arrow pointing the way.
     void UpdateCourse()
     {
-        Vector3 screen = cam.WorldToScreenPoint(cam.transform.position + broom.CourseDirection * 200f);
-        bool visible = broom.IsFreeAim && screen.z > 0f;
-        if (visible) course.position = new Vector3(screen.x, screen.y, 0f);
+        bool active = broom.IsFreeAim;
+        Vector3 course3 = broom.CourseDirection;
+        Vector3 screen = cam.WorldToScreenPoint(cam.transform.position + course3 * 200f);
+        Vector2 centre = new Vector2(Screen.width, Screen.height) * 0.5f;
+        Vector2 half = centre - Vector2.one * edgeMargin;
+        bool inView = screen.z > 0f && Mathf.Abs(screen.x - centre.x) <= half.x && Mathf.Abs(screen.y - centre.y) <= half.y;
 
-        Color target = visible ? courseColor : new Color(courseColor.r, courseColor.g, courseColor.b, 0f);
-        courseImage.color = Color.Lerp(courseImage.color, target, 12f * Time.unscaledDeltaTime);
+        Vector2 pos;
+        if (inView)
+        {
+            pos = screen;
+        }
+        else
+        {
+            // the way to it as the camera sees it, which also works when it is behind the camera
+            Vector3 local = cam.transform.InverseTransformDirection(course3);
+            Vector2 dir = new Vector2(local.x, local.y);
+            if (dir.sqrMagnitude < 0.0001f) dir = Vector2.down;
+            dir.Normalize();
+            float t = Mathf.Min(half.x / Mathf.Max(Mathf.Abs(dir.x), 0.0001f), half.y / Mathf.Max(Mathf.Abs(dir.y), 0.0001f));
+            pos = centre + dir * t;
+            arrowDir = dir;
+        }
+        if (active) course.position = new Vector3(pos.x, pos.y, 0f);
+
+        float dt = Time.unscaledDeltaTime;
+        offScreenAmount = Mathf.MoveTowards(offScreenAmount, inView ? 0f : 1f, 10f * dt);
+        float alpha = active ? 1f : 0f;
+        courseImage.color = Color.Lerp(courseImage.color, new Color(courseColor.r, courseColor.g, courseColor.b, courseColor.a * alpha), 12f * dt);
+        courseArrowImage.color = new Color(courseColor.r, courseColor.g, courseColor.b, courseImage.color.a * offScreenAmount);
+        courseArrow.anchoredPosition = arrowDir * courseSize * 1.1f;
+        courseArrow.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(-arrowDir.x, arrowDir.y) * Mathf.Rad2Deg);
     }
 
     // after the crosshair's own animator, so the roll sits on top of it
