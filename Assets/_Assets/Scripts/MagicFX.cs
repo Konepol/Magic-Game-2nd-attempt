@@ -64,7 +64,7 @@ public static class MagicFX
         return orbMesh;
     }
 
-    static Material Unlit(bool additive, Texture tex = null)
+    public static Material Unlit(bool additive, Texture tex = null)
     {
         if (additive && tex != null)
         {
@@ -94,7 +94,7 @@ public static class MagicFX
         return m;
     }
 
-    static Texture2D SoftDot(int n = 32, float power = 2f)
+    public static Texture2D SoftDot(int n = 32, float power = 2f)
     {
         var tex = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
         for (int y = 0; y < n; y++)

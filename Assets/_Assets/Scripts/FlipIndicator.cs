@@ -14,7 +14,11 @@ public class FlipIndicator : MonoBehaviour
     [SerializeField] Color groundColor = new Color(1f, 0.82f, 0.45f, 0.85f);
     [SerializeField] Color invertedColor = new Color(1f, 0.35f, 0.3f, 0.95f);
     [SerializeField] float fadeSpeed = 6f;
+    [SerializeField] float courseSize = 26f;          // the free-aim course marker
+    [SerializeField] Color courseColor = new Color(0.78f, 0.72f, 1f, 0.95f);
 
+    RectTransform course;
+    Image courseImage;
     BroomFlight broom;
     TargetLockOn lockOn;
     Camera cam;
@@ -60,6 +64,15 @@ public class FlipIndicator : MonoBehaviour
         right.rectTransform.anchoredPosition = new Vector2(radius, 0f);
 
         parts = new Graphic[] { arc, left, right };
+
+        // free aim: a small ring that marks where the broom is heading while the crosshair looks elsewhere.
+        // It sits beside the crosshair (not inside it), so it neither rolls nor moves with it.
+        course = Part("Course", MakeHalfRing(48, 0.72f, false)).rectTransform;
+        course.SetParent(crosshair.parent, false);
+        course.SetSiblingIndex(crosshair.GetSiblingIndex());
+        course.sizeDelta = new Vector2(courseSize, courseSize);
+        courseImage = course.GetComponent<Image>();
+        courseImage.color = Color.clear;
     }
 
     Image Part(string name, Sprite sprite)
@@ -74,7 +87,7 @@ public class FlipIndicator : MonoBehaviour
     }
 
     // the lower half of a soft-edged white ring; inner is the hole, as a fraction of the radius
-    static Sprite MakeHalfRing(int pixels, float inner)
+    static Sprite MakeHalfRing(int pixels, float inner, bool bottomOnly = true)
     {
         var tex = new Texture2D(pixels, pixels, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
         var colors = new Color[pixels * pixels];
@@ -84,12 +97,28 @@ public class FlipIndicator : MonoBehaviour
             {
                 float d = Mathf.Sqrt((x - centre) * (x - centre) + (y - centre) * (y - centre));
                 float a = Mathf.Clamp01(outer - d + 0.5f) * Mathf.Clamp01(d - outer * inner + 0.5f);
-                a *= Mathf.Clamp01(centre - y + 0.5f);          // texture rows run bottom to top: keep the bottom half
+                if (bottomOnly) a *= Mathf.Clamp01(centre - y + 0.5f);   // texture rows run bottom to top: keep the bottom half
                 colors[y * pixels + x] = new Color(1f, 1f, 1f, a);
             }
         tex.SetPixels(colors);
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, pixels, pixels), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    void OnDestroy()
+    {
+        if (course != null) Destroy(course.gameObject);
+    }
+
+    // the course marker: on screen where the broom is heading, only while free aiming and only if that is in view
+    void UpdateCourse()
+    {
+        Vector3 screen = cam.WorldToScreenPoint(cam.transform.position + broom.CourseDirection * 200f);
+        bool visible = broom.IsFreeAim && screen.z > 0f;
+        if (visible) course.position = new Vector3(screen.x, screen.y, 0f);
+
+        Color target = visible ? courseColor : new Color(courseColor.r, courseColor.g, courseColor.b, 0f);
+        courseImage.color = Color.Lerp(courseImage.color, target, 12f * Time.unscaledDeltaTime);
     }
 
     // after the crosshair's own animator, so the roll sits on top of it
@@ -100,6 +129,7 @@ public class FlipIndicator : MonoBehaviour
         // only in free flight: locked on, the view is always the right way up and the crosshair marks the enemy
         bool show = broom.IsFlying && !lockOn.IsLocked;
         group.alpha = Mathf.MoveTowards(group.alpha, show ? 1f : 0f, fadeSpeed * Time.unscaledDeltaTime);
+        UpdateCourse();
         if (!show)
         {
             if (rolled) { crosshair.localRotation = Quaternion.identity; rolled = false; }   // hand the crosshair back untouched

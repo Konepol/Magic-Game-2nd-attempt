@@ -28,6 +28,7 @@ public static class PlayerSettings
         new Bind("barrier", "Barrier", "<Keyboard>/f"),
         new Bind("broom", "Broom (mount / dismount)", "<Keyboard>/x"),
         new Bind("lock", "Lock on to a target", "<Keyboard>/v"),
+        new Bind("freeAim", "Broom free aim (keep course)", "<Keyboard>/z"),
     };
 
     public static event Action Changed;                    // a binding or an option changed: listeners apply them again

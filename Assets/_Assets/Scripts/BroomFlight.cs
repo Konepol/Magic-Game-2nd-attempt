@@ -60,6 +60,14 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("Max seconds between the two taps.")]
     float doubleTapWindow = 0.28f;
 
+    [SerializeField, Tooltip("A sideways dash also spins the broom once around.")]
+    bool dashRoll = true;
+    [SerializeField] float dashRollTime = 0.4f;
+
+    [Header("Free Aim (key in Options: look and aim anywhere while the broom keeps its course)")]
+    [SerializeField, Tooltip("On = only while the key is held. Off = the key switches it on and off.")]
+    bool freeAimHold = false;
+
     [Header("Height Limit")]
     [SerializeField] float flightCeiling = 150f;      // above the ground below you
     [SerializeField] float ceilingSoftZone = 25f;     // start slowing the climb this far below the limit
@@ -100,6 +108,9 @@ public class BroomFlight : MonoBehaviour
     [SerializeField, Tooltip("Lines start once you are this much faster than normal flight.")]
     float speedLinesStart = 1.15f;
 
+    [Header("Broom Effects (sparkle trail, dash burst, rider lean: see BroomFX)")]
+    [SerializeField] bool broomEffects = true;
+
     [Header("Bank (lean into turns)")]
     [SerializeField] float maxBank = 30f;
     [SerializeField, Tooltip("Degrees of roll per degree/second of turning.")]
@@ -139,6 +150,18 @@ public class BroomFlight : MonoBehaviour
     float dashTimer, dashCooldownLeft, dashSpeedNow, dashExitSpeed;
     Vector3 dashDir;
     bool cruising;                 // jet flight (true) or hovering (false)
+    bool dashSide;                 // the current dash is a sidestep: it is added on top of the flight instead of replacing it
+    float rollSign, rollTime = 100f;
+    InputAction freeAimAction;
+    bool freeAim;
+    Quaternion heldFrame = Quaternion.identity;   // the course kept while free aiming
+
+    // free aim: the view (and so the spell aim) turns freely while the broom keeps the course it had
+    public bool IsFreeAim => IsFlying && freeAim;
+    public Vector3 CourseDirection => velocity.sqrMagnitude > 1f ? velocity.normalized : heldFrame * Vector3.forward;
+    public float SpeedFraction => SpeedAmount;
+    public int DashCount { get; private set; }     // goes up by one each dash, so effects can react to it
+    public Transform BroomModel => broomModel != null ? broomModel.transform : null;
     CameraZoom cameraZoom;
 
     public float Speed => IsFlying ? velocity.magnitude : 0f;
@@ -150,10 +173,12 @@ public class BroomFlight : MonoBehaviour
 
     // double-tap a direction (press, release, press within the window) to dash along the current input;
     // other direction keys may stay held the whole time
-    void UpdateDash(Vector2 move, Vector3 wish, bool blocked)
+    // The dash goes exactly the way of the key that was double-tapped, whatever else is held: A/D dash straight
+    // sideways even while W is down.
+    void UpdateDash(Vector2 move, Quaternion look, bool blocked)
     {
         dashCooldownLeft -= Time.deltaTime;
-        bool isDouble = false;
+        int tapped = -1;
         for (int d = 0; d < 4; d++)
         {
             float axis = d == 0 ? move.y : d == 1 ? move.x : d == 2 ? -move.y : -move.x;
@@ -162,10 +187,10 @@ public class BroomFlight : MonoBehaviour
             prevHeld[d] = held;
             if (!pressed) continue;
 
-            if (Time.time - lastTapTimes[d] <= doubleTapWindow) { isDouble = true; lastTapTimes[d] = -10f; }
+            if (Time.time - lastTapTimes[d] <= doubleTapWindow) { tapped = d; lastTapTimes[d] = -10f; }
             else lastTapTimes[d] = Time.time;
         }
-        if (!isDouble || blocked || dashCooldownLeft > 0f) return;
+        if (tapped < 0 || blocked || dashCooldownLeft > 0f) return;
 
         if (mana == null || mana.Current <= dashManaCost + 0.5f)
         {
@@ -174,9 +199,16 @@ public class BroomFlight : MonoBehaviour
         }
 
         mana.Drain(dashManaCost);
-        dashDir = wish.normalized;
+        dashDir = look * (tapped == 0 ? Vector3.forward : tapped == 1 ? Vector3.right : tapped == 2 ? Vector3.back : Vector3.left);
+        dashSide = tapped == 1 || tapped == 3;
+        if (dashSide && dashRoll)
+        {
+            rollSign = tapped == 1 ? -1f : 1f;   // rolling right is negative Z
+            rollTime = 0f;
+        }
         dashTimer = dashDuration;
         dashCooldownLeft = dashCooldown;
+        DashCount++;
         Log("DASH");
     }
 
@@ -198,6 +230,9 @@ public class BroomFlight : MonoBehaviour
         if (broomModel != null) broomModel.SetActive(false);
 
         if (speedLines) lines = SpeedLines.Create();
+
+        freeAimAction = new InputAction("FreeAim", InputActionType.Button, PlayerSettings.GetPath("freeAim"));
+        if (broomEffects) gameObject.AddComponent<BroomFX>();
     }
 
     void Start()
@@ -234,12 +269,17 @@ public class BroomFlight : MonoBehaviour
         return tpc.CinemachineCameraTarget.transform.rotation;
     }
 
-    void ApplyKeyBinding() => PlayerSettings.Apply("broom", broomAction.action);
+    void ApplyKeyBinding()
+    {
+        PlayerSettings.Apply("broom", broomAction.action);
+        PlayerSettings.Apply("freeAim", freeAimAction);
+    }
 
     void OnEnable()
     {
         PlayerSettings.Changed += ApplyKeyBinding;
         ApplyKeyBinding();
+        freeAimAction.Enable();
         broomAction.action.performed += OnBroomPressed;
         broomAction.action.Enable();
         ascendAction.action.Enable();
@@ -249,6 +289,7 @@ public class BroomFlight : MonoBehaviour
     void OnDisable()
     {
         PlayerSettings.Changed -= ApplyKeyBinding;
+        freeAimAction.Disable();
         broomAction.action.performed -= OnBroomPressed;
         if (mana != null) mana.SetRegenScale(this, 1f);
     }
@@ -283,6 +324,8 @@ public class BroomFlight : MonoBehaviour
         bodyRot = transform.rotation;
         bank = bankVel = 0f;
         cruising = false;   // always start in a hover
+        freeAim = false;
+        rollTime = 100f;
         Log("Mounted with carried fall speed " + carried.ToString("F1"));
         IsFlying = true;
         tpc.IsFlying = true;
@@ -349,6 +392,22 @@ public class BroomFlight : MonoBehaviour
 
         // ---------- input: everything is relative to where you look, in full 3D ----------
         Quaternion look = LookFrame();
+        bool locked = tpc.LockOn != null && tpc.LockOn.IsLocked;
+
+        // free aim: from the moment it is switched on, the controls follow the course the broom had instead of the view
+        bool wasFreeAim = freeAim;
+        if (locked) freeAim = false;
+        else if (freeAimHold) freeAim = freeAimAction.IsPressed();
+        else if (freeAimAction.WasPressedThisFrame()) freeAim = !freeAim;
+        if (freeAim && !wasFreeAim)
+        {
+            Vector3 course = velocity.sqrMagnitude > 4f ? velocity.normalized : look * Vector3.forward;
+            Vector3 up = look * Vector3.up;
+            if (Mathf.Abs(Vector3.Dot(course, up)) > 0.999f) up = SafeUp(course, look * Vector3.forward);
+            heldFrame = Quaternion.LookRotation(course, up);
+        }
+        if (freeAim) look = heldFrame;
+
         Vector3 lookForward = look * Vector3.forward;
         Vector3 lookUp = look * Vector3.up;
         Vector2 move = charging ? Vector2.zero : input.move;
@@ -362,7 +421,6 @@ public class BroomFlight : MonoBehaviour
         // Stopped, locked on or charging mana, it hovers and strafes instead.
         bool canBoost = mana != null && mana.Current > 0f && !exhausted;
         bool wantBoost = input.sprint && canBoost && !charging && !casting;
-        bool locked = tpc.LockOn != null && tpc.LockOn.IsLocked;
         if (!jetFlight || locked || charging) cruising = false;
         else if (move.y > 0.1f || wantBoost) cruising = true;
 
@@ -373,8 +431,19 @@ public class BroomFlight : MonoBehaviour
 
         float speedBefore = velocity.magnitude;
         bool wasDashing = dashTimer > 0f;
-        UpdateDash(move, wishDir, charging);
-        if (dashTimer > 0f)
+        UpdateDash(move, look, charging);
+
+        // a sideways dash is a sidestep: a short burst straight to the side, added on top of the flight, which carries on
+        // underneath exactly as it was. Forward and backward dashes take over the flight for their moment instead.
+        Vector3 sideVelocity = Vector3.zero;
+        if (dashTimer > 0f && dashSide)
+        {
+            float t = 1f - dashTimer / Mathf.Max(dashDuration, 0.01f);
+            sideVelocity = dashDir * (dashSpeed * Mathf.Lerp(1f, 0.3f, t * t));
+            dashTimer -= Time.deltaTime;
+        }
+
+        if (dashTimer > 0f && !dashSide)
         {
             if (!wasDashing)   // a dash is always a clear burst, however fast you were already going
             {
@@ -434,10 +503,15 @@ public class BroomFlight : MonoBehaviour
         if (!IsFlying) return;   // the mana ran out and we dismounted this frame
 
         // ---------- move ----------
-        CollisionFlags flags = controller.Move(velocity * Time.deltaTime);
+        CollisionFlags flags = controller.Move((velocity + sideVelocity) * Time.deltaTime);
 
-        // slide along obstacles: keep only the velocity that actually happened
-        if (flags != CollisionFlags.None) velocity = controller.velocity;
+        // slide along obstacles: keep only the velocity that actually happened (the sidestep is not part of the flight)
+        if (flags != CollisionFlags.None)
+        {
+            Vector3 actual = controller.velocity;
+            velocity = sideVelocity == Vector3.zero ? actual
+                : actual - Vector3.Project(actual, dashDir) + Vector3.Project(velocity, dashDir);
+        }
 
         RotateBody(lookForward, lookUp);
     }
@@ -515,7 +589,19 @@ public class BroomFlight : MonoBehaviour
             Vector3.ProjectOnPlane(bodyRot * Vector3.forward, lookUp), lookUp) / Mathf.Max(Time.deltaTime, 0.0001f);
         bank = Mathf.SmoothDamp(bank, Mathf.Clamp(-turnRate * bankPerYawRate, -maxBank, maxBank), ref bankVel, tiltSmoothTime);
 
-        transform.rotation = bodyRot * Quaternion.Euler(0f, 0f, bank);
+        // a sideways dash spins the broom once around, easing in and out
+        float roll = 0f;
+        if (rollTime < dashRollTime)
+        {
+            rollTime += Time.deltaTime;
+            roll = rollSign * 360f * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(rollTime / Mathf.Max(dashRollTime, 0.01f)));
+        }
+
+        // hovering: a slow, gentle sway so the broom never looks frozen in the air
+        float sway = 1f - Mathf.Clamp01(velocity.magnitude / Mathf.Max(maxSpeed, 0.01f));
+        Quaternion idle = Quaternion.Euler(Mathf.Sin(Time.time * 1.7f) * 1.5f * sway, 0f, Mathf.Sin(Time.time * 1.1f) * 2.5f * sway);
+
+        transform.rotation = bodyRot * idle * Quaternion.Euler(0f, 0f, bank + roll);
     }
 
     // an up direction that is safe to use when the facing direction lines up with the view's up

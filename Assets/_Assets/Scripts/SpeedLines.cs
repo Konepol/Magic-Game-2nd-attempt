@@ -15,9 +15,18 @@ public class SpeedLines : MonoBehaviour
     [SerializeField] float lengthPerSpeed = 0.05f;     // metres of streak per m/s it travels
     [SerializeField] float turnRate = 10f;             // how quickly the lines swing round to a new flight direction
     [SerializeField] float fadeRate = 5f;              // how quickly they thicken and thin out
-    [SerializeField] Color color = new Color(1f, 1f, 1f, 0.65f);
+    // the look: soft glowing streaks in the spell colours (arcane lavender and warm gold), with a few of the
+    // chubby little stars the spell effects use tumbling past among them
+    [SerializeField] Color color = new Color(0.78f, 0.72f, 1f, 0.7f);
+    [SerializeField] Color colorWarm = new Color(1f, 0.9f, 0.62f, 0.7f);
+    [SerializeField] float streakWidth = 0.16f;        // soft-edged, so wider than a hard line would be
+    [SerializeField, Range(0f, 0.5f)] float starShare = 0.12f;   // stars per streak
+    [SerializeField] float starSize = 0.2f;
 
-    ParticleSystem ps;
+    ParticleSystem ps, stars;
+    ParticleSystem.EmissionModule starEmission;
+    ParticleSystem.VelocityOverLifetimeModule starDrift;
+    ParticleSystem.MainModule starMain;
     ParticleSystem.MainModule main;
     ParticleSystem.EmissionModule emission;
     ParticleSystem.VelocityOverLifetimeModule drift;
@@ -39,8 +48,8 @@ public class SpeedLines : MonoBehaviour
         main.loop = true;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;       // streaks travel with the camera
         main.startSpeed = 0f;
-        main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.07f);
-        main.startColor = color;
+        main.startSize = new ParticleSystem.MinMaxCurve(streakWidth * 0.5f, streakWidth);
+        main.startColor = new ParticleSystem.MinMaxGradient(color, colorWarm);
         main.maxParticles = 400;
 
         emission = ps.emission;
@@ -56,7 +65,6 @@ public class SpeedLines : MonoBehaviour
         drift.space = ParticleSystemSimulationSpace.Local;
         drift.x = 0f;
         drift.y = 0f;
-        SetStreakSpeed(minStreakSpeed);
 
         var fade = ps.colorOverLifetime;
         fade.enabled = true;
@@ -73,10 +81,64 @@ public class SpeedLines : MonoBehaviour
         rend.cameraVelocityScale = 0f;
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows = false;
-        var shader = Shader.Find("Sprites/Default");
-        if (shader != null) rend.material = new Material(shader);
+        rend.material = MagicFX.Unlit(true, MagicFX.SoftDot(32, 1.5f));    // a soft dot, stretched into a glowing streak
 
+        BuildStars(fade.color);
+        SetStreakSpeed(minStreakSpeed);
         ps.Play();
+    }
+
+    // a second, sparse system inside the same ring: small 3D stars that tumble as they rush past
+    void BuildStars(ParticleSystem.MinMaxGradient fadeColor)
+    {
+        var go = new GameObject("Stars");
+        go.transform.SetParent(transform, false);
+        stars = go.AddComponent<ParticleSystem>();
+        stars.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        starMain = stars.main;
+        starMain.playOnAwake = false;
+        starMain.loop = true;
+        starMain.simulationSpace = ParticleSystemSimulationSpace.Local;
+        starMain.startSpeed = 0f;
+        starMain.startSize = new ParticleSystem.MinMaxCurve(starSize * 0.5f, starSize);
+        starMain.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(color.r, color.g, color.b, 1f), new Color(colorWarm.r, colorWarm.g, colorWarm.b, 1f));
+        starMain.startRotation3D = true;
+        starMain.startRotationX = starMain.startRotationY = starMain.startRotationZ = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        starMain.maxParticles = 80;
+
+        starEmission = stars.emission;
+        starEmission.rateOverTime = 0f;
+
+        var shape = stars.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = outerRadius;
+        shape.radiusThickness = 1f - Mathf.Clamp01(innerRadius / Mathf.Max(outerRadius, 0.01f));
+
+        starDrift = stars.velocityOverLifetime;
+        starDrift.enabled = true;
+        starDrift.space = ParticleSystemSimulationSpace.Local;
+        starDrift.x = 0f;
+        starDrift.y = 0f;
+
+        var spin = stars.rotationOverLifetime;
+        spin.enabled = true;
+        spin.separateAxes = true;
+        spin.x = spin.y = spin.z = new ParticleSystem.MinMaxCurve(-6f, 6f);
+
+        var fade = stars.colorOverLifetime;
+        fade.enabled = true;
+        fade.color = fadeColor;
+
+        var rend = stars.GetComponent<ParticleSystemRenderer>();
+        rend.renderMode = ParticleSystemRenderMode.Mesh;
+        rend.mesh = MagicFX.StarMesh();
+        rend.material = MagicFX.Unlit(false);
+        rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        rend.receiveShadows = false;
+
+        stars.Play();
     }
 
     // local -Z is against the flight direction; the lifetime is whatever carries a streak from front to back
@@ -84,6 +146,8 @@ public class SpeedLines : MonoBehaviour
     {
         drift.z = -streakSpeed;
         main.startLifetime = 2f * distance / streakSpeed;
+        starDrift.z = -streakSpeed;
+        starMain.startLifetime = 2f * distance / streakSpeed;
     }
 
     // intensity: 0 = no lines, 1 = full. velocity: how the player is moving. view: the camera the lines wrap around.
@@ -91,14 +155,17 @@ public class SpeedLines : MonoBehaviour
     {
         shown = Mathf.MoveTowards(shown, Mathf.Clamp01(intensity), fadeRate * Time.deltaTime);
         emission.rateOverTime = shown * maxRate;
-        if (shown <= 0f && ps.particleCount == 0) return;   // nothing on screen: leave it where it is
+        starEmission.rateOverTime = shown * maxRate * starShare;
+        if (shown <= 0f && ps.particleCount == 0 && stars.particleCount == 0) return;   // nothing on screen: leave it where it is
 
         float speed = velocity.magnitude;
         if (speed > 0.1f)
             direction = Vector3.Slerp(direction, velocity / speed, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
 
         SetStreakSpeed(Mathf.Max(minStreakSpeed, speed * streakSpeedFactor));
-        main.startColor = new Color(color.r, color.g, color.b, color.a * Mathf.Lerp(0.45f, 1f, shown));   // faint at first, solid at full speed
+        float a = Mathf.Lerp(0.45f, 1f, shown);   // faint at first, solid at full speed
+        main.startColor = new ParticleSystem.MinMaxGradient(
+            new Color(color.r, color.g, color.b, color.a * a), new Color(colorWarm.r, colorWarm.g, colorWarm.b, colorWarm.a * a));
 
         transform.SetPositionAndRotation(view.position + direction * distance, Quaternion.LookRotation(direction));
     }
