@@ -2,7 +2,8 @@
 // The glow is made from blurred (low mip level) copies of the texture's own alpha, so every stroke gets a soft halo
 // and a hotter, whiter core without needing a baked glow in the image.
 // _Mode picks how the image is revealed:  0 clockwise draw-on, 1 glyphs pop in at random (8 x 8 grid cells),
-// 2 glyphs pop in from the middle outward (cells), 3 a ring of reveal that travels from the middle outward.
+// 2 glyphs pop in from the middle outward (cells), 3 a ring of reveal that travels from the middle outward,
+// 4 drawn on from the bottom edge of the image upward.
 Shader "Magic/CastingCircle"
 {
     Properties
@@ -13,7 +14,7 @@ Shader "Magic/CastingCircle"
         _Soft ("Reveal Edge Softness", Range(0.001, 0.3)) = 0.04
         _Glow ("Stroke Glow", Range(0, 4)) = 1.2
         _CoreWhite ("Hot Core (whitens the stroke centre)", Range(0, 1)) = 0.35
-        _Mode ("Reveal Mode (0 clockwise, 1 random glyphs, 2 glyphs from the middle, 3 radial)", Range(0, 3)) = 0
+        _Mode ("Reveal Mode (0 clockwise, 1 random glyphs, 2 glyphs from the middle, 3 radial, 4 bottom up)", Range(0, 4)) = 0
         _Dissolve ("Dissolve (0 = whole, 1 = gone)", Range(0, 1)) = 0
         _Stretch ("Stretch Outward (the lines are pulled away from the middle)", Range(0, 1)) = 0
         _Pad ("Quad Padding (the quad is this much bigger than the image so the glow is not cut off)", Float) = 1.16
@@ -139,12 +140,17 @@ Shader "Magic/CastingCircle"
                     flash = saturate(local * (1.0 - local) * 4.0);
                     mask *= 0.78 + 0.22 * sin(_Time.y * 7.0 + h * 40.0);
                 }
-                else
+                else if (_Mode < 3.5)
                 {
                     // a reveal that travels outward from the middle; the leading edge burns brighter
                     float front = _Reveal * 1.15;
                     mask = saturate((front - r) / 0.08);
                     flash = _Reveal < 0.999 ? saturate(1.0 - abs(front - r) / 0.1) * 0.7 : 0.0;
+                }
+                else
+                {
+                    // drawn on from the bottom edge of the image up to the top (the near end of a line to its far end)
+                    mask = _Reveal >= 0.999 ? 1.0 : saturate((_Reveal * 1.1 - uv.y) / 0.06);
                 }
 
                 // dissolve: patches of the circle burn away; a bright rim shows on the patches that are about to go

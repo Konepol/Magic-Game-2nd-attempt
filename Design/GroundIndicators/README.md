@@ -1,6 +1,6 @@
 # Ground indicators: circle, cone and line (design pack)
 
-Design only. Nothing here is imported by the game: this folder sits outside `Assets/`, so Unity ignores it. To try a design, copy the PNGs from `textures/` into `Assets/_Assets/Images/Circles/`, let Unity import them, and build the layers below as a Casting Circle asset anchored on the ground (Feet or Aim Point).
+This folder is the design source (outside `Assets/`, so Unity ignores it). The same textures are copied into `Assets/_Assets/Images/GroundIndicators/` and the design is now implemented in the game: see "Implemented in the game" at the end.
 
 All textures are 512 x 512 RGBA, white with alpha, meant to be tinted by the spell's colour (`useSpellColor` on) except where stated. The previews in `previews/` were drawn outside Unity with the same layer values, so they are close but not exact.
 
@@ -37,7 +37,7 @@ The apex is the centre of every cone texture, so the layers all share one pivot 
 | Core | GroundCircle_Core (reused) | 0.8 | spin -28 deg/s | 0.4 | 0.6 | Burst | 1 |
 | Charge Fill | GroundCone_ChargeFill | 4.0 | none | see Charge | | | 0.7 |
 
-## Line (4.6 m texture; strip about 0.9 m wide; near end at the caster, far end forward)
+## Line (4.6 m texture; the strip is 0.46 m wide and 4.3 m long at that size; near end at the caster, far end forward)
 | Layer | Texture | Size m | Motion | Start | Draw | Appear | Opacity |
 |---|---|---|---|---|---|---|---|
 | Track | GroundLine_Track | 4.6 | none | 0 | 0.6 | wipe from the near end up | 0.9 |
@@ -58,20 +58,22 @@ The Star is a star only (no circle around it). There is no ring at the near end.
 ## Readability: dark outline
 On pale ground an additive glow washes out. Under every layer except Glow and Charge Fill, draw a copy of the same texture in black, alpha blended (not additive), slightly blurred, at about 0.6 opacity. See `previews/..._readability_pale_floor.png`.
 
-## What the current circle code does and does not support
-Checked against `CastingCircle.cs` / `CastingCircleData.cs`. The older version on `main-bwmpsm` has: size, rotation speed, offset, start, draw time, appear (RadialWipe, ScaleUp, FadeIn), ready flash. The `spell-changes` branch adds more appear modes (Burst, RadialOut, Bloom, Flash, Pop), reverse spin, spin speed and curves, and exit styles.
+## Implemented in the game (not yet compiled or tested in Unity)
+Built on the `spell-changes` circle engine (merged into `main-bwmpsm`). New files:
+- `Scripts/GroundIndicatorData.cs`: the asset (shape Circle / Cone / Line, and the layers with the values in the tables above).
+- `Scripts/GroundIndicator.cs`: draws one indicator on the ground: draw-on, spin, swing, slide, charge fill, ready flash, dark outline.
+- `Shaders/GroundIndicatorOutline.shader`: the soft dark copy under each layer (alpha blended). `Shaders/CastingCircle.shader` gets one new reveal mode (4, bottom up) used by the line.
+- `Editor/GroundIndicatorBuilder.cs`: **Tools > Magic > Build Ground Indicators** sets the texture import settings, creates the outline material and builds `GroundIndicator_Circle`, `GroundIndicator_Cone` and `GroundIndicator_Line` in `Assets/_Assets/Resources`. Run it once after opening the project.
+- `PlayerSpellCaster.cs`: while a spell is aimed and charging, the default circle replaces the old plain ring for area (ground) spells that have no casting circle, sized to the spell's area and fed by the cast charge. `SpellData.cs` has new optional fields (Aim Indicator, Indicator Length, Indicator Width) so a spell can use the cone or the line instead. If the assets have not been built, the old ring is used as before.
 
-Not available in either, so they need new code or shader work before the previews can be matched exactly:
-1. Charge Fill reveal driven by the charge amount (clockwise / outward from the apex / near end to far end).
-2. Wipe from the near end up (for the line).
-3. Swing (back-and-forth rotation) for the cone's Inner Arcs.
-4. Slide-and-fade along the line's axis for the Arcs.
-5. A per-layer offset along the layer's own axis (the Star; the cone's Glow). A plain Offset exists, but check it is in the right space.
-6. The dark outline layer under each texture (a second, alpha-blended material).
-7. The lock flash with a tint to white and a 5 percent swell (the existing ready flash is similar but not the same).
-8. Per-layer exit: not specified here; use the circle's existing exit style.
+How the states map: aiming = the indicator is up and moving; charging = the charge fill follows the cast progress; ready = the circle is complete (the flash plays once); released = it disappears. The indicator stops at the spell's maximum range, as the ring did (no out-of-range look).
+
+Not done: the release animation (shatter) is not implemented, the indicator just disappears; the two echo layers sit at the same height as the rest; the flat marker does not follow slopes; the cone and line are not attached to any spell by default.
+
+## Notes from the design
+Not available in the older circle code and now covered by the new component: charge-driven fill reveal, wipe from the near end up, swing, slide, offsets, the dark outline and the lock flash.
 
 ## Not done yet
-- No Casting Circle `.asset` files and no `.meta` files (Unity creates the meta files and GUIDs on import).
-- Sizes assume the layer sizes above at circleScale 1. Cone angle, line width and line length are placeholders; in the game they should come from the spell's real area.
+- No hand-made `.asset` or `.meta` files: the builder creates the assets, and Unity creates the meta files on import.
+- Sizes: the circle uses the spell's real area; the cone and line need a length (and width) set on the spell. Their previews used placeholder sizes.
 - Colours in the previews are examples only: Absolute Zero ice for the circle, Fire for the cone, Lightning for the line.

@@ -79,6 +79,12 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     LineRenderer aimRing;
     Material aimRingMat;
 
+    // the ground indicators (circle, cone, line) shown while a spell is aimed; they replace the plain ring when their assets exist
+    readonly Dictionary<GroundIndicatorData, GroundIndicator> aimIndicators = new Dictionary<GroundIndicatorData, GroundIndicator>();
+    readonly HashSet<GroundIndicator> aimIndicatorsUsed = new HashSet<GroundIndicator>();
+    GroundIndicatorData defaultCircleIndicator;
+    bool defaultCircleIndicatorLoaded;
+
     public WeaponData Weapon => weapon;
 
     // raised when a cast fails: "Fizzled", "Interrupted" or "Not enough mana" (the HUD shows it)
@@ -233,12 +239,15 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         switchWeaponAction.Disable();
         if (health != null) health.Damaged -= OnDamaged;
         SetAimRing(false, Vector3.zero, 0f, Color.white);
+        HideAimIndicators();
         DropAllCircles();
     }
 
     void OnDestroy()
     {
         if (aimRingMat != null) Destroy(aimRingMat);
+        foreach (var kv in aimIndicators) if (kv.Value != null) Destroy(kv.Value.gameObject);
+        aimIndicators.Clear();
     }
 
     // ---------- read-only info for the HUD ----------
@@ -280,6 +289,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             DropAllCircles();             // charging mana also removes a combined spell that is being cast
             entryInfos.Clear();           // and the cast bars above the player go with it
             SetAimRing(false, Vector3.zero, 0f, Color.white);
+            HideAimIndicators();
             return;
         }
 
@@ -391,8 +401,12 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                         }
                     }
 
-                    // aimed spells without a casting circle keep the plain ring
-                    if (heldVariant.NeedsAim && spell.holdCircle == null)
+                    // the ground indicator shows what an aimed spell will cover and fills as it charges; without its asset the plain ring stays
+                    if (ShowAimIndicator(spell, heldVariant, Mathf.Clamp01(held / castTime), complete))
+                    {
+                        aimingNow = true;
+                    }
+                    else if (heldVariant.NeedsAim && spell.holdCircle == null)
                     {
                         aimingNow = true;
                         SetAimRing(true, GetAoeTarget(heldVariant, out _), heldVariant.aoeRadius, heldVariant.effectColor);
@@ -481,6 +495,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         UpdateMulticastLayout();
 
         if (!aimingNow) SetAimRing(false, Vector3.zero, 0f, Color.white);
+        HideAimIndicators();
     }
 
     // how much of the spell's mana should have been paid after being held this long: the base cost over the cast time, then each charge tier's
@@ -1540,6 +1555,71 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             return p;
         }
         return hasGround ? hit.point : p;
+    }
+
+    // ---------- ground indicators ----------
+
+    GroundIndicatorData DefaultCircleIndicator()
+    {
+        if (!defaultCircleIndicatorLoaded)
+        {
+            defaultCircleIndicatorLoaded = true;
+            defaultCircleIndicator = Resources.Load<GroundIndicatorData>("GroundIndicator_Circle");     // made by Tools > Magic > Build Ground Indicators
+        }
+        return defaultCircleIndicator;
+    }
+
+    // Shows the ground indicator for this spell while it is aimed. Returns false when there is none (the caller keeps the plain ring).
+    // charge: 0..1 how far the cast has charged; ready: the circle is complete, the player may release.
+    bool ShowAimIndicator(SpellData spell, SpellVariant v, float charge, bool ready)
+    {
+        GroundIndicatorData data = spell.aimIndicator;
+        if (data == null && v.NeedsAim && spell.holdCircle == null) data = DefaultCircleIndicator();
+        if (data == null) return false;
+
+        if (!aimIndicators.TryGetValue(data, out var gi) || gi == null)
+        {
+            gi = GroundIndicator.Create(data, v.effectColor);
+            if (gi == null) return false;
+            aimIndicators[data] = gi;
+        }
+
+        gi.SetColor(v.effectColor);
+        gi.Show();
+
+        if (data.shape == IndicatorShape.Circle)
+        {
+            Vector3 centre = GetAoeTarget(v, out _);
+            float diameter = Mathf.Max(v.aoeRadius, 0.5f) * 2f;
+            gi.Place(centre + Vector3.up * 0.06f, GroundIndicator.GroundRotation(Vector3.forward), diameter, diameter);
+        }
+        else
+        {
+            // a cone or line starts at the caster's feet and points the way they are aiming
+            Vector3 origin = transform.root.position;
+            if (RaycastSkippingOwnBarriers(origin + Vector3.up, Vector3.down, 3f, groundMask, out RaycastHit hit)) origin = hit.point;
+
+            Vector3 dir = GetAimDirection();
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f) dir = transform.forward;
+
+            float length = spell.indicatorLength > 0f ? spell.indicatorLength : (v.kind == SpellKind.Laser ? v.laserRange : v.aoeRange);
+            float width = spell.indicatorWidth > 0f ? spell.indicatorWidth : 0.9f;
+            gi.Place(origin + Vector3.up * 0.06f, GroundIndicator.GroundRotation(dir), width, length);
+        }
+
+        gi.SetCharge(charge);
+        if (ready) gi.Lock();
+        aimIndicatorsUsed.Add(gi);
+        return true;
+    }
+
+    // hides every ground indicator that was not shown this frame
+    void HideAimIndicators()
+    {
+        foreach (var kv in aimIndicators)
+            if (kv.Value != null && !aimIndicatorsUsed.Contains(kv.Value)) kv.Value.Hide();
+        aimIndicatorsUsed.Clear();
     }
 
     void SetAimRing(bool visible, Vector3 center, float radius, Color color)

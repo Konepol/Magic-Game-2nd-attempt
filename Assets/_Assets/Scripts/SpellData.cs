@@ -129,6 +129,14 @@ public class SpellData : ScriptableObject
     public float circleScale = 1f;
     [Range(0.1f, 1f)] public float tapCircleScale = 0.45f;
 
+    [Header("Ground indicator (shown while the spell is aimed)")]
+    [Tooltip("The marker on the ground while this spell is aimed and charged. Empty = the default circle for ground area spells that have no casting circle. Use a cone or line asset for spells that reach out from the caster.")]
+    public GroundIndicatorData aimIndicator;
+    [Tooltip("Cone or line indicator: how far it reaches, in metres. 0 = the spell's beam range (or its ring range).")]
+    public float indicatorLength = 0f;
+    [Tooltip("Line indicator: how wide the strip is, in metres. 0 = 0.9.")]
+    public float indicatorWidth = 0f;
+
     [Header("Naming")]
     [Tooltip("The name shown once the hold circle completes. Leave empty for 'Greater <name>'.")]
     public string holdDisplayName = "";
