@@ -12,6 +12,8 @@ public static class MenuBuilder
     const string CatalogPath = "Assets/_Assets/Resources/GameCatalog.asset";
     const string WeaponDir = "Assets/_Assets/Weapons";
     const string ComboDir = "Assets/_Assets/Weapons/Combos";
+    const string SpellDir = "Assets/_Assets/Spells";
+    const string FusionDir = "Assets/_Assets/Spells/Fusions";
     const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
     const string StageScenePath = "Assets/Scenes/Scene1.unity";
 
@@ -38,18 +40,18 @@ public static class MenuBuilder
         }
 
         // every spell except the barrier, which is part of the base kit now
-        string[] spellNames = { "ArcaneBolt", "ScatterShot", "FireBurst", "SparkStream", "LightningLance", "MeteorStrike",
-                                "FrostShard", "EarthSpike", "RadiantBeam", "VenomDart", "WindBlade" };
+        // the sky-combat spell list (Assets/_Assets/Spells); the old ground-combat spells in Weapons are kept only as reference
+        string[] spellNames = { "StarBolt", "SeekerSwarm", "FlakBurst", "GaleCrescent", "Thunderclap", "FrostSpire", "GravityWell", "Starfall" };
         var spells = new List<SpellData>();
         foreach (var n in spellNames)
         {
-            var s = AssetDatabase.LoadAssetAtPath<SpellData>(WeaponDir + "/" + n + ".asset");
+            var s = AssetDatabase.LoadAssetAtPath<SpellData>(SpellDir + "/" + n + ".asset");
             if (s != null) spells.Add(s);
         }
         catalog.spells = spells.ToArray();
 
         var combos = new List<SpellCombo>();
-        foreach (var guid in AssetDatabase.FindAssets("t:SpellCombo", new[] { ComboDir }))
+        foreach (var guid in AssetDatabase.FindAssets("t:SpellCombo", new[] { FusionDir }))
         {
             var c = AssetDatabase.LoadAssetAtPath<SpellCombo>(AssetDatabase.GUIDToAssetPath(guid));
             if (c != null) combos.Add(c);
@@ -57,7 +59,7 @@ public static class MenuBuilder
         catalog.combos = combos.ToArray();
 
         catalog.slotCount = 7;
-        catalog.defaultLoadout = new[] { "ArcaneBolt", "ScatterShot", "FireBurst", "MeteorStrike" };
+        catalog.defaultLoadout = new[] { "StarBolt", "FlakBurst", "SeekerSwarm", "Thunderclap", "GaleCrescent", "GravityWell", "Starfall" };
         catalog.allowMulticast = true;
         catalog.multicastDelay = 0.15f;
         catalog.maxMulticast = 4;

@@ -242,7 +242,7 @@ public static class ProjectilePool
         // shots that can be in the air at once: a volley for every cooldown that fits in the time a shot usually flies
         int volleys = Mathf.Clamp(Mathf.CeilToInt(1.5f / Mathf.Max(v.cooldown, 0.1f)), 1, 6);
         int count = Mathf.Min(Mathf.Max(1, v.projectileCount) * volleys, 24);
-        Demand(ProjectilePoolFor(prefab, spell.name, spell.name, v.effectColor, v.projectileScale), count);
+        Demand(ProjectilePoolFor(prefab, spell.FxKey, spell.FxKey, v.effectColor, v.projectileScale), count);
     }
 
     // the enemies of a wave: begin, then each shooter says what it needs, then end

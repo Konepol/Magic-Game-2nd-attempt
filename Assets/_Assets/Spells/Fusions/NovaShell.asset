@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: NovaShell
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Nova Shell
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  fxStyle: InfernalBolt
+  roleLabel: Giant airburst
+  tap:
+    kind: 0
+    damage: 95
+    breaksBarriers: 0
+    effectColor: {r: 1, g: 0.45, b: 0.2, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 90
+    lifetime: 2.5
+    projectileScale: 2.6
+    explosionRadius: 12
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 6
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 5
+      magnitude: 12
+    manaCost: 55
+    cooldown: 3
+  hasHoldVariant: 1
+  holdThreshold: 1.2
+  hold:
+    kind: 0
+    damage: 95
+    breaksBarriers: 0
+    effectColor: {r: 1, g: 0.45, b: 0.2, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 90
+    lifetime: 2.5
+    projectileScale: 2.6
+    explosionRadius: 12
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 6
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 5
+      magnitude: 12
+    manaCost: 55
+    cooldown: 3
+  tapMovement: 0
+  tapRecovery: 0
+  holdingMovement: 1
+  holdingStartsAfter: 0.15
+  heldMovement: 1
+  heldRecovery: 0.4
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 8
+  holdCircle: {fileID: 11400000, guid: d35ce4fd31a531b4b814e27d1e362d69, type: 2}
+  tapCircle: {fileID: 0}
+  circleScale: 0.9
+  tapCircleScale: 0.45
+  holdDisplayName: Nova Shell
+  multicastable: 1
+  chant:
+  - Star and ember made one
+  - Burst and fill the sky
+  tapDoesNothing: 0
+  extraTiers: []
+  autoRepeatWhenHeld: 0

@@ -232,7 +232,7 @@ public static class CastStyles
     {
         if (spell == null) return null;
         if (table == null) Build();
-        table.TryGetValue(spell.name, out var s);
+        table.TryGetValue(spell.FxKey, out var s);
         return s;
     }
 

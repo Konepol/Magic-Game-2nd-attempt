@@ -64,14 +64,27 @@ public static class PlayerProfile
         if (!string.IsNullOrEmpty(saved)) source = saved.Split(';');
         else if (catalog != null && catalog.defaultLoadout != null) source = catalog.defaultLoadout;
 
+        Fill(result, source, catalog);
+
+        // a saved loadout made only of spells that no longer exist (the spell list was replaced): start again from the default one
+        if (!string.IsNullOrEmpty(saved) && catalog != null && catalog.defaultLoadout != null && System.Array.TrueForAll(result, string.IsNullOrEmpty))
+        {
+            bool savedHadSpells = false;
+            foreach (var name in source) if (!string.IsNullOrEmpty(name) && name != EmptySlot) savedHadSpells = true;
+            if (savedHadSpells) Fill(result, catalog.defaultLoadout, catalog);
+        }
+        return result;
+    }
+
+    static void Fill(string[] result, string[] source, GameCatalog catalog)
+    {
         var used = new HashSet<string>();
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < result.Length; i++)
         {
             string name = source != null && i < source.Length ? source[i] : "";
             if (name == EmptySlot || catalog == null || catalog.FindSpell(name) == null || !used.Add(name)) name = "";
             result[i] = name;
         }
-        return result;
     }
 
     public static void SetLoadout(string[] names)

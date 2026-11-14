@@ -1,0 +1,153 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: Starfall
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Starfall
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  fxStyle: MeteorStrike
+  roleLabel: Siege spell - long cast
+  tap:
+    kind: 2
+    damage: 260
+    breaksBarriers: 1
+    effectColor: {r: 1, g: 0.55, b: 0.2, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 18
+    aoeRange: 90
+    aoeHeight: 70
+    aoeDelay: 1.6
+    lingerDuration: 5
+    lingerTickDamage: 15
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 4
+      magnitude: 10
+    manaCost: 90
+    cooldown: 14
+  hasHoldVariant: 1
+  holdThreshold: 4.5
+  hold:
+    kind: 2
+    damage: 260
+    breaksBarriers: 1
+    effectColor: {r: 1, g: 0.55, b: 0.2, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 18
+    aoeRange: 90
+    aoeHeight: 70
+    aoeDelay: 1.6
+    lingerDuration: 5
+    lingerTickDamage: 15
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 1
+      duration: 4
+      magnitude: 10
+    manaCost: 90
+    cooldown: 14
+  tapMovement: 2
+  tapRecovery: 0.5
+  holdingMovement: 2
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 1
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 12
+  holdCircle: {fileID: 11400000, guid: 2d73929177bdfa94387df53194dce952, type: 2}
+  tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
+  circleScale: 1.4
+  tapCircleScale: 0.45
+  holdDisplayName: Starfall
+  multicastable: 0
+  chant:
+  - Lights above the sky hear me
+  - Leave your places and descend
+  - Let the heavens come down as fire
+  - Nothing beneath shall stand
+  tapDoesNothing: 1
+  extraTiers:
+  - displayName: Cataclysm
+    time: 7.5
+    damageMultiplier: 1.6
+    sizeMultiplier: 1.4
+    manaMultiplier: 1.4
+    circle: {fileID: 11400000, guid: fd4aa8045df3e094ebc7f326a25eb5e8, type: 2}
+    circleScale: 1.2
+    chant:
+    - Wider than walls and deeper than stone
+    - Break the ground they stand on
+  - displayName: World Ender
+    time: 11
+    damageMultiplier: 2.6
+    sizeMultiplier: 1.9
+    manaMultiplier: 2
+    circle: {fileID: 11400000, guid: fd4aa8045df3e094ebc7f326a25eb5e8, type: 2}
+    circleScale: 1.5
+    chant:
+    - Every star at once
+    - End all things beneath your light!
+  autoRepeatWhenHeld: 0

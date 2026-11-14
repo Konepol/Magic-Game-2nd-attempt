@@ -18,6 +18,17 @@ public class Projectile : MonoBehaviour
     StatusEffectSpec status;
     float homingTurnRate;         // degrees per second, 0 = flies straight
     Transform homingTarget;
+
+    // sky combat extras, set by SetFlight (player spells)
+    float hitHeight;              // extra reach above and below: the hit shape is a standing capsule
+    float proximity;              // airburst fuse distance, 0 = has to touch
+    float seekTurnRate;           // degrees per second toward the seek target, 0 = no seeking
+    Transform seekTarget;
+    Collider seekCollider;
+    float nextSeekScan;
+    const float SeekRange = 55f, SeekCone = 50f;
+    LineRenderer tallMark;        // a standing streak of light as tall as the hit shape, so the reach of a tall shot can be seen
+    Material tallMat;
     Vector3 baseScale;
     float spawnTime;
     Vector3 prefabScale;
@@ -29,6 +40,7 @@ public class Projectile : MonoBehaviour
 
     static readonly RaycastHit[] hitBuffer = new RaycastHit[32];
     static readonly Collider[] overlapBuffer = new Collider[8];
+    static readonly Collider[] wideBuffer = new Collider[64];
     static readonly Comparer<RaycastHit> byDistance = Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
     public float Speed => speed;
@@ -65,10 +77,51 @@ public class Projectile : MonoBehaviour
         pierced.Clear();
         homingTarget = null;
         spawnTime = Time.time;
+        hitHeight = 0f;
+        proximity = 0f;
+        seekTurnRate = 0f;
+        seekTarget = null;
+        seekCollider = null;
+        if (tallMark != null) tallMark.enabled = false;
 
         if (fxReady) RestartTrails();
         else BuildTrails();
     }
+
+    // Call right after Init. hitHeight: metres of extra reach above and below. proximityFuse: goes off this close to an enemy.
+    // seekTurnRate: degrees per second it curves toward its target (the given one, otherwise the nearest enemy ahead of it).
+    public void SetFlight(float hitHeight, float proximityFuse, float seekTurnRate, Transform seekTarget = null)
+    {
+        this.hitHeight = Mathf.Max(0f, hitHeight);
+        proximity = Mathf.Max(0f, proximityFuse);
+        this.seekTurnRate = Mathf.Max(0f, seekTurnRate);
+        this.seekTarget = seekTarget;
+        seekCollider = seekTarget != null ? seekTarget.GetComponentInChildren<Collider>() : null;
+        nextSeekScan = 0f;
+
+        if (this.hitHeight <= 1f) return;
+        if (tallMark == null)
+        {
+            tallMat = SpellVisuals.Make(effectColor, true);
+            tallMark = SpellVisuals.CreateRing(transform, tallMat, 0.3f);
+            tallMark.loop = false;
+            tallMark.positionCount = 2;
+            tallMark.numCapVertices = 6;
+        }
+        Color c = Color.Lerp(effectColor, Color.white, 0.3f); c.a = 0.4f;
+        SpellVisuals.SetColor(tallMat, c);
+        tallMark.startWidth = tallMark.endWidth = Mathf.Max(radius * 1.4f, 0.25f);
+        tallMark.enabled = true;
+        PlaceTallMark();
+    }
+
+    void PlaceTallMark()
+    {
+        tallMark.SetPosition(0, transform.position - Vector3.up * hitHeight);
+        tallMark.SetPosition(1, transform.position + Vector3.up * hitHeight);
+    }
+
+    void OnDestroy() { if (tallMat != null) Destroy(tallMat); }
 
     void Awake()
     {
@@ -117,11 +170,18 @@ public class Projectile : MonoBehaviour
         float speedFactor = homingTurnRate > 0f ? Steer() : 1f;
         if (homingTurnRate > 0f && CheckOverlap()) return;
 
+        if (seekTurnRate > 0f) Seek();
+        if (proximity > 0f && CheckProximity()) return;
+
         float dist = speed * speedFactor * Time.deltaTime;
 
         // sweep instead of moving blindly, so fast bullets can't pass through colliders
-        int count = Physics.SphereCastNonAlloc(transform.position, radius, transform.forward,
-            hitBuffer, dist, hitMask, QueryTriggerInteraction.Ignore);
+        // (a shot with hit height sweeps a standing capsule, so it also catches fliers a little above or below its line)
+        int count = hitHeight > 0f
+            ? Physics.CapsuleCastNonAlloc(transform.position + Vector3.up * hitHeight, transform.position - Vector3.up * hitHeight, radius,
+                transform.forward, hitBuffer, dist, hitMask, QueryTriggerInteraction.Ignore)
+            : Physics.SphereCastNonAlloc(transform.position, radius, transform.forward,
+                hitBuffer, dist, hitMask, QueryTriggerInteraction.Ignore);
         System.Array.Sort(hitBuffer, 0, count, byDistance);
 
         for (int i = 0; i < count; i++)
@@ -175,6 +235,7 @@ public class Projectile : MonoBehaviour
         }
 
         transform.position += transform.forward * dist;
+        if (tallMark != null && tallMark.enabled) PlaceTallMark();
     }
 
     // homing shots turn toward the target and shrink away as their time limit runs out.
@@ -198,6 +259,98 @@ public class Projectile : MonoBehaviour
         float left = spawnTime + lifetime - Time.time;
         if (left < 0.8f) transform.localScale = baseScale * Mathf.Clamp01(left / 0.8f);
         return factor;
+    }
+
+    // Player seeking shots: curve toward the target at full speed. A target that is gone, dead or already behind the shot is dropped
+    // and the nearest enemy ahead is picked instead, so a miss does not circle forever.
+    void Seek()
+    {
+        if (seekTarget != null)
+        {
+            bool gone = !seekTarget.gameObject.activeInHierarchy;
+            if (!gone)
+            {
+                var h = seekTarget.GetComponentInParent<Health>();
+                gone = h != null && h.IsDead;
+            }
+            if (gone) { seekTarget = null; seekCollider = null; }
+        }
+
+        if (seekTarget == null)
+        {
+            if (Time.time < nextSeekScan) return;
+            nextSeekScan = Time.time + 0.12f;
+            AcquireSeekTarget();
+            if (seekTarget == null) return;
+        }
+
+        Vector3 point = seekCollider != null ? seekCollider.bounds.center : seekTarget.position + Vector3.up;
+        Vector3 want = point - transform.position;
+        if (want.sqrMagnitude < 0.01f) return;
+        if (Vector3.Angle(transform.forward, want) > 100f) { seekTarget = null; seekCollider = null; return; }      // flew past it
+
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(want), seekTurnRate * Time.deltaTime);
+    }
+
+    // everything with the damage tag, looked up at most a few times a second and shared by every seeking shot
+    static GameObject[] seekPool = new GameObject[0];
+    static string seekPoolTag;
+    static float seekPoolTime = -1f;
+
+    void AcquireSeekTarget()
+    {
+        if (seekPoolTag != damageTag || Time.time - seekPoolTime > 0.25f || Time.time < seekPoolTime)
+        {
+            seekPool = GameObject.FindGameObjectsWithTag(damageTag);
+            seekPoolTag = damageTag;
+            seekPoolTime = Time.time;
+        }
+
+        float best = float.MaxValue;
+        foreach (var go in seekPool)
+        {
+            if (go == null || !go.activeInHierarchy) continue;
+            var col = go.GetComponent<Collider>();
+            if (col == null) col = go.GetComponentInChildren<Collider>();
+            if (col == null) continue;                                       // only things that can actually be hit
+            var h = go.GetComponentInParent<Health>();
+            if (h != null && h.IsDead) continue;
+
+            Vector3 to = col.bounds.center - transform.position;
+            float distance = to.magnitude;
+            if (distance > SeekRange) continue;
+            float angle = Vector3.Angle(transform.forward, to);
+            if (angle > SeekCone) continue;
+
+            float score = angle / SeekCone + distance / SeekRange;          // prefers what is straight ahead and close
+            if (score < best) { best = score; seekTarget = go.transform; seekCollider = col; }
+        }
+    }
+
+    // airburst: an enemy inside the fuse distance sets the shot off without being touched
+    bool CheckProximity()
+    {
+        int n = Physics.OverlapSphereNonAlloc(transform.position, proximity, wideBuffer, hitMask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < n; i++)
+        {
+            var col = wideBuffer[i];
+            if (!col.CompareTag(damageTag)) continue;
+            var target = col.GetComponentInParent<IDamageable>();
+            if (target == null || pierced.Contains(target)) continue;
+            if (target is Health h && h.IsDead) continue;
+
+            if (explosionRadius > 0f) Explode(transform.position);
+            else
+            {
+                Vector3 point = col.ClosestPoint(transform.position);
+                Impact(point, -transform.forward);
+                target.TakeDamage(damage, point);
+                StatusEffects.Apply(col, status);
+            }
+            Despawn();
+            return true;
+        }
+        return false;
     }
 
     // homing shots creep in slowly, so the target can already be inside the shot, where a sweep would not see it
@@ -243,7 +396,7 @@ public class Projectile : MonoBehaviour
         else
         {
             var target = hit.collider.GetComponentInParent<IDamageable>();
-            if (target != null && hit.collider.CompareTag(damageTag))
+            if (target != null && (hit.collider.CompareTag(damageTag) || target is Destructible))
             {
                 target.TakeDamage(damage, hit.point);
                 StatusEffects.Apply(hit.collider, status);
@@ -267,6 +420,7 @@ public class Projectile : MonoBehaviour
                 if (barrier.Blocks(damageTag) && done.Add(barrier.Health)) barrier.Hit(damage, breaksBarriers, col.ClosestPoint(point));
                 continue;
             }
+            if (Destructible.TryHit(col, damage, point, done)) continue;       // scenery that can be broken takes the blast whoever fired it
             if (!col.CompareTag(damageTag)) continue;
             var target = col.GetComponentInParent<IDamageable>();
             if (target != null && done.Add(target))

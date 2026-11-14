@@ -24,7 +24,9 @@ public class BroomFlight : MonoBehaviour
     [SerializeField] float coastTime = 1.5f;
     [SerializeField] float turnSpeed = 10f;
     [SerializeField] bool strafeWhileCasting = true;   // casting turns the broom to face your aim (locked target or camera direction) while you keep moving
-    [SerializeField, Range(0.05f, 1f)] float castSpeedMultiplier = 0.4f;   // speed while casting a spell (charging mana stops you completely instead)
+    [SerializeField, Range(0.05f, 1f)] float castSpeedMultiplier = 0.4f;   // speed while casting a heavy spell (its movement rule is Stand); charging mana stops you completely instead
+    [SerializeField, Range(0.05f, 1f), Tooltip("Speed while casting a spell whose movement rule is Slow: quick charged spells barely slow the broom, so the fight stays fast.")]
+    float lightCastSpeedMultiplier = 0.8f;
 
     // Max Speed above doubles as the cruise speed the broom holds by itself in jet flight.
     [Header("Jet Flight (W or boost starts it, S brakes back to a hover)")]
@@ -496,8 +498,10 @@ public class BroomFlight : MonoBehaviour
 
         // casting a spell slows the broom but does not stop it
         if (caster == null) caster = GetComponentInChildren<PlayerSpellCaster>();
-        bool casting = caster != null && caster.IsCasting;
-        float castMul = casting ? castSpeedMultiplier : 1f;
+        var castMovement = caster != null ? caster.ActiveCastMovement : CastMovement.Free;
+        bool casting = castMovement == CastMovement.Stand;      // only heavy casts take the boost away
+        float castMul = castMovement == CastMovement.Stand ? castSpeedMultiplier
+            : castMovement == CastMovement.Slow ? lightCastSpeedMultiplier : 1f;
 
         // ---------- input: everything is relative to where you look, in full 3D ----------
         Quaternion look = LookFrame();
