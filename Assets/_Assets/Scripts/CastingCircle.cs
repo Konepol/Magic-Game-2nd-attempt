@@ -21,8 +21,13 @@ public class CastingCircle : MonoBehaviour
         public int groupIndex;            // position among the layers that share its kind (upright or on the ground)
         public Transform root;            // moved, rotated and scaled as one
         public Renderer face;
+        public Renderer[] pieces;        // arrow ring: 4 diamonds then 4 V's
         public float angle;
+        public float hold;               // seconds this layer has been fully drawn
+        public float ringAngle;          // arrow ring: degrees it has turned since it settled
     }
+
+    const float QuadPadding = 1.16f;      // must match _Pad in the Magic/CastingCircle shader
 
     static readonly Dictionary<Texture2D, Material> materials = new Dictionary<Texture2D, Material>();
     static Material baseMaterial;
@@ -39,6 +44,7 @@ public class CastingCircle : MonoBehaviour
     float progress;
     float modeTime;
     float modeDuration = 0.35f;
+    float clock;                // seconds this circle has existed (drives the hand-drawn variants)
     float autoDrawSeconds;      // > 0: draws itself on a timer and then fades out (quick tap circles)
 
     // where this circle sits on the ring around the player when several casts share the aim (0 degrees = straight ahead)
@@ -88,6 +94,7 @@ public class CastingCircle : MonoBehaviour
             quad.name = "Face";
             Kill(quad.GetComponent<Collider>());
             quad.transform.SetParent(root, false);
+            quad.transform.localScale = Vector3.one * QuadPadding;      // a little bigger than the image so the stroke glow is not cut off at its edge
 
             var r = quad.GetComponent<Renderer>();
             r.sharedMaterial = MaterialFor(def.texture);
@@ -95,7 +102,26 @@ public class CastingCircle : MonoBehaviour
             r.receiveShadows = false;
             r.enabled = false;
 
-            layers.Add(new LayerInstance { def = def, index = index++, groupIndex = def.anchor == CircleAnchor.Front ? upright++ : ground++, root = root, face = r });
+            Renderer[] pieces = null;
+            if (def.arrowRing && def.arrowDiamond != null && def.arrowV != null)
+            {
+                pieces = new Renderer[8];
+                for (int p = 0; p < 8; p++)
+                {
+                    var pq = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                    pq.name = p < 4 ? "Diamond" : "V";
+                    Kill(pq.GetComponent<Collider>());
+                    pq.transform.SetParent(root, false);
+                    var pr = pq.GetComponent<Renderer>();
+                    pr.sharedMaterial = MaterialFor(p < 4 || !def.pointToCenter ? def.arrowDiamond : def.arrowV);
+                    pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                    pr.receiveShadows = false;
+                    pr.enabled = false;
+                    pieces[p] = pr;
+                }
+            }
+
+            layers.Add(new LayerInstance { def = def, index = index++, groupIndex = def.anchor == CircleAnchor.Front ? upright++ : ground++, root = root, face = r, pieces = pieces });
         }
     }
 
@@ -156,7 +182,7 @@ public class CastingCircle : MonoBehaviour
         progress = 1f;
         mode = Mode.Fading;
         modeTime = 0f;
-        modeDuration = Mathf.Max(seconds, 0.05f);
+        modeDuration = Mathf.Max(data.exitDuration > 0f ? data.exitDuration : seconds, 0.05f);      // the circle asset can set its own exit length
     }
 
     // the spell failed: the circle flickers red, shrinks and breaks apart
@@ -174,6 +200,7 @@ public class CastingCircle : MonoBehaviour
     public void Tick(float dt)
     {
         modeTime += dt;
+        clock += dt;
 
         if (autoDrawSeconds > 0f && mode == Mode.Building)
         {
@@ -191,6 +218,7 @@ public class CastingCircle : MonoBehaviour
         float alphaMul = 1f, scaleMul = 1f;
         Color tintOverride = Color.clear;
         float overrideAmount = 0f;
+        float exitK = 0f, exitSpin = 0f, exitDissolve = 0f, exitLaunch = 0f, exitStretch = 0f;
 
         switch (mode)
         {
@@ -207,10 +235,48 @@ public class CastingCircle : MonoBehaviour
                 break;
             }
             case Mode.Fading:
-                alphaMul = 1f - Mathf.Clamp01(modeTime / modeDuration);
-                scaleMul = 1f + 0.12f * Mathf.Clamp01(modeTime / modeDuration);
+            {
+                // the way the circle leaves is chosen on the circle asset (Exit Style)
+                float k = Mathf.Clamp01(modeTime / modeDuration);
+                float k2 = k * k;
+                switch (data.exitStyle)
+                {
+                    case CircleExit.Fade:          // plain fade with a slight swell
+                        alphaMul = 1f - k; scaleMul = 1f + 0.12f * k;
+                        break;
+                    case CircleExit.Implode:       // sucked into the middle, spinning faster and faster
+                        alphaMul = 1f - k2; scaleMul = Mathf.Lerp(1f, 0.02f, k2); exitSpin = k2 * 300f;
+                        break;
+                    case CircleExit.Shockwave:     // flashes white and rushes outward like a ripple
+                        alphaMul = 1f - k; scaleMul = 1f + 1.1f * (1f - (1f - k) * (1f - k));
+                        tintOverride = Color.white; overrideAmount = (1f - k) * 0.6f;
+                        break;
+                    case CircleExit.SpinAway:      // whips round and shrinks away
+                        alphaMul = 1f - k2; scaleMul = Mathf.Lerp(1f, 0.15f, k2); exitSpin = k2 * 720f;
+                        break;
+                    case CircleExit.Unwind:        // un-draws itself, last drawn part first
+                        alphaMul = 1f - Mathf.Clamp01((k - 0.85f) / 0.15f);
+                        break;
+                    case CircleExit.Dissolve:      // breaks into specks
+                        exitDissolve = k;
+                        break;
+                    case CircleExit.Shatter:       // white flash, then the lines are pulled outward and break into specks
+                        alphaMul = 1f - k2; scaleMul = 1f + 0.3f * k;
+                        tintOverride = Color.white; overrideAmount = Mathf.Clamp01(1f - k * 4f) * 0.9f;
+                        exitDissolve = Mathf.Clamp01((k - 0.12f) / 0.88f); exitStretch = k2;
+                        break;
+                    case CircleExit.Overload:      // the lines hang on a moment while they stretch longer and thinner, then fade
+                        alphaMul = 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((k - 0.3f) / 0.45f));
+                        scaleMul = 1f + 0.25f * k; exitStretch = Mathf.Clamp01(k * 1.4f);
+                        break;
+                    case CircleExit.Launch:        // shoots forward toward where the spell is going
+                        alphaMul = 1f - k2; scaleMul = Mathf.Lerp(1f, 0.45f, k); exitLaunch = k2;
+                        break;
+                }
+                exitK = k;
                 if (modeTime >= modeDuration) { Kill(gameObject); return; }
                 break;
+            }
             case Mode.Fizzling:
             {
                 float k = Mathf.Clamp01(modeTime / modeDuration);
@@ -228,16 +294,106 @@ public class CastingCircle : MonoBehaviour
         {
             var def = l.def;
             float t = Mathf.Clamp01((progress - def.startAt) / Mathf.Max(def.drawTime, 0.02f));
+            if (def.exitOnly)
+            {
+                if (mode != Mode.Fading) { SetEnabled(l, false); continue; }
+                t = Mathf.Clamp01((exitK - def.startAt) / Mathf.Max(def.drawTime, 0.02f));      // a fraction of the exit
+            }
             if (t <= 0f) { SetEnabled(l, false); continue; }
             SetEnabled(l, true);
 
-            l.angle += def.rotationSpeed * dt;
+            float spinF = def.spinSpeed * (def.reverseSpin ? -1f : 1f);      // Spin Speed and Reverse Spin on the layer
+            float curveF = SpinCurve(def, t);
+            l.angle += def.rotationSpeed * spinF * curveF * dt;
+
+            // how this layer comes in (each layer can have its own)
+            float reveal = 1f, sizeMul = 1f, styleAlpha = 1f, enterSpin = 0f, flip = 0f;
+            float dir = Mathf.Abs(def.rotationSpeed) > 0.01f ? Mathf.Sign(def.rotationSpeed) : (l.index % 2 == 0 ? 1f : -1f);      // layers that spin the same way also come in the same way
+            if (def.exitOnly)
+            {
+                // swells and brightens quickly, then fades as it grows
+                float a = t < 0.2f ? t / 0.2f : 1f - (t - 0.2f) / 0.8f;
+                styleAlpha = a * a;
+                sizeMul = Mathf.Lerp(def.exitGrow, 1f, 1f - (1f - t) * (1f - t));
+            }
+            else switch (def.appear)
+            {
+                case CircleAppear.RadialWipe: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
+                case CircleAppear.ScaleUp: sizeMul = Mathf.Lerp(0.2f, 1f, 1f - (1f - t) * (1f - t)); styleAlpha = Mathf.Min(1f, t * 4f); break;
+                case CircleAppear.FadeIn: styleAlpha = t; break;
+                case CircleAppear.Burst:
+                {
+                    // ease out with an overshoot: opens fast from a small size, swells slightly past full, settles
+                    float k = t - 1f;
+                    float back = 1f + 2.2f * k * k * k + 1.2f * k * k;
+                    sizeMul = Mathf.LerpUnclamped(0.08f, 1f, back);
+                    styleAlpha = Mathf.Min(1f, t * 8f);
+                    break;
+                }
+                case CircleAppear.Sparkle: case CircleAppear.Cascade: reveal = t; break;
+                case CircleAppear.RadialOut: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
+                case CircleAppear.Pop: reveal = t; styleAlpha = Mathf.Min(1f, t * 10f); break;
+                case CircleAppear.Bloom:
+                {
+                    // opens from the middle outward, growing and whirling, the spin dying away as it settles
+                    float u = 1f - t;
+                    reveal = t;
+                    sizeMul = Mathf.Lerp(0.12f, 1f, 1f - u * u);
+                    enterSpin = u * u * 360f * dir;
+                    styleAlpha = Mathf.Min(1f, t * 5f);
+                    break;
+                }
+                case CircleAppear.Flash:
+                {
+                    // rises to a peak and is gone again, swelling as it goes
+                    sizeMul = Mathf.Lerp(0.3f, 1.25f, 1f - (1f - t) * (1f - t));
+                    styleAlpha = Mathf.Sin(t * Mathf.PI);
+                    break;
+                }
+                case CircleAppear.SpinIn:
+                {
+                    // grows while whirling, the spin slowing to a stop as it settles
+                    float u = 1f - t;
+                    sizeMul = Mathf.Lerp(0.25f, 1f, 1f - u * u);
+                    enterSpin = u * u * 540f * dir;
+                    styleAlpha = Mathf.Min(1f, t * 4f);
+                    break;
+                }
+                case CircleAppear.Stamp:
+                {
+                    // starts big and faint, then slams down onto its place
+                    float u = 1f - t;
+                    sizeMul = 1f + 0.9f * u * u * u;
+                    styleAlpha = Mathf.Min(1f, t * 5f);
+                    break;
+                }
+                case CircleAppear.FlipIn:
+                {
+                    // lies edge-on and swings up to face you
+                    float u = 1f - t;
+                    flip = u * u * 85f;
+                    sizeMul = Mathf.Lerp(0.7f, 1f, 1f - u * u);
+                    styleAlpha = Mathf.Min(1f, t * 3f);
+                    break;
+                }
+            }
+
+            enterSpin *= spinF;
+
+            // leaving by un-drawing: the layer drawn last is erased first
+            if (mode == Mode.Fading && data.exitStyle == CircleExit.Unwind)
+            {
+                float rank = layers.Count - 1 - l.index;
+                float lk = Mathf.Clamp01((exitK - rank * 0.5f / layers.Count) / 0.5f);
+                reveal = 1f - lk;
+            }
 
             Pose pose = source.GetCirclePose(def.anchor, data, variant);
 
             // depth: layers float apart (away from the viewer for upright circles, upward for flat ones)
             float depth = def.anchor == CircleAnchor.Front ? l.groupIndex * data.depthSpacing : -l.groupIndex * data.groundLayerSpacing;
             Vector3 local = def.offset * placeScale + new Vector3(0f, 0f, depth);
+            if (exitLaunch > 0f && def.anchor == CircleAnchor.Front) local.z += exitLaunch * 3.5f * placeScale;
 
             // each layer wobbles on its own rhythm, which makes the layers shift against each other
             Quaternion wobble = Quaternion.identity;
@@ -250,8 +406,17 @@ public class CastingCircle : MonoBehaviour
                                           Mathf.Cos(Time.time * data.tiltSpeed * 0.8f + ph) * data.tiltDegrees, 0f);
             }
 
+            // spin drawn 'on twos': it moves in jumps instead of smoothly
+            float shownAngle = l.angle;
+            if (def.stepFps > 0f && Mathf.Abs(def.rotationSpeed * spinF) > 0.01f)
+            {
+                float stepDeg = Mathf.Abs(def.rotationSpeed * spinF) / def.stepFps;
+                shownAngle = Mathf.Round(l.angle / stepDeg) * stepDeg;
+            }
+
             Vector3 worldPos = pose.position + pose.rotation * local;
-            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(0f, 0f, l.angle);
+            Quaternion spinQ = Quaternion.Euler(0f, 0f, shownAngle + enterSpin + exitSpin * dir);
+            Quaternion worldRot = pose.rotation * wobble * Quaternion.Euler(flip, 0f, 0f) * spinQ;
 
             // upright layers swing around the player on the ring; the parts on the ground stay centred on the player / the target
             if (def.anchor == CircleAnchor.Front && (Mathf.Abs(placementAngle) > 0.01f || Mathf.Abs(placementRadius - 1f) > 0.001f))
@@ -271,29 +436,153 @@ public class CastingCircle : MonoBehaviour
 
             float diameter = def.scaleToAoeRadius && variant != null ? variant.aoeRadius * 2f * def.size : def.size * placeScale;
 
-            float reveal = 1f, sizeMul = 1f, styleAlpha = 1f;
-            switch (def.appear)
+            // while held: slow outward drift and shimmer
+            if (t >= 1f) { l.hold = Mathf.Min(l.hold + dt, 4f); l.ringAngle += def.ringSpin * spinF * curveF * dt; }
+            if (def.holdDrift != 0f) sizeMul *= 1f + def.holdDrift * l.hold;
+            if (def.shimmer > 0f) styleAlpha *= 1f - def.shimmer * 0.5f * (1f + 0.5f * Mathf.Sin(Time.time * 11f + l.index * 2.3f) + 0.5f * Mathf.Sin(Time.time * 17.3f + l.index * 5.1f));
+
+            l.root.localScale = Vector3.one * (diameter * sizeMul * (def.exitOnly ? 1f : scaleMul));
+
+            // Spin Origin: the layer spins around this point instead of its middle (the point stays where it would be unspun)
+            if (def.spinOrigin != Vector2.zero)
             {
-                case CircleAppear.RadialWipe: reveal = t; styleAlpha = Mathf.Min(1f, t * 6f); break;
-                case CircleAppear.ScaleUp: sizeMul = Mathf.Lerp(0.2f, 1f, 1f - (1f - t) * (1f - t)); styleAlpha = Mathf.Min(1f, t * 4f); break;
-                case CircleAppear.FadeIn: styleAlpha = t; break;
+                Vector3 pv = new Vector3(def.spinOrigin.x, def.spinOrigin.y, 0f) * l.root.localScale.x;
+                Quaternion baseQ = worldRot * Quaternion.Inverse(spinQ);
+                l.root.position = worldPos + baseQ * pv - worldRot * pv;
             }
 
-            l.root.localScale = Vector3.one * (diameter * sizeMul * scaleMul);
-
             Color c = def.useSpellColor ? spellColor * def.tint : def.tint;
-            if (overrideAmount > 0f) c = Color.Lerp(c, tintOverride, overrideAmount);
-            float baseAlpha = def.opacity * styleAlpha * alphaMul;
+            if (overrideAmount > 0f && !def.exitOnly) c = Color.Lerp(c, tintOverride, overrideAmount);
+            float baseAlpha = def.opacity * styleAlpha * (def.exitOnly ? 1f : alphaMul);
 
             c.a = baseAlpha;
+            block.Clear();
+            if (def.variants != null && def.variants.Length > 0)
+            {
+                // hand-drawn wiggle: the layer swaps between its drawings
+                int vi = (Mathf.FloorToInt(clock * Mathf.Max(def.variantFps, 1f)) + l.index * 3) % def.variants.Length;
+                if (def.variants[vi] != null) block.SetTexture("_BaseMap", def.variants[vi]);
+            }
             block.SetColor("_Color", c);
             block.SetFloat("_Reveal", reveal);
+            block.SetFloat("_Dissolve", def.exitOnly ? 0f : exitDissolve);
+            block.SetFloat("_Glow", data.glow);
+            block.SetFloat("_CoreWhite", data.coreWhite);
+            block.SetFloat("_Stretch", def.exitOnly ? 0f : exitStretch);
+            block.SetFloat("_Mode", RevealMode(def.appear));
             l.face.SetPropertyBlock(block);
+
+            if (def.arrowRing && l.pieces != null)
+            {
+                Color accent = def.arrowAccent;
+                if (overrideAmount > 0f) accent = Color.Lerp(accent, tintOverride, overrideAmount);
+                UpdateArrowRing(l, t, l.ringAngle, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
+            }
         }
+    }
+
+    // which reveal the shader uses: 0 clockwise draw-on, 1 random glyphs, 2 glyphs from the middle, 3 travelling ring from the middle
+    static float RevealMode(CircleAppear a)
+    {
+        switch (a)
+        {
+            case CircleAppear.Sparkle: return 1f;
+            case CircleAppear.Cascade: return 2f;
+            case CircleAppear.RadialOut: case CircleAppear.Bloom: case CircleAppear.Pop: return 3f;
+            default: return 0f;
+        }
+    }
+
+    // the layer's Spin Over Time graph at this point of its drawing (a flat 1 if the graph is empty)
+    static float SpinCurve(CircleLayer def, float t)
+    {
+        var c = def.spinOverTime;
+        return c == null || c.length == 0 ? 1f : c.Evaluate(Mathf.Clamp01(t));
     }
 
     static void SetEnabled(LayerInstance l, bool on)
     {
-        l.face.enabled = on;
+        l.face.enabled = on && l.pieces == null;
+        if (l.pieces != null) foreach (var pr in l.pieces) pr.enabled = on;
+    }
+
+    // ---------- the arrow ring ----------
+    // Positions are in units of the layer's diameter (the ring starts at radius 0.5), y up, angles in degrees counter-clockwise.
+    // One after the other: each piece turns a little on its own -> V's close up on their diamonds -> each group turns to face the
+    // middle (the shape is complete) -> the whole ring scales down and moves in -> locked small, it circles the middle.
+    const float ArrowL = 0.30f;      // wing length of the V in the arrow images, as a fraction of the image width
+
+    static Vector2 Dir(float deg) => new Vector2(Mathf.Cos(deg * Mathf.Deg2Rad), Mathf.Sin(deg * Mathf.Deg2Rad));
+    static float Smooth(float x) { x = Mathf.Clamp01(x); return x * x * (3f - 2f * x); }
+
+    // orbit-only ring: 4 V's alternate with 4 second pieces (triangles) on the ring, tips pointing counter-clockwise along it.
+    // The layer's own rotation and its Appear (growth) do the rest, so the pieces just sit on the ring here.
+    void UpdateOrbitRing(LayerInstance l, Color main, Color accent, float alpha)
+    {
+        float wing = l.def.pieceWing;
+        int count = Mathf.Clamp(l.def.pieceCount, 1, 8);
+        main.a = alpha;
+        for (int k = 0; k < 8; k++)
+        {
+            if (k >= count) { SetPiece(l.pieces[k], Vector2.zero, 0f, 0f, main, l.def); continue; }
+            float psi = 360f * k / count + 45f;
+            float sgn = l.def.reverseSpin ? -1f : 1f;
+            float axis = psi + sgn * (90f + l.def.pieceTurn);          // along the ring, the way it spins, turned by Piece Turn (+ = toward the middle)
+            // the middle of the piece sits on the ring and the piece runs along it (the image's tip is at its front end, about 0.38 of the image behind it is its back end)
+            float half = 0.5f * 0.38f * (wing / ArrowL);
+            Vector2 tip = l.def.ringRadius * Dir(psi) + Dir(axis) * half * (1f - l.def.piecePivot);      // Piece Pivot: the point of the piece that sits on the ring (0 middle, +1 tip, -1 back)
+            SetPiece(l.pieces[k], tip, axis, wing / ArrowL, main, l.def);
+        }
+    }
+
+    void UpdateArrowRing(LayerInstance l, float s, float spinDeg, Color main, Color accent, float alpha)
+    {
+        var def = l.def;
+        if (!def.pointToCenter) { UpdateOrbitRing(l, main, accent, alpha); return; }
+        float fuse = Smooth((s - 0.2f) / 0.25f);
+        float turn = Smooth((s - 0.45f) / 0.2f);
+        float shrink = Smooth((s - 0.72f) / 0.28f);
+        float ringR = Mathf.Lerp(def.ringRadius, def.finalRadius, shrink);    // Ring Radius: where the ring starts; Final Radius: where it ends up
+        float wing = (30f + 22f * fuse) * Mathf.Lerp(1f, def.finalPieceScale, shrink);
+        float dW = 0.78f * wing / 300f;                         // the diamond's wing length (the V is 1.6 times that)
+        float wob = s < 0.25f ? 30f * Mathf.Sin(Mathf.PI * Mathf.Min(1f, s / 0.25f)) : 0f;
+        float nose = 2.07f * dW * 0.5f + 0.55f * dW;            // how far the V's tip sits ahead of the diamond's middle once fused
+        float baseDeg = Mathf.Rad2Deg * (nose / ringR);
+
+        // the whole ring spins around the middle while the pieces appear, slowing to a stop as the shape completes
+        float eo = 1f - Mathf.Pow(1f - Mathf.Clamp01(s / 0.65f), 3f);
+        spinDeg += -360f * def.orbitTurns * (1f - eo) * def.spinSpeed * (def.reverseSpin ? -1f : 1f);
+
+        main.a = alpha;
+        accent.a = alpha;
+
+        for (int k = 0; k < 4; k++)
+        {
+            float psi = 90f * k + 20f + spinDeg;
+            float ad = psi - 14f * (1f - fuse);                 // the diamond sits behind its V on the ring
+            Vector2 dc = ringR * Dir(ad);
+            float axis = Mathf.LerpAngle(ad + 90f, ad + 180f, turn);     // along the ring (tips point counter-clockwise), then toward the middle
+            Vector2 vRing = ringR * Dir(ad + baseDeg + 20f * (1f - fuse));
+            Vector2 vAxis = dc + Dir(axis) * nose;
+            Vector2 vTip = Vector2.Lerp(vRing, vAxis, turn);
+
+            SetPiece(l.pieces[k], dc, axis + wob, dW / ArrowL, main, def);
+            SetPiece(l.pieces[4 + k], vTip, axis - wob, 1.6f * dW / ArrowL, accent, def);
+        }
+    }
+
+    void SetPiece(Renderer r, Vector2 pos, float angle, float size, Color col, CircleLayer def)
+    {
+        var t = r.transform;
+        t.localPosition = new Vector3(pos.x, pos.y, 0f);
+        t.localRotation = Quaternion.Euler(0f, 0f, angle);
+        t.localScale = Vector3.one * (size * QuadPadding);
+        block.Clear();
+        block.SetColor("_Color", col);
+        block.SetFloat("_Reveal", 1f);
+        block.SetFloat("_Glow", data.glow);
+        block.SetFloat("_CoreWhite", data.coreWhite);
+        block.SetFloat("_Mode", 0f);
+        r.SetPropertyBlock(block);
     }
 }

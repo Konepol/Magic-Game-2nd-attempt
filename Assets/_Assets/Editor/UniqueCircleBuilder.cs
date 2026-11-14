@@ -73,15 +73,14 @@ public static class UniqueCircleBuilder
             for (int arm = 0; arm < 4; arm++)
             {
                 float baseAng = 2f * Mathf.PI * arm / 4f;
-                Vector2 prev = default;
+                var armPts = new List<Vector2>();
                 for (int i = 0; i <= 36; i++)
                 {
                     float t = i / 36f;
                     float ang = baseAng + t * 2.6f;
-                    Vector2 p = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Mathf.Lerp(0.05f, 0.42f, t);
-                    if (i > 0) c.Seg(prev, p, 0.012f);
-                    prev = p;
+                    armPts.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * Mathf.Lerp(0.05f, 0.42f, t));
                 }
+                c.TaperPath(armPts, 0.022f, 0.002f, 0.4f);
             }
         });
 
@@ -133,7 +132,7 @@ public static class UniqueCircleBuilder
                 float a = 2f * Mathf.PI * i / 24f;
                 var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
                 bool longRay = i % 2 == 0;
-                c.Seg(d * (longRay ? 0.22f : 0.3f), d * (longRay ? 0.46f : 0.39f), longRay ? 0.012f : 0.008f);
+                c.Taper(d * (longRay ? 0.22f : 0.3f), d * (longRay ? 0.46f : 0.39f), longRay ? 0.022f : 0.014f, 0.0015f, 0.5f);      // thick at the root, pointed and fading at the tip
             }
             c.RingDots(8, 0.13f, 0.012f);
         });
@@ -207,6 +206,42 @@ public static class UniqueCircleBuilder
             c.Poly(4, 0.46f, 45f, 0.012f); c.Poly(4, 0.46f, 0f, 0.012f);
             c.Ring(0.34f, 0.008f); c.Ring(0.22f, 0.008f);
             c.Runes(0.235f, 0.325f, 20, 11);
+        });
+
+        // a field of separate small glyphs on an 8 x 8 grid, one per cell (the Sparkle reveal in the shader pops them in cell by cell)
+        Make("Rune_Scatter", c =>
+        {
+            var rng = new System.Random(23);
+            for (int gy = 0; gy < 8; gy++)
+                for (int gx = 0; gx < 8; gx++)
+                {
+                    var centre = new Vector2((gx + 0.5f) / 8f - 0.5f, (gy + 0.5f) / 8f - 0.5f);
+                    if (centre.magnitude > 0.43f) continue;                // keep the field round
+                    if (rng.NextDouble() < 0.14) continue;                  // a few gaps so it reads as scattered
+                    centre += new Vector2((float)rng.NextDouble() - 0.5f, (float)rng.NextDouble() - 0.5f) * 0.024f;
+                    float size = 0.030f + 0.012f * (float)rng.NextDouble();
+                    float rot = (float)rng.NextDouble() * 360f;
+                    c.Glyph(rng.Next(0, 6), centre, size, rot);
+                }
+        });
+
+        // a crosshair flare: long thin tapered lines through the middle (horizontal, vertical, short diagonals) and a bright core
+        Make("Flare_Cross", c =>
+        {
+            for (int k = 0; k < 4; k++)
+            {
+                float a = Mathf.PI * 0.5f * k;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                c.Taper(d * 0.02f, d * 0.49f, 0.016f, 0.0015f, 0.2f);
+            }
+            for (int k = 0; k < 4; k++)
+            {
+                float a = Mathf.PI * 0.25f + Mathf.PI * 0.5f * k;
+                var d = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                c.Taper(d * 0.02f, d * 0.22f, 0.010f, 0.0012f, 0.3f);
+            }
+            c.FillDot(Vector2.zero, 0.022f);
+            c.Ring(0.06f, 0.005f);
         });
 
         // ---------- the circles ----------
@@ -360,10 +395,39 @@ public static class UniqueCircleBuilder
         Mix(zero, frostC, earthC, goldC, meteorC);
         Mix(sun, goldC, boltC, fireC);
 
+        // ---------- new casting styles (from the anime references) ----------
+        var yellow = new Color(1f, 0.85f, 0.3f);
+
+        // Rune Field (an older attempt from reference clip 3: a seed cross, a crosshair flash, then glyphs pop in from the middle outward)
+        var runeField = Circle("Circle_RuneField", 1.4f, Tilt(2f, 0.8f), Ready(new Color(1f, 0.95f, 0.6f), 0.7f),
+            L("Seed", "Flare_Cross", CircleAnchor.Front, 0.7f, 0f, 0.0f, 0.18f, CircleAppear.Flash),
+            L("Crosshair Flash", "Flare_Cross", CircleAnchor.Front, 3.0f, 0f, 0.1f, 0.3f, CircleAppear.Flash),
+            L("Field Far", "Rune_Scatter", CircleAnchor.Front, 3.0f, 2f, 0.2f, 0.5f, CircleAppear.Cascade),
+            L("Field Mid", "Rune_Scatter", CircleAnchor.Front, 2.2f, -3f, 0.3f, 0.5f, CircleAppear.Cascade),
+            L("Field Near", "Rune_Scatter", CircleAnchor.Front, 1.4f, 4f, 0.42f, 0.5f, CircleAppear.Cascade));
+        Accent(runeField, 0, yellow);
+        Accent(runeField, 3, yellow);
+        Hold(runeField, 2, 0f, 0.35f); Hold(runeField, 3, 0f, 0.35f); Hold(runeField, 4, 0f, 0.4f);
+
+        // ---------- how each circle comes in and goes out ----------
+        // in: layer-by-layer Appear styles (default is the draw-on wipe); out: one Exit Style for the whole circle
+        Exit(runeField, CircleExit.Dissolve, 0.55f);
+        Exit(fire, CircleExit.SpinAway, 0.4f);          Exit(frost, CircleExit.Dissolve, 0.5f);        Exit(wind, CircleExit.SpinAway, 0.45f);
+        Exit(earth, CircleExit.Unwind, 0.5f);           Exit(venom, CircleExit.Implode, 0.35f);        Exit(radiant, CircleExit.Shockwave, 0.45f);
+        Exit(infernal, CircleExit.Launch, 0.35f);       Exit(cinder, CircleExit.Dissolve, 0.5f);       Exit(firestorm, CircleExit.Launch, 0.35f);
+        Exit(thunder, CircleExit.Shockwave, 0.4f);      Exit(glacier, CircleExit.Launch, 0.35f);       Exit(blizzard, CircleExit.Launch, 0.35f);
+        Exit(cyclone, CircleExit.SpinAway, 0.45f);      Exit(tremor, CircleExit.Unwind, 0.55f);        Exit(plague, CircleExit.Implode, 0.4f);
+        Exit(zero, CircleExit.Dissolve, 0.6f);          Exit(sun, CircleExit.Launch, 0.4f);
+
+        Enter(wind, CircleAppear.SpinIn, 0, 1);         Enter(cyclone, CircleAppear.SpinIn, 0);        Enter(venom, CircleAppear.SpinIn, 0, 1);
+        Enter(firestorm, CircleAppear.SpinIn, 0);       Enter(frost, CircleAppear.FlipIn, 0, 1);       Enter(glacier, CircleAppear.FlipIn, 0);
+        Enter(blizzard, CircleAppear.FlipIn, 0);        Enter(plague, CircleAppear.FlipIn, 0);         Enter(sun, CircleAppear.FlipIn, 0);
+        Enter(earth, CircleAppear.Stamp, 0, 1);         Enter(tremor, CircleAppear.Stamp, 0, 1);       Enter(zero, CircleAppear.Stamp, 0, 1);
+        Enter(thunder, CircleAppear.Stamp, 0, 1);       Enter(infernal, CircleAppear.Stamp, 1);
+
         // ---------- assign ----------
-        Assign(WeaponDir, "ScatterShot", scatter);
+        Assign(WeaponDir, "ScatterShot", runeField);
         Assign(WeaponDir, "FireBurst", fire);
-        Assign(WeaponDir, "LightningLance", lightning);
         Assign(WeaponDir, "FrostShard", frost);
         Assign(WeaponDir, "WindBlade", wind);
         Assign(WeaponDir, "EarthSpike", earth);
@@ -384,7 +448,7 @@ public static class UniqueCircleBuilder
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned to 8 spells and 11 fusions.");
+        Debug.Log("Unique casting circles built in " + CircleDir + " and assigned (Scatter Shot: rune field, other basic spells and 11 fusions: own circles). The vortex circles (Circle_Vortex on Arcane Bolt, Circle_Vortex_LightningLance) are not built here: edit those assets directly.");
     }
 
     // ---------- helpers ----------
@@ -421,6 +485,37 @@ public static class UniqueCircleBuilder
             circle.layers[i].useSpellColor = false;
             circle.layers[i].tint = colors[i % colors.Length];
         }
+        EditorUtility.SetDirty(circle);
+    }
+
+    // slow outward drift and flicker while the cast is held
+    static void Hold(CastingCircleData circle, int layerIndex, float drift, float shimmer)
+    {
+        circle.layers[layerIndex].holdDrift = drift;
+        circle.layers[layerIndex].shimmer = shimmer;
+        EditorUtility.SetDirty(circle);
+    }
+
+    static void Exit(CastingCircleData circle, CircleExit style, float seconds)
+    {
+        circle.exitStyle = style;
+        circle.exitDuration = seconds;
+        EditorUtility.SetDirty(circle);
+    }
+
+    // sets how the listed layers come in
+    static void Enter(CastingCircleData circle, CircleAppear appear, params int[] layerIndexes)
+    {
+        foreach (int i in layerIndexes)
+            if (i < circle.layers.Length) circle.layers[i].appear = appear;
+        EditorUtility.SetDirty(circle);
+    }
+
+    // one layer keeps a fixed second colour whatever the spell's colour is (the yellow beside the green in the references)
+    static void Accent(CastingCircleData circle, int layerIndex, Color color)
+    {
+        circle.layers[layerIndex].useSpellColor = false;
+        circle.layers[layerIndex].tint = color;
         EditorUtility.SetDirty(circle);
     }
 
@@ -475,6 +570,43 @@ public static class UniqueCircleBuilder
     class Canvas
     {
         public readonly float[] a = new float[N * N];
+
+        // a stroke that is thick at one end and tapers to a point at the other, optionally fading out along the way
+        // (the "brush stroke" look: wS = width at the start, wE = width at the end, aE = opacity at the end)
+        public void Taper(Vector2 s, Vector2 e, float wS, float wE, float aE = 1f) => TaperSeg(s, e, wS, wE, 1f, aE);
+
+        // the same along a curve: width and opacity ease from the first point to the last
+        public void TaperPath(IList<Vector2> pts, float wS, float wE, float aE = 1f)
+        {
+            int n = pts.Count - 1;
+            for (int i = 0; i < n; i++)
+            {
+                float t0 = (float)i / n, t1 = (float)(i + 1) / n;
+                TaperSeg(pts[i], pts[i + 1], Mathf.Lerp(wS, wE, t0), Mathf.Lerp(wS, wE, t1), Mathf.Lerp(1f, aE, t0), Mathf.Lerp(1f, aE, t1));
+            }
+        }
+
+        void TaperSeg(Vector2 s, Vector2 e, float wS, float wE, float aS, float aE)
+        {
+            Vector2 d = e - s;
+            float len2 = Mathf.Max(d.sqrMagnitude, 1e-8f);
+            float maxHalf = Mathf.Max(wS, wE) * 0.5f;
+            int x0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(s.x, e.x) - maxHalf + 0.5f) * N) - 2);
+            int x1 = Mathf.Min(N - 1, Mathf.CeilToInt((Mathf.Max(s.x, e.x) + maxHalf + 0.5f) * N) + 2);
+            int y0 = Mathf.Max(0, Mathf.FloorToInt((Mathf.Min(s.y, e.y) - maxHalf + 0.5f) * N) - 2);
+            int y1 = Mathf.Min(N - 1, Mathf.CeilToInt((Mathf.Max(s.y, e.y) + maxHalf + 0.5f) * N) + 2);
+
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    var p = new Vector2((x + 0.5f) / N - 0.5f, (y + 0.5f) / N - 0.5f);
+                    float t = Mathf.Clamp01(Vector2.Dot(p - s, d) / len2);
+                    float dist = (p - (s + d * t)).magnitude;
+                    float half = Mathf.Lerp(wS, wE, t) * 0.5f;
+                    float cov = Mathf.Clamp01((half - dist) * N + 0.5f) * Mathf.Lerp(aS, aE, t);
+                    if (cov > a[y * N + x]) a[y * N + x] = cov;
+                }
+        }
 
         public void Seg(Vector2 s, Vector2 e, float w)
         {
@@ -540,6 +672,50 @@ public static class UniqueCircleBuilder
                     float cov = Mathf.Clamp01((radius - (p - c).magnitude) * N + 0.5f);
                     if (cov > a[y * N + x]) a[y * N + x] = cov;
                 }
+        }
+
+        // a small diamond (a stretched square) at a point, turned to point along rotDeg
+        public void Poly4At(Vector2 centre, float r, float rotDeg, float w)
+        {
+            float rad = rotDeg * Mathf.Deg2Rad;
+            var fwd = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+            var side = new Vector2(-fwd.y, fwd.x);
+            Vector2 a0 = centre + fwd * r * 1.6f, a1 = centre + side * r * 0.8f, a2 = centre - fwd * r * 1.6f, a3 = centre - side * r * 0.8f;
+            Seg(a0, a1, w); Seg(a1, a2, w); Seg(a2, a3, w); Seg(a3, a0, w);
+        }
+
+        // one small invented rune: kind 0 cross, 1 chevron, 2 diamond, 3 triangle, 4 sharp tick pair, 5 bent arrow
+        public void Glyph(int kind, Vector2 c, float s, float rotDeg)
+        {
+            float rad = rotDeg * Mathf.Deg2Rad;
+            var ux = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+            var uy = new Vector2(-ux.y, ux.x);
+            Vector2 P(float x, float y) => c + ux * (x * s) + uy * (y * s);
+            const float w = 0.0045f;
+
+            switch (kind)
+            {
+                case 0:
+                    Taper(P(0, -1), P(0, 1), 0.007f, 0.0015f); Taper(P(-0.8f, 0), P(0.8f, 0), 0.006f, 0.0015f);
+                    break;
+                case 1:
+                    Taper(P(0, 0.9f), P(-1f, -0.7f), 0.008f, 0.0015f); Taper(P(0, 0.9f), P(1f, -0.7f), 0.008f, 0.0015f);
+                    Taper(P(0, 0.1f), P(-0.7f, -1f), 0.006f, 0.001f, 0.6f); Taper(P(0, 0.1f), P(0.7f, -1f), 0.006f, 0.001f, 0.6f);
+                    break;
+                case 2:
+                    Seg(P(0, 1.1f), P(0.7f, 0), w); Seg(P(0.7f, 0), P(0, -1.1f), w); Seg(P(0, -1.1f), P(-0.7f, 0), w); Seg(P(-0.7f, 0), P(0, 1.1f), w);
+                    FillDot(c, 0.0045f);
+                    break;
+                case 3:
+                    Seg(P(0, 1f), P(0.9f, -0.7f), w); Seg(P(0.9f, -0.7f), P(-0.9f, -0.7f), w); Seg(P(-0.9f, -0.7f), P(0, 1f), w);
+                    break;
+                case 4:
+                    Taper(P(-0.5f, -1f), P(-0.5f, 1f), 0.007f, 0.0015f); Taper(P(0.5f, 1f), P(0.5f, -1f), 0.007f, 0.0015f);
+                    break;
+                default:
+                    Seg(P(-1f, -0.6f), P(0f, 0.6f), w); Seg(P(0f, 0.6f), P(1f, -0.6f), w); Seg(P(0f, 0.6f), P(0f, -1f), w);
+                    break;
+            }
         }
 
         public void Poly(int sides, float r, float rotDeg, float w)

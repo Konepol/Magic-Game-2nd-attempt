@@ -15,10 +15,34 @@ public enum CircleAppear
     RadialWipe,   // drawn on clockwise from the top
     ScaleUp,      // grows from the middle
     FadeIn,       // fades in
+    Burst,        // snaps out from the middle with an overshoot, like a vortex opening
+    Sparkle,      // for a layer holding a grid of glyphs (8 x 8 cells): each glyph pops in at its own moment, then shimmers
+    SpinIn,       // grows while whirling, the spin slowing to a stop
+    Stamp,        // starts big and faint, then slams down onto its place
+    FlipIn,       // lies edge-on and swings up to face you
+    RadialOut,    // drawn from the middle outward in a travelling ring, the leading edge burning bright
+    Cascade,      // for a glyph-grid layer: glyphs pop in from the middle outward, each with a flash
+    Bloom,        // grows from the middle outward while it whirls and settles (a pinwheel opening)
+    Flash,        // a quick flare: swells, peaks and is gone again (a seed glyph or a crosshair flash)
+    Pop,          // everything at once, shot outward from the middle in a few frames
+}
+
+// How a whole circle leaves when the spell is released.
+public enum CircleExit
+{
+    Fade,         // fades with a slight swell
+    Implode,      // sucked into the middle, spinning faster and faster
+    Shockwave,    // flashes white and rushes outward like a ripple
+    SpinAway,     // whips round and shrinks away
+    Unwind,       // un-draws itself, the last drawn part first
+    Dissolve,     // breaks into specks
+    Launch,       // shoots forward toward where the spell is going
+    Shatter,      // white flash, then the lines are pulled outward and break into specks
+    Overload,     // the lines stay for a moment while they are stretched longer and thinner, then fade; layers marked 'Exit Only' play their own flash, shockwave and embers
 }
 
 [Serializable]
-public class CircleLayer
+public class CircleLayer : ISerializationCallbackReceiver
 {
     public string name = "Layer";
     public Texture2D texture;
@@ -43,6 +67,76 @@ public class CircleLayer
     [Range(0.02f, 1f), Tooltip("How much of the cast time this layer takes to draw.")]
     public float drawTime = 0.4f;
     public CircleAppear appear = CircleAppear.RadialWipe;
+
+    [Header("Spin")]
+    [Tooltip("Turns the spin of this layer the other way (its Rotation Speed, the whirl while it appears, and the arrow ring's orbit). On the orbit-only ring the tips of the pieces turn round too, so they still point the way they travel.")]
+    public bool reverseSpin = false;
+    [Min(0f), Tooltip("Multiplies every spin of this layer: 1 = as set, 2 = twice as fast, 0.5 = half speed.")]
+    public float spinSpeed = 1f;
+    [Tooltip("The point this layer spins around, as a fraction of the layer's size, measured from its middle (x = right, y = up). 0, 0 = it spins around its own middle. For example 0.3, 0 makes it swing around a point to the right of its middle.")]
+    public Vector2 spinOrigin = Vector2.zero;
+    [Tooltip("Graph of the spin speed while this layer draws in: left = the moment it starts to appear, right = when it is fully drawn (after that it keeps the right-hand value). The height multiplies the Rotation Speed, so a tall bump at the left gives a fast spin at the start that slows down. A flat line at 1 changes nothing. On the arrow ring it shapes the settled spin (Ring Spin).")]
+    public AnimationCurve spinOverTime = AnimationCurve.Constant(0f, 1f, 1f);
+
+    [Header("Arrow ring (a ring of diamond + V groups: they turn apart, fuse, turn to face the middle, shrink and circle it)")]
+    [Tooltip("Turns this layer into the arrow ring. It then draws its own pieces from the two images below instead of the Texture above. Start At / Draw Time set when the whole sequence plays.")]
+    public bool arrowRing = false;
+    public Texture2D arrowV;
+    public Texture2D arrowDiamond;
+    [Tooltip("Colour of the big V pieces. The diamonds use the spell's colour.")]
+    public Color arrowAccent = new Color(1f, 0.85f, 0.3f);
+    [Tooltip("Degrees per second the small ring circles the middle once it has settled.")]
+    public float ringSpin = 90f;
+    [Tooltip("While the pieces appear and before the shape is complete, the whole ring spins around the middle this many full turns, starting fast and slowing to a stop as the shape completes (0 = no spin).")]
+    public float orbitTurns = 1f;
+    [Tooltip("Arrow ring. Checked: the full sequence (the pieces turn apart, fuse into groups, turn to point at the middle, then the ring shrinks and locks around the middle). Unchecked: the pieces do not point at the middle; they stay on the ring pointing along it and only spin and grow (Piece Count, Piece Wing and Ring Radius apply).")]
+    public bool pointToCenter = true;
+    [Min(0.01f), Tooltip("Point To Center ring: how far from the middle the ring ends up once it has shrunk and locked, as a fraction of the layer's size. The ring starts at Ring Radius (0.5 = the edge of the layer), so a smaller number shrinks it more; there is no upper limit. 0.19 is the old fixed amount.")]
+    public float finalRadius = 0.19f;
+    [Range(0.1f, 1f), Tooltip("Point To Center ring: how big the pieces are once the ring has shrunk, compared with their size before it shrinks (1 = they do not get smaller). 0.5 is the old fixed amount.")]
+    public float finalPieceScale = 0.5f;
+    [HideInInspector] public bool ringOrbitOnly;        // the old, inverted toggle: only read once to convert layers saved before Point To Center existed
+    [HideInInspector, SerializeField] bool convertedToPointToCenter;
+    [Tooltip("Orbit-only ring: wing length of the pieces, as a fraction of the layer's size.")]
+    public float pieceWing = 0.26f;
+    [Range(1, 8), Tooltip("Orbit-only ring: how many pieces.")]
+    public int pieceCount = 4;
+    [Range(-180f, 180f), Tooltip("Orbit-only ring (Point To Center unchecked): turns every piece on its own centre by a fixed angle, the same turn Point To Center animates but static. 0 = pointing along the ring; +90 = pointing at the middle; -90 = pointing away from it. It follows Reverse Spin, so +90 still points at the middle when the ring is reversed.")]
+    public float pieceTurn = 0f;
+    [Range(-1f, 1f), Tooltip("Orbit-only ring: the point on each piece that sits on the ring and that Piece Turn rotates around. 0 = the middle of the piece, +1 = its tip (the front end), -1 = its back end.")]
+    public float piecePivot = 0f;
+    [Min(0.01f), Tooltip("Arrow ring: how far from the middle the ring sits, as a fraction of the layer's size (0.5 = at the edge). With Point To Center checked this is where the ring starts, before it shrinks to Final Radius; unchecked, it is where the pieces stay.")]
+    public float ringRadius = 0.5f;
+
+    // layers saved with the old Ring Orbit Only toggle keep their behaviour: Point To Center is its inverse
+    public void OnBeforeSerialize() { convertedToPointToCenter = true; }
+
+    public void OnAfterDeserialize()
+    {
+        if (convertedToPointToCenter) return;
+        pointToCenter = !ringOrbitOnly;
+        convertedToPointToCenter = true;
+    }
+
+    [Header("Hand-drawn animation")]
+    [Tooltip("Optional: several drawings of this layer that are swapped one after another (a hand-drawn wiggle). The Texture above is the first one.")]
+    public Texture2D[] variants;
+    [Tooltip("How many times a second the drawings are swapped.")]
+    public float variantFps = 10f;
+    [Tooltip("0 = the spin is smooth. Above 0 the spin moves in jumps this many times a second (like animation drawn on twos).")]
+    public float stepFps = 0f;
+
+    [Header("Exit only")]
+    [Tooltip("This layer is hidden while the circle builds and holds, and plays only while the circle leaves (a flash, a shockwave, embers). Start At and Draw Time then mean a fraction of the exit.")]
+    public bool exitOnly = false;
+    [Tooltip("Exit-only layers start at this fraction of their size and grow to full size.")]
+    public float exitGrow = 0.4f;
+
+    [Header("While it holds")]
+    [Tooltip("The layer slowly grows by this fraction of its size per second while the cast is held (0.05 = 5% a second).")]
+    public float holdDrift = 0f;
+    [Range(0f, 1f), Tooltip("Flickers the layer's brightness.")]
+    public float shimmer = 0f;
 }
 
 // A set of circle layers that draw themselves over a spell's cast time. Assign one to a spell to give it a casting circle.
@@ -51,6 +145,17 @@ public class CastingCircleData : ScriptableObject
 {
     [Tooltip("How far in front of the hand the 'Front' anchor sits, in metres.")]
     public float frontDistance = 1.3f;
+
+    [Header("Leaving (when the spell is released)")]
+    public CircleExit exitStyle = CircleExit.Fade;
+    [Tooltip("How long the exit takes in seconds. 0 = use the length the game asks for (short for quick taps).")]
+    public float exitDuration = 0f;
+
+    [Header("Stroke glow")]
+    [Range(0f, 4f), Tooltip("Soft halo around every stroke, and a hotter white core. 0 = flat lines.")]
+    public float glow = 1.2f;
+    [Range(0f, 1f), Tooltip("How much the centre of each stroke turns white.")]
+    public float coreWhite = 0.35f;
 
     [Header("Depth (every layer sits at its own distance)")]
     [Tooltip("Each layer sits this much further from the previous one along the circle's depth, so the layers float apart. Upright circles stack away from the viewer; flat circles stack upward. A layer's own Offset z adds to this.")]

@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Circle_Radiant
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.4
+  exitStyle: 2
+  exitDuration: 0.45
+  glow: 1.2
+  coreWhite: 0.35
   depthSpacing: 0.3
   groundLayerSpacing: 0.03
   tiltDegrees: 5
@@ -36,6 +40,24 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.55
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Rays Counter
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -49,6 +71,24 @@ MonoBehaviour:
     startAt: 0.2
     drawTime: 0.5
     appear: 1
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Halo
     texture: {fileID: 2800000, guid: 884d5f54fa6a9044aa1feba58a473227, type: 3}
     useSpellColor: 1
@@ -62,6 +102,24 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Glow
     texture: {fileID: 2800000, guid: 771a812d2fdf4064eb14814e0f7d0288, type: 3}
     useSpellColor: 1
@@ -75,6 +133,24 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.5
     appear: 2
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Side Rays A
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -88,6 +164,24 @@ MonoBehaviour:
     startAt: 0.6
     drawTime: 0.3
     appear: 1
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Side Rays B
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -101,3 +195,21 @@ MonoBehaviour:
     startAt: 0.65
     drawTime: 0.3
     appear: 1
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0

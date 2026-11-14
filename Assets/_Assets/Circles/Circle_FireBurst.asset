@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Circle_FireBurst
   m_EditorClassIdentifier: Assembly-CSharp::CastingCircleData
   frontDistance: 1.3
+  exitStyle: 3
+  exitDuration: 0.4
+  glow: 1.2
+  coreWhite: 0.35
   depthSpacing: 0.3
   groundLayerSpacing: 0.03
   tiltDegrees: 4
@@ -36,6 +40,24 @@ MonoBehaviour:
     startAt: 0
     drawTime: 0.6
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Flame Petals Counter
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
     useSpellColor: 1
@@ -49,6 +71,24 @@ MonoBehaviour:
     startAt: 0.25
     drawTime: 0.5
     appear: 1
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Rays
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -62,6 +102,24 @@ MonoBehaviour:
     startAt: 0.1
     drawTime: 0.5
     appear: 2
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Floor Petals
     texture: {fileID: 2800000, guid: 44d2dad282caa4c4ab651f5728e78dd9, type: 3}
     useSpellColor: 1
@@ -75,6 +133,24 @@ MonoBehaviour:
     startAt: 0.3
     drawTime: 0.6
     appear: 0
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
   - name: Floor Rays
     texture: {fileID: 2800000, guid: a497dab9ec1faf943a139e959cfc7efe, type: 3}
     useSpellColor: 1
@@ -88,3 +164,21 @@ MonoBehaviour:
     startAt: 0.5
     drawTime: 0.4
     appear: 1
+    arrowRing: 0
+    arrowV: {fileID: 0}
+    arrowDiamond: {fileID: 0}
+    arrowAccent: {r: 1, g: 0.85, b: 0.3, a: 1}
+    ringSpin: 90
+    orbitTurns: 1
+    ringOrbitOnly: 0
+    pieceWing: 0.26
+    pieceCount: 4
+    ringRadius: 0.5
+    piecesFaceMiddle: 0
+    variants: []
+    variantFps: 10
+    stepFps: 0
+    exitOnly: 0
+    exitGrow: 0.4
+    holdDrift: 0
+    shimmer: 0
