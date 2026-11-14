@@ -1434,7 +1434,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             case SpellKind.Projectile: cast = CastProjectile(v, spell); break;
             case SpellKind.Laser: cast = CastLaser(v, spell); break;
             case SpellKind.GroundAoE:
-                AoeStrike.Spawn(GetAoeTarget(v, out bool inAir), v, damageTag, inAir, spell.name);
+                AoeStrike.Spawn(GetAoeTarget(v, out bool inAir), v, damageTag, inAir, spell.FxKey);
                 cast = true;
                 break;
             case SpellKind.Barrier: cast = CastBarrier(v); break;
@@ -1457,7 +1457,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (!IsSustained(spell) || Time.time - lastBeamEffect > 0.45f)
         {
             lastBeamEffect = Time.time;
-            if (sound == Sfx.BarrierPlace || !SpellSounds.Cast(spell.name, muzzle.position)) SpellFX.Play(sound, muzzle.position, 0.8f);
+            if (sound == Sfx.BarrierPlace || !SpellSounds.Cast(spell.FxKey, muzzle.position)) SpellFX.Play(sound, muzzle.position, 0.8f);
             SpellFX.CastFlash(LaunchPosition, v.effectColor);
         }
 
@@ -1504,6 +1504,37 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         return dir.normalized;
     }
 
+    // Like GetAimDirection, but for a shot that takes time to arrive: when locked onto a moving target it points at the spot where a shot
+    // of this speed and the target meet. Free aim (no lock) is not changed.
+    Vector3 GetLeadDirection(float shotSpeed)
+    {
+        if (lockOn == null || !lockOn.IsLocked || shotSpeed <= 0.01f) return GetAimDirection();
+
+        Vector3 origin = LaunchPosition;
+        Vector3 toTarget = lockOn.AimPoint - origin;
+        Vector3 velocity = lockOn.TargetVelocity;
+        if (velocity.sqrMagnitude < 0.25f) return GetAimDirection();
+
+        // |toTarget + velocity * t| = shotSpeed * t
+        float a = Vector3.Dot(velocity, velocity) - shotSpeed * shotSpeed;
+        float b = 2f * Vector3.Dot(toTarget, velocity);
+        float c = Vector3.Dot(toTarget, toTarget);
+        float t;
+        if (Mathf.Abs(a) < 0.001f) t = Mathf.Abs(b) > 0.001f ? -c / b : -1f;
+        else
+        {
+            float disc = b * b - 4f * a * c;
+            if (disc < 0f) return GetAimDirection();
+            float root = Mathf.Sqrt(disc);
+            float t1 = (-b - root) / (2f * a), t2 = (-b + root) / (2f * a);
+            t = t1 > 0f && t2 > 0f ? Mathf.Min(t1, t2) : Mathf.Max(t1, t2);
+        }
+        if (t <= 0f || t > 2.5f) return GetAimDirection();       // cannot catch it (or only far in the future): aim straight at it
+
+        Vector3 dir = toTarget + velocity * t;
+        return dir.sqrMagnitude > 0.01f ? dir.normalized : GetAimDirection();
+    }
+
     Vector3 GetCursorAimPoint()
     {
         Vector2 screenPoint = useMousePosition
@@ -1525,6 +1556,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         inAir = false;
         bool locked = lockOn != null && lockOn.IsLocked;
         Vector3 p = locked ? lockOn.AimPoint : GetCursorAimPoint();
+        if (locked) p += lockOn.TargetVelocity * Mathf.Min(v.aoeDelay, 1.5f);      // the blast lands where the target is heading
 
         Vector3 origin = transform.position;
         Vector3 flat = p - origin;
@@ -1569,7 +1601,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         var prefab = v.projectilePrefab != null ? v.projectilePrefab : spell.defaultProjectile;
         if (prefab == null) return false;
 
-        Vector3 dir = GetAimDirection();
+        // a locked target that is moving is led: the shot is aimed at where the target will be when it gets there
+        Vector3 dir = GetLeadDirection(v.projectileSpeed);
+        Transform seek = v.homingTurnRate > 0f && lockOn != null && lockOn.IsLocked ? lockOn.CurrentTarget : null;
 
         int count = Mathf.Max(1, v.projectileCount);
         for (int k = 0; k < count; k++)
@@ -1577,9 +1611,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             float angle = count == 1 ? 0f : Mathf.Lerp(-v.spreadDegrees * 0.5f, v.spreadDegrees * 0.5f, k / (float)(count - 1));
             Vector3 shotDir = Quaternion.AngleAxis(angle, mainCamera.transform.up) * dir;
 
-            var p = ProjectilePool.Get(prefab, spell.name, spell.name, v.effectColor, v.projectileScale, LaunchPosition, Quaternion.LookRotation(shotDir));
+            var p = ProjectilePool.Get(prefab, spell.FxKey, spell.FxKey, v.effectColor, v.projectileScale, LaunchPosition, Quaternion.LookRotation(shotDir));
             p.Init(v.damage, v.projectileSpeed, v.lifetime, v.projectileScale, v.explosionRadius,
                 v.pierceCount, v.explodeOnPierce, v.breaksBarriers, v.status);
+            p.SetFlight(v.hitHeight, v.proximityFuse, v.homingTurnRate, seek);
         }
         return true;
     }
@@ -1587,7 +1622,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     // instant hit along the aim line
     WandAim wandAim;
     float lastBeamEffect;
-    static bool IsSustained(SpellData spell) => spell != null && (spell.name == "RadiantBeam" || spell.name == "BlizzardLance");
+    static bool IsSustained(SpellData spell) => spell != null && (spell.FxKey == "RadiantBeam" || spell.FxKey == "BlizzardLance");
 
     bool CastLaser(SpellVariant v, SpellData spell)
     {
@@ -1599,6 +1634,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         var done = new System.Collections.Generic.HashSet<IDamageable>();
+        bool struck = false;
+        Vector3 lastStruck = end;
         foreach (var hit in hits)
         {
             if (hit.distance <= 0f) continue;                        // started inside it
@@ -1621,20 +1658,60 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 {
                     target.TakeDamage(v.damage, hit.point);
                     StatusEffects.Apply(hit.collider, v.status);
+                    struck = true;
+                    lastStruck = hit.collider.bounds.center;
                 }
                 if (!v.laserPierces) { end = hit.point; break; }
                 continue;
             }
 
+            // scenery that can be broken takes the beam (and stops it)
+            if (target is Destructible) target.TakeDamage(v.damage, hit.point);
+
             end = hit.point;   // solid surface stops the beam
             break;
         }
 
-        LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration, spell.name);
+        LaserBeam.Spawn(origin, end, v.laserWidth, v.effectColor, v.laserDuration, spell.FxKey);
+        if (struck && v.chainCount > 0) ChainFrom(lastStruck, v, spell, done);
         // the sustained beams draw their own starburst at the far end every few ticks
-        if (!IsSustained(spell) && (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.name, end, -dir, 1.1f, v.effectColor))) SpellFX.Sparks(end, v.effectColor);
-        SpellSounds.Impact(spell.name, end, 0f, 0.6f);
+        if (!IsSustained(spell) && (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.FxKey, end, -dir, 1.1f, v.effectColor))) SpellFX.Sparks(end, v.effectColor);
+        SpellSounds.Impact(spell.FxKey, end, 0f, 0.6f);
         return true;
+    }
+
+    // the beam jumps from the enemy it hit to the nearest enemy it has not touched yet, again and again, weaker each time
+    void ChainFrom(Vector3 from, SpellVariant v, SpellData spell, System.Collections.Generic.HashSet<IDamageable> done)
+    {
+        float damage = v.damage;
+        for (int jump = 0; jump < v.chainCount; jump++)
+        {
+            damage *= v.chainFalloff;
+
+            Collider best = null;
+            float bestDist = v.chainRange;
+            foreach (var col in Physics.OverlapSphere(from, v.chainRange, aimMask, QueryTriggerInteraction.Ignore))
+            {
+                if (!col.CompareTag(damageTag)) continue;
+                var candidate = col.GetComponentInParent<IDamageable>();
+                if (candidate == null || done.Contains(candidate)) continue;
+                if (candidate is Health h && h.IsDead) continue;
+
+                float d = Vector3.Distance(from, col.bounds.center);
+                if (d < bestDist) { bestDist = d; best = col; }
+            }
+            if (best == null) return;
+
+            var target = best.GetComponentInParent<IDamageable>();
+            done.Add(target);
+            Vector3 to = best.bounds.center;
+            target.TakeDamage(damage, to);
+            StatusEffects.Apply(best, v.status);
+
+            LaserBeam.Spawn(from, to, v.laserWidth * 0.6f, v.effectColor, v.laserDuration, spell.FxKey);
+            if (!SpellFX.UseMagicFX || !SpellImpact.Play(spell.FxKey, to, (from - to).normalized, 0.8f, v.effectColor)) SpellFX.Sparks(to, v.effectColor);
+            from = to;
+        }
     }
 
     // a wall in front of the player, facing where they are aiming

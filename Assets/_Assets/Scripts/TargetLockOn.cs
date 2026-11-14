@@ -42,6 +42,26 @@ public class TargetLockOn : MonoBehaviour
         lockOnAction != null && lockOnAction.action != null ? PlayerSettings.LabelOf(lockOnAction.action) : "V";
     public Vector3 AimPoint => CurrentTarget != null ? PointOn(CurrentTarget) : Vector3.zero;
 
+    // how the locked target is moving right now (smoothed), so shots and blasts can be aimed ahead of it
+    public Vector3 TargetVelocity { get; private set; }
+    Vector3 lastTargetPos;
+    bool hasLastTargetPos;
+
+    void TrackVelocity()
+    {
+        if (!IsLocked) { TargetVelocity = Vector3.zero; hasLastTargetPos = false; return; }
+
+        Vector3 pos = CurrentTarget.position;
+        if (hasLastTargetPos && Time.deltaTime > 0.0001f)
+        {
+            Vector3 raw = (pos - lastTargetPos) / Time.deltaTime;
+            if (raw.sqrMagnitude > 80f * 80f) raw = Vector3.zero;                    // a teleport is not movement
+            TargetVelocity = Vector3.Lerp(TargetVelocity, raw, 1f - Mathf.Exp(-10f * Time.deltaTime));
+        }
+        lastTargetPos = pos;
+        hasLastTargetPos = true;
+    }
+
     // a point on the target worked out from its own bounds, so big and small enemies are aimed at the same relative spot
     Vector3 PointOn(Transform target)
     {
@@ -164,6 +184,8 @@ public class TargetLockOn : MonoBehaviour
         Log("LOCKING onto '" + target.name + "'");
         CurrentTarget = target;
         hiddenTimer = 0f;
+        TargetVelocity = Vector3.zero;
+        hasLastTargetPos = false;
 
         targetGroup.Targets.Clear();
         targetGroup.AddMember(lockOnPivot, 1f, 1f);
@@ -197,6 +219,7 @@ public class TargetLockOn : MonoBehaviour
 
     void Update()
     {
+        TrackVelocity();
         if (!IsLocked)
         {
             if (hadLock) { Log("AUTO-UNLOCK: target destroyed"); Unlock(); }

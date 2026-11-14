@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: AbsoluteZero
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Absolute Zero
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  fxStyle: AbsoluteZero
+  roleLabel: Freezing sky pillar
+  tap:
+    kind: 2
+    damage: 150
+    breaksBarriers: 0
+    effectColor: {r: 0.7, g: 0.9, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 13
+    aoeRange: 70
+    aoeHeight: 60
+    aoeDelay: 1
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 4
+      duration: 3.5
+      magnitude: 0
+    manaCost: 100
+    cooldown: 8
+  hasHoldVariant: 1
+  holdThreshold: 2.4
+  hold:
+    kind: 2
+    damage: 150
+    breaksBarriers: 0
+    effectColor: {r: 0.7, g: 0.9, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 13
+    aoeRange: 70
+    aoeHeight: 60
+    aoeDelay: 1
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 4
+      duration: 3.5
+      magnitude: 0
+    manaCost: 100
+    cooldown: 8
+  tapMovement: 0
+  tapRecovery: 0
+  holdingMovement: 1
+  holdingStartsAfter: 0.15
+  heldMovement: 1
+  heldRecovery: 0.4
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 8
+  holdCircle: {fileID: 11400000, guid: a63da80f6dd3a5a4898134afb6cb5fd6, type: 2}
+  tapCircle: {fileID: 0}
+  circleScale: 1.25
+  tapCircleScale: 0.45
+  holdDisplayName: Absolute Zero
+  multicastable: 1
+  chant:
+  - Stillness at the centre of all things
+  - Hold them and let the cold take them
+  tapDoesNothing: 0
+  extraTiers: []
+  autoRepeatWhenHeld: 0

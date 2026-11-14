@@ -377,6 +377,7 @@ public class MainMenu : MonoBehaviour
 
     static string KindName(SpellData s)
     {
+        if (!string.IsNullOrEmpty(s.roleLabel)) return s.roleLabel;
         switch (s.tap.kind)
         {
             case SpellKind.Laser: return "Beam";
