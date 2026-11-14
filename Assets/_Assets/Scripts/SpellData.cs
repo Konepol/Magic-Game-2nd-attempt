@@ -50,18 +50,36 @@ public class SpellVariant
     [Min(1)] public int projectileCount = 1;
     public float spreadDegrees = 0f;        // total fan angle, projectiles are spaced evenly across it
 
+    [Header("Projectile: sky combat")]
+    [Tooltip("Extra reach above and below the shot, in metres: the hit shape becomes a standing capsule, so a shot aimed at a flier's height still connects when the flier climbs or dives. The ground and walls ignore it.")]
+    public float hitHeight = 0f;
+    [Tooltip("Airburst fuse: the shot goes off as soon as an enemy is within this distance (it does not have to touch). Give it an explosion radius at least this big.")]
+    public float proximityFuse = 0f;
+    [Tooltip("Degrees per second the shot turns toward its target: the locked enemy, otherwise the nearest enemy ahead of it. 0 = flies straight.")]
+    public float homingTurnRate = 0f;
+
     [Header("Laser")]
     public float laserRange = 60f;
     public float laserRadius = 0.15f;       // thickness of the hit check
     public bool laserPierces = false;       // hits every enemy along the line instead of the first
     public float laserWidth = 0.3f;         // thickness of the visible beam
     public float laserDuration = 0.2f;      // how long the beam stays visible
+    [Tooltip("After the beam hits an enemy it jumps to this many more enemies nearby.")]
+    public int chainCount = 0;
+    public float chainRange = 14f;          // how far each jump can reach
+    [Range(0.1f, 1f)] public float chainFalloff = 0.7f;     // damage kept on each jump
 
     [Header("Ground AoE (hold to aim, release to cast)")]
     public float aoeRadius = 4f;
     public float aoeRange = 30f;            // furthest the ring can be placed from the player
     public float aoeHeight = 6f;            // how far above the ground the blast reaches (so flying enemies are hit)
     public float aoeDelay = 0.6f;           // warning time between release and the blast
+    [Tooltip("Above 0 the area stays for this many seconds after the blast and keeps hurting what is inside (a storm, a burning crater, a gravity well).")]
+    public float lingerDuration = 0f;
+    public float lingerTickDamage = 0f;     // damage on every tick while it lingers (the status effect is applied again too)
+    public float lingerTickInterval = 0.5f;
+    [Tooltip("Metres per second enemies inside the lingering area are dragged toward its centre.")]
+    public float lingerPull = 0f;
 
     [Header("Barrier")]
     public float barrierWidth = 4f;
@@ -89,6 +107,15 @@ public class SpellData : ScriptableObject
 {
     public string displayName = "New Spell";
     public Projectile defaultProjectile;
+
+    [Header("Look and sound")]
+    [Tooltip("Which family of effects this spell uses: the projectile model, trail, impact, beam, sound and cast pose are all picked by this key (ArcaneBolt, FireBurst, LightningLance, MeteorStrike ...). Empty = the asset's own name.")]
+    public string fxStyle = "";
+    [Tooltip("Short label for the spell book (Homing swarm, Sky pillar ...). Empty = worked out from the spell kind.")]
+    public string roleLabel = "";
+
+    // the key every effect, sound and pose table is looked up with
+    public string FxKey => string.IsNullOrEmpty(fxStyle) ? name : fxStyle;
 
     [Header("Tap (press and release quickly)")]
     public SpellVariant tap = new SpellVariant();
@@ -201,6 +228,9 @@ public class SpellData : ScriptableObject
         v.aoeRadius *= t.sizeMultiplier;
         v.explosionRadius *= t.sizeMultiplier;
         v.projectileScale *= t.sizeMultiplier;
+        v.hitHeight *= t.sizeMultiplier;
+        v.proximityFuse *= t.sizeMultiplier;
+        v.lingerTickDamage *= t.damageMultiplier;
         v.manaCost *= t.manaMultiplier;
         tierVariants[tier] = v;
         return v;

@@ -13,35 +13,30 @@ MonoBehaviour:
   m_Name: GameCatalog
   m_EditorClassIdentifier: Assembly-CSharp::GameCatalog
   spells:
-  - {fileID: 11400000, guid: 84ff10f1769640f408cd320deb9ec933, type: 2}
-  - {fileID: 11400000, guid: e39d82728ce879d4da0efc195bdfc7da, type: 2}
-  - {fileID: 11400000, guid: 336a91e1ec9f946448d3ada891b824ff, type: 2}
-  - {fileID: 11400000, guid: f87301bd9846d1d4b85c28a5493327a7, type: 2}
-  - {fileID: 11400000, guid: 13e4958c455d47942bd46181c7e05f42, type: 2}
-  - {fileID: 11400000, guid: 92b6b17b061a0e44a9bcd2e1705718b6, type: 2}
-  - {fileID: 11400000, guid: fe1db34eb2a6f7c4b886c0a937824ad3, type: 2}
-  - {fileID: 11400000, guid: 7a24b7a0d21aa9944ae69efd55855805, type: 2}
-  - {fileID: 11400000, guid: 6ba9596aaec9ae64b9c81638ad075bf8, type: 2}
-  - {fileID: 11400000, guid: f9abd7a7bc8e3c5458f9347dbd32ee23, type: 2}
-  - {fileID: 11400000, guid: 515e01354d002104b92628e87d4a4276, type: 2}
+  - {fileID: 11400000, guid: 0b10bd7098ac1d7818421dcf9cd96d54, type: 2}
+  - {fileID: 11400000, guid: 0f4ff321c3b5cba943d16455e966a606, type: 2}
+  - {fileID: 11400000, guid: bc186d70fb48d2ef8122107dfee9dba3, type: 2}
+  - {fileID: 11400000, guid: 33d5d1fa67896d7a1fc02895b7bc19db, type: 2}
+  - {fileID: 11400000, guid: 5a6be6b7c64a450bcec0836b87f04386, type: 2}
+  - {fileID: 11400000, guid: a665120aa2b1bb15303b506104ae9679, type: 2}
+  - {fileID: 11400000, guid: 7a55e2f898a130740f85dfeb12dd023a, type: 2}
+  - {fileID: 11400000, guid: 1aea2515970600229ff107a7e6354f57, type: 2}
   combos:
-  - {fileID: 11400000, guid: 97241855223d0fa469d6065185ef802a, type: 2}
-  - {fileID: 11400000, guid: 689001884a3022241b5f3968550be3d0, type: 2}
-  - {fileID: 11400000, guid: f17019eca2b3bb54095ddbd597eea35a, type: 2}
-  - {fileID: 11400000, guid: 769f3ef3cd187044db037427307e1f2f, type: 2}
-  - {fileID: 11400000, guid: 6c67523768ec19a47bdbbf8418879c23, type: 2}
-  - {fileID: 11400000, guid: aa703e15106b6f44fabc3848ea55c4b6, type: 2}
-  - {fileID: 11400000, guid: 5740cae9140ad1d4a9217a362a8d7800, type: 2}
-  - {fileID: 11400000, guid: 8bb8f62dbb8002744ad47c642c2d1567, type: 2}
-  - {fileID: 11400000, guid: f39426b1aa29f3845b181b6e18ff2142, type: 2}
-  - {fileID: 11400000, guid: b22a9e5162429634f99e4f0fd9d3bfaf, type: 2}
-  - {fileID: 11400000, guid: c0ab6a6feeed8a240ac1586e189251cf, type: 2}
+  - {fileID: 11400000, guid: fda7689609f0ed5b43661b34e8c0617d, type: 2}
+  - {fileID: 11400000, guid: d09b168dd8fde9f16923620170b83ed2, type: 2}
+  - {fileID: 11400000, guid: 24208b56fd52fe75f86a833b3268b3a7, type: 2}
+  - {fileID: 11400000, guid: b32174b5792184b0991b4d1ed8d35c6c, type: 2}
+  - {fileID: 11400000, guid: cf7b10093bd15bc7c1e48542d822110f, type: 2}
+  - {fileID: 11400000, guid: a17ae0b355cdde20fa51d68b3ba9cd49, type: 2}
   slotCount: 7
   defaultLoadout:
-  - ArcaneBolt
-  - ScatterShot
-  - FireBurst
-  - MeteorStrike
+  - StarBolt
+  - FlakBurst
+  - SeekerSwarm
+  - Thunderclap
+  - GaleCrescent
+  - GravityWell
+  - Starfall
   allowMulticast: 1
   multicastDelay: 0.15
   maxMulticast: 4

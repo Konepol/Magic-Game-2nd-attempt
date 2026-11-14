@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: Judgement
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Judgement
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  fxStyle: ThunderMeteor
+  roleLabel: Siege spell - stuns
+  tap:
+    kind: 2
+    damage: 330
+    breaksBarriers: 1
+    effectColor: {r: 1, g: 0.9, b: 0.35, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 22
+    aoeRange: 90
+    aoeHeight: 70
+    aoeDelay: 1.3
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 3
+      duration: 2.5
+      magnitude: 0
+    manaCost: 130
+    cooldown: 12
+  hasHoldVariant: 1
+  holdThreshold: 5
+  hold:
+    kind: 2
+    damage: 330
+    breaksBarriers: 1
+    effectColor: {r: 1, g: 0.9, b: 0.35, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 22
+    aoeRange: 90
+    aoeHeight: 70
+    aoeDelay: 1.3
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 3
+      duration: 2.5
+      magnitude: 0
+    manaCost: 130
+    cooldown: 12
+  tapMovement: 0
+  tapRecovery: 0
+  holdingMovement: 2
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 1
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 12
+  holdCircle: {fileID: 11400000, guid: ad26c45e8f90690408e72212c245d7cf, type: 2}
+  tapCircle: {fileID: 0}
+  circleScale: 1.4
+  tapCircleScale: 0.45
+  holdDisplayName: Judgement
+  multicastable: 0
+  chant:
+  - Storm above and star beyond
+  - Fall together as one verdict
+  - Let none rise after
+  tapDoesNothing: 0
+  extraTiers: []
+  autoRepeatWhenHeld: 0
