@@ -106,11 +106,17 @@ Spells can destroy scenery, and destroying things has consequences.
 
 **Quest difficulty rule:** the reward's power sets the quest's difficulty and secrecy. Easy common spells and wands are obtained simply. The most powerful ones combine **hard fights, hidden secrets, puzzles, and exploration**, and may be long.
 
+### 6.9 Economy, failure, difficulty and saving
+- **Economy:** medieval-style trade. There is a **central money system**, but you don't have to pay with money: you can offer **anything of equal or higher value**, and what it can be traded for depends on the seller. Fines and repair bills use the same system. Value tables and which items are tradable: **TBD**.
+- **Death:** you respawn at the **last checkpoint with no loss**.
+- **Difficulty:** medium by default, with a **selectable difficulty** (easy, normal, hard). Exact numbers: **TBD**.
+- **Saving:** **auto-save anywhere**, so drop-in play always keeps progress.
+
 ## 7. Co-op, NPC helpers and PvP (later milestones)
 - **Co-op (first):** players help each other with quests.
 - **Player count follows boss scale.** Each boss gets a **recommended range**, for example 5 to 10, but the number is **not fixed**: you can enter with fewer or more. Bosses **also scale live** (health, phases and mechanics) with how many are fighting.
 - **Networking:** Steam-style peer-to-peer with a host; others join by invite. Keep spells, quests and world state data-driven so they can be synchronised.
-- **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. When playing solo, NPCs count toward boss scaling like players. Full roster and rules: **TBD**.
+- **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. NPC helpers can be **switched off individually**, and they are **also allowed in co-op**, with limits: every NPC has a **value**, every boss has a **value limit**, and the NPCs brought in count toward that limit. The more NPC value you bring, the more the boss scales up. When playing solo, NPCs count toward boss scaling like players. Value numbers, boss limits and the full roster: **TBD**.
 - **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. Balance and matchmaking: **TBD**.
 - Single-player must stay fully playable without any of this.
 
