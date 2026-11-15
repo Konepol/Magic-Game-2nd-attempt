@@ -117,6 +117,10 @@ Spells can destroy scenery, and destroying things has consequences.
 - **Crime is wider than destruction.** Doing bad things in general counts, including hurting or killing NPCs and civilians, which is possible **with consequences**.
 - **No wanted-level stages.** Consequences depend on **reputation**, tracked **per town and per faction**, separately. Towns and factions can be allies, and a faction can come from the same town while still being a separate standing. Reputation affects **prices and barter terms**, **which quests and NPC helpers appear** (some refuse you if you're hated), **guard behavior** (including witch guards on brooms hunting you), and **story options**.
 - **Where crime applies depends on the zone**: each zone has its own law (a lawless wilderness versus a strict sky city). Table of zone laws: **TBD**.
+- **Making amends:** repair and pay fines, do favor quests for that town, **capture a wanted criminal**, **revive NPCs you killed**, or **serve time in jail**. **Some crimes are permanent.**
+- **Killing NPCs:** a dead NPC **stays dead until revived**. Important NPCs are **strong or protected by default but can still be killed**.
+- **Allies:** whether allied towns and factions share reputation is **up to each faction**.
+- **Co-op:** reputation is **per player**, even in a shared world, so a friend's crime in your world is on their own record.
 - Exact reputation tiers and thresholds, the list of crimes, and the repair minigame design: **TBD**.
 
 ### 6.8 Progression
