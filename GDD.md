@@ -38,7 +38,7 @@ This is a **personal project with no release date and no store**. It is "done" w
 **Quest types:** story missions, spell and wand quests, broom trials, and NPC favor quests (which can make NPCs into helpers).
 **Finding quests:** the quest board, NPC conversations, exploration and secrets, and rumors and clues collected in the spellbook. Some quests have a map marker and some deliberately have none.
 
-**Moment-to-moment loop:** explore (broom) > find a quest or threat > fight (spells, mana, barrier) > reward (story, level, wand, spell, broom upgrade, cosmetic) > a new part of the map or a new option in the spellbook.
+**Moment-to-moment loop:** explore (broom) > find a quest or threat > fight (spells, mana, barrier) > reward (story, upgrade, wand, spell, broom upgrade, cosmetic) > a new part of the map or a new option in the spellbook.
 
 ## 5. Story
 
@@ -61,6 +61,9 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
 - **Fusions:** press `B`, press the spells to join, press `B` again to ready the fusion (15 s timer), hold `B` to cast it. 2 to 4 ingredient recipes.
 - **Sky-combat rules** (from `SPELLS.md`): everything reaches a flier; quick spells never restrict movement; siege spells (Starfall and others) are a big commitment.
 - Current spell list: Star Bolt, Seeker Swarm, Flak Burst, Gale Crescent, Thunderclap, Frost Spire, Gravity Well, Starfall, plus fusions (Nova Shell, Firefly Barrage, Storm Front, Absolute Zero, Heaven Piercer, Judgement). The finished game targets about **40 spells** (and about **12 wands**), which grows through quests.
+- **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
+- **Loadout size depends on the wand.** Some wands hold many spells, and some hold **only one and cannot fuse, which makes that wand extremely strong**. Slot numbers per wand: **TBD**. A single-spell wand has no multicast and no fusion, its spell is boosted far above normal and costs a lot of mana or cast time, and it is **tied to the hardest secret quests** (though not every one of them has to be the hardest).
+- **Fusion recipes are shown but locked until learned.** You see the recipe, and you learn it by doing; some recipes come from quests or quest rewards.
 - **Chants:** voiced lines per spell, text above the head today; the finished game adds **chanting voice lines** (see section 10).
 
 ### 6.3 Mana, health, barrier
@@ -77,7 +80,9 @@ Some fights happen underground or in places where flying is forbidden or limited
 - Enemy factions tie directly to the story and are **not set yet** (candidate groups: rival witches, creatures and monsters per zone, corrupted or cursed beings, human soldiers and guards). Boss count and structure: **TBD** with the story.
 - Ground and air enemies both matter (existing: Rusher, Charger, Heavy, Seeker, flying shooter).
 - **Rival witches on brooms** are elite enemies who cast spells like the player. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
-- **Bosses** are set pieces with a gimmick (existing: The Warden of Ruins, three phases).
+- **Bosses** are set pieces (existing: The Warden of Ruins, three phases). It depends on the boss: many are multi-phase, some have a gimmick or puzzle, some are huge and fought in the air on the broom, many have destructible arenas, and **some have no gimmick at all**.
+- **Crime during boss fights:** it depends on the zone, but destruction is **mostly ignored while a boss fight is going**.
+- **Rematches:** a boss you beat is placed in a **simulation area** where you can fight it again. Rematch rewards: **TBD**.
 - Enemy and boss stat values stay in code for now and are reworked when the new structure is in place.
 
 ### 6.7 Destruction, crime and repair
@@ -103,7 +108,7 @@ Spells can destroy scenery, and destroying things has consequences.
 ### 6.8 Progression
 | What | How it grows |
 | --- | --- |
-| Player level and stats | Quests and story |
+| Player stats | **No levels, only upgrades**: quest and story rewards raise stats (health, mana and so on) |
 | Wands (about 12) | Separate wand quests; stronger wands come from harder or more secret quests. A wand changes stats and mana modifiers, has its own unique ability, and sets the number of spell slots in the loadout |
 | Spells | Separate spell quests with the same rule |
 | Broom | Its own trial quests (broom control); also gates some story |
@@ -117,8 +122,14 @@ Spells can destroy scenery, and destroying things has consequences.
 - **Difficulty:** medium by default, with a **selectable difficulty** (easy, normal, hard). Exact numbers: **TBD**.
 - **Saving:** **auto-save anywhere**, so drop-in play always keeps progress.
 
+### 6.10 Extras
+- In-engine **cinematic cutscenes**, a **photo mode**, **subtitles** for chants and dialogue, and the existing **rebindable keys**. You also named "something else" here: **TBD, tell me what it was**.
+
+### 6.11 Completed quests stay completed
+Most quests are **not repeatable**, so once finished they **stay finished** in the world and the save. What to do with them afterward (for example, whether their places change, give nothing, or offer a replay, and how a co-op player who already finished one is handled): **TBD, to be decided later**.
+
 ## 7. Co-op, NPC helpers and PvP (later milestones)
-- **Co-op (first):** players help each other with quests.
+- **Co-op (first):** players help each other with quests. Players see each other **both** in the open world and in quests: a friend can roam your world, and you can invite each other into quests. A quest completed together counts as complete for **both players**, and both are rewarded.
 - **Player count follows boss scale.** Each boss gets a **recommended range**, for example 5 to 10, but the number is **not fixed**: you can enter with fewer or more. Bosses **also scale live** (health, phases and mechanics) with how many are fighting.
 - **Networking:** Steam-style peer-to-peer with a host; others join by invite. Keep spells, quests and world state data-driven so they can be synchronised.
 - **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. NPC helpers can be **switched off individually**, and they are **also allowed in co-op**, with limits: every NPC has a **value**, every boss has a **value limit**, and the NPCs brought in count toward that limit. The more NPC value you bring, the more the boss scales up. When playing solo, NPCs count toward boss scaling like players. Value numbers, boss limits and the full roster: **TBD**.
@@ -153,7 +164,7 @@ Zone gating: story chapters, sealed gates or fog that story events remove, and b
 ## 10. UI and immersion
 
 - **In play:** a clean fantasy HUD, minimal gold trim, small icons, and it **fades out unless needed**. Combat state is shown on the witch and in the world where possible (wand glow, aura, barrier, circle) instead of bars.
-- **Menus:** diegetic **spellbook**. Loadout, fusion recipes, quests and map live in a grimoire. Opening it shows the book in the witch's hands with the world dimmed behind it.
+- **Menus:** diegetic **spellbook**. Loadout, fusion recipes, quests and map live in a grimoire. Opening it shows the book in the witch's hands with the world dimmed behind it. Each part is its own **tab**: loadout and fusion recipes, quest log with rumors and clues, map, and reputation, NPC helpers and settings. In single player the game **pauses while the book is open**; in co-op the world keeps running.
 - **Feedback:** chants, wand hum and ambient sound carry state and mood.
 - **Cinematic camera:** big spells, bosses, and zone reveals.
 - Immersion applies to the other parts of the game too (quests, shops, hub), not only combat. The detailed design of each is **TBD**.
@@ -197,7 +208,8 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 3. Which specific areas use a hard ban, a low ceiling, or a law-based ban on flight.
 4. Spell counts per zone and per rarity, and how many of the ~40 are fusions.
 5. What each of the ~12 wands does (stats, unique ability, slot count).
-6. Crime details: wanted levels, reputation tiers, repair minigame, which spell unlocks repair magic.
+6. What happens with quests that are completed and cannot be repeated (also in co-op).
+6b. Crime details: wanted levels, reputation tiers, repair minigame, which spell unlocks repair magic.
 7. NPC helper roster: who helps, who refuses, and what each needs.
 8. Boss scaling numbers for each boss.
 
