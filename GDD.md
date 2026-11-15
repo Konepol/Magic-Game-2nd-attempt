@@ -75,7 +75,8 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
   - **Start from scratch:** the current spell list is discarded. New spells are designed together (the owner gives references and ideas, Claude proposes concepts), and the M1 slice needs only **3 to 4 very polished spells**.
   - **Spell scale follows the player's mana and mana output**, and there is a separate **mana output** control (own key) the player uses, in the spirit of *Frieren*:
     - The player sets a **power level before casting**, which **multiplies how much each spell costs**, and the output **sets the spell's size continuously**.
-    - While casting, the player can **hold to pour in even more mana**. The drawbacks of this (so it isn't free power): **TBD**.
+    - While casting, the player can **hold to pour in even more mana**. Drawbacks so it isn't free power: past a safe level the **cost rises much faster**, and **mana regeneration pauses for a few seconds afterward**.
+    - **Every spell has its own output limit.** Pushing extra output past that point makes the spell **backfire and damage the caster**. The limit differs per spell and is part of its design.
     - Output is shown as a **visible mana aura** on the witch, and the player can **suppress mana** (stealth) so enemies and NPCs notice less.
     - Normal tap and hold casting stays the base, and output is the extra layer.
   - M1's first spells should cover: a basic attack with a signature motion, a big charge spell that transforms (**not just ball to beam**), the movement spell (blink or dash), and a defensive or counter spell.
@@ -86,7 +87,8 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
     - **Veil Step** (movement): a petal blink spell with a **toggleable passive that changes the dash into a blink**; details in the next bullets.
     - **Lantern** (multipurpose): a floating light you place or throw. It lights dark places such as caves, marks enemies for homing, lures enemies when thrown, and held it grows into a beacon that others can teleport to.
     - **Spells with a passive part:** a spell in the list can have an **active part** (what it does when cast) and a separate **passive part** that is **toggled on and off**. Equipping a spell keeps its active part usable; the toggle only controls the passive. The passive **costs mana when it activates**, or **continuously takes up mana while toggled on**.
-    - **Veil Step** is the example: its **active part is unchanged when equipped** (holding it still opens the star gate portal ahead of you, with the afterimage), and its **toggleable passive part turns the dash into a blink** (petals dissolve and re-form at the aimed spot). So it is an ordinary castable spell and a movement modifier at once. Its tap behavior and which passives work which way: **TBD**.
+    - **Mana style is decided per spell**: each spell chooses whether its passive costs mana per activation or keeps mana tied up while on (Veil Step uses per activation, since constant drain would cost too much). **Any kind of passive is allowed**, for example passive healing, trap sense or eagle eye.
+    - **Veil Step** is the example: its **active part is unchanged when equipped** (holding it still opens the star gate portal ahead of you, with the afterimage), and its **toggleable passive part turns the dash into a blink** (petals dissolve and re-form at the aimed spot). So it is an ordinary castable spell and a movement modifier at once. **Tapping Veil Step** makes a short blink toward where you aim; holding opens the star gate.
   - The remaining spell designs: **TBD** (spell changes come before M1 content).
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
@@ -276,7 +278,14 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 6. Quest content: tutorial, spell quest, wand quest, broom trial 1.
 7. Repair minigame and reputation, then a polish pass against the feel checks.
 
-**M1 open questions:** the feel-check list, the tutorial's content, the wand's unique ability, which existing spells stay (spell changes next), the teacher's character, and the fracture piece budget.
+**Decided for M1:**
+- **Feel checks:** flying across the forest feels free; a chant makes the player feel powerful; breaking a wall feels satisfying; the HUD stays out of the way; each of the 4 spells looks different at a glance.
+- **Fracture budget:** start with about **150 live pieces** at once, with the oldest fading out first, and tune after testing.
+- **Teacher:** an older, dry-humoured witch, slightly impatient, who teaches by giving tasks (placeholder until the story is written).
+- **Spell build order:** **Weaver** first (it proves the casting circle, scale and visual style), then Hollow Moon, Mirror Bloom, Lantern and Veil Step.
+- **Starter wand's unique ability:** **TBD, to brainstorm**.
+
+**M1 open questions (remaining):** the feel-check list, the tutorial's content, the wand's unique ability, which existing spells stay (spell changes next), the teacher's character, and the fracture piece budget.
 
 ## 14. Open questions and next steps
 
