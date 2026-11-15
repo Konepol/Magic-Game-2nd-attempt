@@ -222,6 +222,33 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 
 (Mobile was removed. The witch redesign and its model can move earlier if the owner wants.)
 
+### M1 detail (current goal)
+
+**Scope (nothing cut):** forest free roam, quest system, one story mission, one spell quest, one wand quest, broom trial 1, a hub (placeholder town), new camera, immersive HUD, spellbook menu, plus the destruction and crime pieces below.
+
+**Done means:** it **feels good and looks like the target** (quality bar, not just a checklist). Because that is subjective, write a short list of "feel checks" when M1 starts (for example: flight feels free, a chant feels powerful, breaking a wall feels satisfying, the HUD stays out of the way).
+
+**World:**
+- The forest is **rebuilt handcrafted with AI assistance** (the runtime generator is not the final answer), and it is **small: about 2 minutes of flight across**, dense and polished.
+- The hub is a **generated placeholder town** containing: houses and walls to break, a quest board and a merchant, a guard NPC, and a repair center.
+
+**Destruction and crime in M1:** runtime fracture of props, destruction of buildings and walls, the repair minigame (repair center, carried materials, perfection meter), and reputation and crime for the one town.
+
+**Story mission:** a **tutorial only, with no boss**. It is an interactive survival tutorial that ends by opening the first gate or area. Story content is a placeholder until written.
+
+**Other M1 content:** one spell quest, one wand quest, and broom trial 1 (the first broom upgrade).
+
+**Suggested build order** (riskiest and most foundational first):
+1. Destruction prototype: runtime fracture with a capped, pooled piece count. It is the biggest technical risk.
+2. Quest system data model: story, spell, wand and broom quests and NPC favors all use it.
+3. New camera and immersive HUD (fading HUD, state shown on the witch).
+4. Spellbook menu with tabs (loadout and fusions, quest log, map, reputation, helpers and settings).
+5. Forest rebuild and the placeholder town.
+6. Quest content: tutorial, spell quest, wand quest, broom trial 1.
+7. Repair minigame and reputation, then a polish pass against the feel checks.
+
+**M1 open questions:** the feel-check list, the tutorial's content, which spell and wand the quests give, what broom trial 1 is, and the fracture piece budget.
+
 ## 14. Open questions and next steps
 
 **Title:** TBD. It should be something that matters inside the game (a place, artifact or concept from the story), so choose it once the story is written.
