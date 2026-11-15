@@ -23,7 +23,7 @@ This is a **personal project with no release date and no store**. It is "done" w
 ## 3. Audience and platform
 - Windows PC, keyboard and mouse. Mobile is cut, so heavier effects such as runtime fracture are allowed (still keep performance healthy for co-op).
 - Co-op (quests only) after the single-player game works. PvP arena after that.
-- Controller support: **TBD** (not requested).
+- Controller support: **not planned**.
 
 ## 4. Structure and game loop
 
@@ -57,7 +57,7 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
 - **Multicast:** holding several spells casts them together.
 - **Fusions:** press `B`, press the spells to join, press `B` again to ready the fusion (15 s timer), hold `B` to cast it. 2 to 4 ingredient recipes.
 - **Sky-combat rules** (from `SPELLS.md`): everything reaches a flier; quick spells never restrict movement; siege spells (Starfall and others) are a big commitment.
-- Current spell list: Star Bolt, Seeker Swarm, Flak Burst, Gale Crescent, Thunderclap, Frost Spire, Gravity Well, Starfall, plus fusions (Nova Shell, Firefly Barrage, Storm Front, Absolute Zero, Heaven Piercer, Judgement). The final list for the finished game is **TBD** and grows through quests.
+- Current spell list: Star Bolt, Seeker Swarm, Flak Burst, Gale Crescent, Thunderclap, Frost Spire, Gravity Well, Starfall, plus fusions (Nova Shell, Firefly Barrage, Storm Front, Absolute Zero, Heaven Piercer, Judgement). The finished game targets about **40 spells** (and about **12 wands**), which grows through quests.
 - **Chants:** voiced lines per spell, text above the head today; the finished game adds **chanting voice lines** (see section 10).
 
 ### 6.3 Mana, health, barrier
@@ -67,7 +67,7 @@ Mana (max 200, regen, manual charge) pays for spells, the barrier (its health), 
 Costs mana, has boost and a quick dash. The broom is upgraded through its own **trial quests** (broom control challenges). Some story chapters require a certain broom upgrade before they can begin.
 
 ### 6.5 Flight-restricted areas
-Some fights happen underground or in places where flying is forbidden or limited (caves, ruins, towns, sealed halls). Those fights are ground-based, use cover and the barrier, and favour spell choices that do not rely on height. Which areas, and whether restriction is absolute or partial: **TBD**.
+Some fights happen underground or in places where flying is forbidden or limited (caves, ruins, towns, sealed halls). Those fights are ground-based, use cover and the barrier, and favour spell choices that do not rely on height. There are three kinds of restriction: a **hard ban** underground and in sealed halls (no broom at all), a **low ceiling** in tight spaces (you can fly low but not climb), and **law-based** bans in towns (flying is possible but a crime, tied to the wanted level). Which specific areas use which: **TBD**.
 
 ### 6.6 Enemies
 - Ground and air enemies both matter (existing: Rusher, Charger, Heavy, Seeker, flying shooter).
@@ -99,7 +99,7 @@ Spells can destroy scenery, and destroying things has consequences.
 | What | How it grows |
 | --- | --- |
 | Player level and stats | Quests and story |
-| Wands | Separate wand quests; stronger wands come from harder or more secret quests |
+| Wands (about 12) | Separate wand quests; stronger wands come from harder or more secret quests. A wand changes stats and mana modifiers, has its own unique ability, and sets the number of spell slots in the loadout |
 | Spells | Separate spell quests with the same rule |
 | Broom | Its own trial quests (broom control); also gates some story |
 | Cosmetics | Rewards from some quests |
@@ -183,9 +183,9 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 **Open questions to answer:**
 1. Story premise, cast, and ending (owner writes).
 2. Zones 4 and later: themes and unique hooks, and the law of each zone.
-3. Which areas restrict flight, and is the restriction absolute?
-4. Controller support: yes or no?
-5. How many spells, wands, and fusions in the finished game (counts per zone and per rarity).
+3. Which specific areas use a hard ban, a low ceiling, or a law-based ban on flight.
+4. Spell counts per zone and per rarity, and how many of the ~40 are fusions.
+5. What each of the ~12 wands does (stats, unique ability, slot count).
 6. Crime details: wanted levels, reputation tiers, repair minigame, which spell unlocks repair magic.
 7. NPC helper roster: who helps, who refuses, and what each needs.
 8. Boss scaling numbers for each boss.
