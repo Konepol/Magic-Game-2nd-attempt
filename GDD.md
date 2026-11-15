@@ -283,9 +283,9 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 - **Fracture budget:** start with about **150 live pieces** at once, with the oldest fading out first, and tune after testing.
 - **Teacher:** an older, dry-humoured witch, slightly impatient, who teaches by giving tasks (placeholder until the story is written).
 - **Spell build order:** **Weaver** first (it proves the casting circle, scale and visual style), then Hollow Moon, Mirror Bloom, Lantern and Veil Step.
-- **Starter wand's unique ability:** **TBD, to brainstorm**.
+- **Starter wand's unique ability:** **Echo**: every spell you cast leaves a faint echo that repeats it once, weaker, a moment later (tuning and any drawbacks: **TBD**). **Compass** (the wand points toward the nearest secret or quest site) is liked but **saved for another wand**, not the starter.
 
-**M1 open questions (remaining):** the feel-check list, the tutorial's content, the wand's unique ability, which existing spells stay (spell changes next), the teacher's character, and the fracture piece budget.
+**M1 open questions (remaining):** the feel-check list, the tutorial's content, Echo's tuning, the spell designs after the first four, and the fracture piece budget.
 
 ## 14. Open questions and next steps
 
