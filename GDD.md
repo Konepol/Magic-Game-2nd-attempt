@@ -82,7 +82,7 @@ Some fights happen underground or in places where flying is forbidden or limited
 - **The game is boss-focused.** Bosses are the main fights and regular enemies are fewer and serve as supporting encounters, not the bulk of play. Effort goes into boss design, boss scaling and boss spectacle first.
 - Enemy factions tie directly to the story and are **not set yet** (candidate groups: rival witches, creatures and monsters per zone, corrupted or cursed beings, human soldiers and guards). Boss count and structure: **TBD** with the story.
 - Ground and air enemies both matter (existing: Rusher, Charger, Heavy, Seeker, flying shooter).
-- **Rival witches on brooms** are elite enemies who cast spells like the player. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
+- **Rival witches on brooms** are elite enemies who cast spells like the player. They serve as mini-boss duels, as law guards who chase you at a high wanted level, and as recurring characters with their own stories. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
 - **Bosses** are set pieces (existing: The Warden of Ruins, three phases). It depends on the boss: many are multi-phase, some have a gimmick or puzzle, some are huge and fought in the air on the broom, many have destructible arenas, and **some have no gimmick at all**.
 - **Crime during boss fights:** it depends on the zone, but destruction is **mostly ignored while a boss fight is going**.
 - **Rematches:** a boss you beat is placed in a **simulation area** where you can fight it again. Rematch rewards: **TBD**.
@@ -126,7 +126,7 @@ Spells can destroy scenery, and destroying things has consequences.
 - **Saving:** **auto-save anywhere**, so drop-in play always keeps progress.
 
 ### 6.10 Extras
-- In-engine **cinematic cutscenes**, a **photo mode**, **subtitles** for chants and dialogue, and the existing **rebindable keys**. You also asked for **more accessibility options** beyond subtitles and rebinding. The list (for example text size, colour-blind modes, reduced camera shake and flashes, hold-versus-toggle for chants): **TBD**.
+- In-engine **cinematic cutscenes**, a **photo mode**, **subtitles** for chants and dialogue, and the existing **rebindable keys**. You also asked for **more accessibility options** beyond subtitles and rebinding. Chosen options: **text size and UI scale**, **colour-blind modes**, **reduced shake, flash and motion**, and **hold-versus-toggle** for chants and aiming. Further options: **TBD**.
 
 ### 6.11 Completed quests stay completed
 Most quests are **not repeatable**, so once finished they **stay finished** in the world and the save. What to do with them afterward (for example, whether their places change, give nothing, or offer a replay, and how a co-op player who already finished one is handled): **TBD, to be decided later**.
@@ -136,7 +136,7 @@ Most quests are **not repeatable**, so once finished they **stay finished** in t
 - **Player count follows boss scale.** Each boss gets a **recommended range**, for example 5 to 10, but the number is **not fixed**: you can enter with fewer or more. Bosses **also scale live** (health, phases and mechanics) with how many are fighting.
 - **Networking:** Steam-style peer-to-peer with a host; others join by invite. Keep spells, quests and world state data-driven so they can be synchronised.
 - **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. NPC helpers can be **switched off individually**, and they are **also allowed in co-op**, with limits: every NPC has a **value**, every boss has a **value limit**, and the NPCs brought in count toward that limit. The more NPC value you bring, the more the boss scales up. When playing solo, NPCs count toward boss scaling like players. Value numbers, boss limits and the full roster: **TBD**.
-- **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. Balance and matchmaking: **TBD**.
+- **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. There are **several modes** (formats such as duels, teams and free-for-all: **TBD**), and PvP uses **separate PvP numbers** for damage and cooldowns so PvE balance is untouched. Matchmaking: **TBD**.
 - Single-player must stay fully playable without any of this.
 
 ## 8. World and zones
