@@ -13,7 +13,7 @@ A third-person magic action game in a bright, medieval-fantasy open region. You 
 **Pillars** (every feature must serve at least one):
 1. **Spells are the game.** Tap, chant, multicast and fuse. Chanting is both a mechanic and a performance (voice lines, circles, camera).
 2. **The broom is freedom.** Flight is fast and fun, and the world is built to be flown over. Places where flying is forbidden feel like a deliberate change of pace.
-3. **Explore, don't farm.** No grind is ever required. Quests are not locked behind a quest board, and the story can be finished without any specific side quest (harder, never impossible).
+3. **Explore, don't farm.** No grind is ever required. Quests are not limited to the quest board, and the story can be finished without any specific side quest (harder, never impossible).
 4. **Immersion over interface.** The HUD stays out of the way, and sound, camera and the witch herself carry the feedback.
 
 ## 2. Finish line
@@ -33,7 +33,10 @@ This is a **personal project with no release date and no store**. It is "done" w
 - **Open world:** drop-in play. Roam, fly, find things, do a quest, save and quit at any time.
 - **Short runs:** most quests and missions are short, about 10 to 15 minutes. Secret quests that give powerful spells can be much longer.
 - **Replay:** quests do not need to be repeatable. Replay value comes from repeatable challenge content (boss fights, trials, arenas) and the multiplayer modes, not from re-running quests.
-- **Never required:** no farming, no mandatory side quest, no quest-board dependency. Skipping optional content makes the game harder, not blocked.
+- **Never required:** no farming, no mandatory side quest. A quest board exists, but quests are not limited to it. Skipping optional content makes the game harder, not blocked.
+
+**Quest types:** story missions, spell and wand quests, broom trials, and NPC favor quests (which can make NPCs into helpers).
+**Finding quests:** the quest board, NPC conversations, exploration and secrets, and rumors and clues collected in the spellbook. Some quests have a map marker and some deliberately have none.
 
 **Moment-to-moment loop:** explore (broom) > find a quest or threat > fight (spells, mana, barrier) > reward (story, level, wand, spell, broom upgrade, cosmetic) > a new part of the map or a new option in the spellbook.
 
@@ -69,7 +72,9 @@ Costs mana, has boost and a quick dash. The broom is upgraded through its own **
 ### 6.5 Flight-restricted areas
 Some fights happen underground or in places where flying is forbidden or limited (caves, ruins, towns, sealed halls). Those fights are ground-based, use cover and the barrier, and favour spell choices that do not rely on height. There are three kinds of restriction: a **hard ban** underground and in sealed halls (no broom at all), a **low ceiling** in tight spaces (you can fly low but not climb), and **law-based** bans in towns (flying is possible but a crime, tied to the wanted level). Which specific areas use which: **TBD**.
 
-### 6.6 Enemies
+### 6.6 Enemies and bosses
+- **The game is boss-focused.** Bosses are the main fights and regular enemies are fewer and serve as supporting encounters, not the bulk of play. Effort goes into boss design, boss scaling and boss spectacle first.
+- Enemy factions tie directly to the story and are **not set yet** (candidate groups: rival witches, creatures and monsters per zone, corrupted or cursed beings, human soldiers and guards). Boss count and structure: **TBD** with the story.
 - Ground and air enemies both matter (existing: Rusher, Charger, Heavy, Seeker, flying shooter).
 - **Rival witches on brooms** are elite enemies who cast spells like the player. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
 - **Bosses** are set pieces with a gimmick (existing: The Warden of Ruins, three phases).
