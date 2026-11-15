@@ -67,6 +67,7 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
 - Current spell list: Star Bolt, Seeker Swarm, Flak Burst, Gale Crescent, Thunderclap, Frost Spire, Gravity Well, Starfall, plus fusions (Nova Shell, Firefly Barrage, Storm Front, Absolute Zero, Heaven Piercer, Judgement). The finished game targets about **40 spells** (and about **12 wands**), which grows through quests.
 - **Spell themes:** the ~40 spells are **not fixed to elements**; what exists depends on what the player learns, in the spirit of *Frieren*. Themes to draw from: fire, frost, lightning, wind, gravity, space, time, nature, earth, poison, light, shadow and summoning.
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
+- **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
 - **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
 - **Loadout size depends on the wand.** Some wands hold many spells, and some hold **only one and cannot fuse, which makes that wand extremely strong**. Slot numbers per wand: **TBD**. A single-spell wand has no multicast and no fusion, its spell is boosted far above normal and costs a lot of mana or cast time, and it is **tied to the hardest secret quests** (though not every one of them has to be the hardest).
 - **Fusion recipes are shown but locked until learned.** You see the recipe, and you learn it by doing; some recipes come from quests or quest rewards.
@@ -110,6 +111,9 @@ Spells can destroy scenery, and destroying things has consequences.
   - pay a **fine or repair bill**,
   - repair it **themselves** by a **minigame** (a repair center appears near the damaged place; you carry the materials that thing needs and fix it yourself; a **perfection meter** decides if the result is good or bad, and **your repair stays permanent**), or
   - repair it with **repair magic**, unlocked by a quest or by a specific spell.
+- **Repair quality:** a bad repair **looks shabby, is weaker, and returns less reputation, or can even negate the reputation you would get back**. To redo it the player must **destroy their own work** and repair it again. A repair **better than the original** earns **more reputation** than simply paying back the damage.
+- **Materials:** a **mix**: the repair center holds basic materials, and special materials come from the world.
+- **Carrying loads:** the player can **carry loads and deliveries on the broom** (also used for delivery quests). **Dropping a load reduces that piece's durability until it is destroyed**, and **hitting something destructible damages the load too**.
 - **Consequences:** a **wanted level** (guards hunt you, including witch guards on brooms) and **reputation** with towns and factions, which affects shops, quests and story options.
 - **Where crime applies depends on the zone**: each zone has its own law (a lawless wilderness versus a strict sky city). Table of zone laws: **TBD**.
 - Exact rules for what the wanted levels do, reputation tiers, and the repair minigame design: **TBD**.
