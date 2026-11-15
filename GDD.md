@@ -1,8 +1,8 @@
 # Game Design Document
 
-Working title: **Magic Game** (rename later; title ideas in section 14).
-Engine: Unity 6.5, URP, new Input System. Target: Windows PC first (keyboard + mouse), mobile later.
-Status: draft 1, written 2026-11-15 from the owner's answers. Anything marked **TBD** is not decided yet.
+Working title: **Magic Game** (the final title is TBD and should name something that matters inside the game; decide after the story is written).
+Engine: Unity 6.5, URP, new Input System. Target: Windows PC only (keyboard + mouse). Mobile is **removed** from the plan.
+Status: draft 2, 2026-11-15. Anything marked **TBD** is not decided yet.
 
 ---
 
@@ -21,8 +21,7 @@ A third-person magic action game in a bright, medieval-fantasy open region. You 
 This is a **personal project with no release date and no store**. It is "done" when the owner is happy with it. Because the scope is large, the finish line is split into **milestones**, and each one is a complete place to stop (see section 13). Milestone 3 is the recommended definition of "finished".
 
 ## 3. Audience and platform
-- Windows PC, keyboard and mouse, first.
-- Mobile later (touch controls, performance budget, and lower-quality settings are future work; keep performance in mind from now on).
+- Windows PC, keyboard and mouse. Mobile is cut, so heavier effects such as runtime fracture are allowed (still keep performance healthy for co-op).
 - Co-op (quests only) after the single-player game works. PvP arena after that.
 - Controller support: **TBD** (not requested).
 
@@ -76,7 +75,27 @@ Some fights happen underground or in places where flying is forbidden or limited
 - **Bosses** are set pieces with a gimmick (existing: The Warden of Ruins, three phases).
 - Enemy and boss stat values stay in code for now and are reworked when the new structure is in place.
 
-### 6.7 Progression
+### 6.7 Destruction, crime and repair
+
+Spells can destroy scenery, and destroying things has consequences.
+
+- **What breaks:** props (crates, barrels, fences, trees) and buildings and walls. Terrain deformation is not planned.
+- **How:** runtime physics fracture, with chunks flying apart. Terrain-wide spectacle is limited by a pooled, capped number of live pieces so combat and co-op stay smooth.
+- **Why it matters:**
+  - spectacle and feedback for spells,
+  - puzzles and secrets (break a seal or wall to find a hidden quest, spell or loot),
+  - a combat tool (collapse things on enemies, remove their cover; enemies and bosses can wreck yours),
+  - lasting story and world changes (broken gates, ruined buildings).
+- **Repair:** destroyed things are never simply reset. The player or NPCs have to **fix** them, and whoever breaks them can be committing a **crime**.
+- **Choice when you break something:** the player picks how to make it right:
+  - pay a **fine or repair bill**,
+  - repair it **themselves** by a **minigame**, or
+  - repair it with **repair magic**, unlocked by a quest or by a specific spell.
+- **Consequences:** a **wanted level** (guards hunt you, including witch guards on brooms) and **reputation** with towns and factions, which affects shops, quests and story options.
+- **Where crime applies depends on the zone**: each zone has its own law (a lawless wilderness versus a strict sky city). Table of zone laws: **TBD**.
+- Exact rules for what the wanted levels do, reputation tiers, and the repair minigame design: **TBD**.
+
+### 6.8 Progression
 | What | How it grows |
 | --- | --- |
 | Player level and stats | Quests and story |
@@ -87,8 +106,11 @@ Some fights happen underground or in places where flying is forbidden or limited
 
 **Quest difficulty rule:** the reward's power sets the quest's difficulty and secrecy. Easy common spells and wands are obtained simply. The most powerful ones combine **hard fights, hidden secrets, puzzles, and exploration**, and may be long.
 
-## 7. Co-op and PvP (later milestones)
-- **Co-op (first):** players help each other with quests. Player count: **TBD** (2 to 4). Networking solution: **TBD** (decide before milestone 4).
+## 7. Co-op, NPC helpers and PvP (later milestones)
+- **Co-op (first):** players help each other with quests.
+- **Player count follows boss scale.** Each boss gets a **recommended range**, for example 5 to 10, but the number is **not fixed**: you can enter with fewer or more. Bosses **also scale live** (health, phases and mechanics) with how many are fighting.
+- **Networking:** Steam-style peer-to-peer with a host; others join by invite. Keep spells, quests and world state data-driven so they can be synchronised.
+- **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. When playing solo, NPCs count toward boss scaling like players. Full roster and rules: **TBD**.
 - **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. Balance and matchmaking: **TBD**.
 - Single-player must stay fully playable without any of this.
 
@@ -111,7 +133,7 @@ Zone gating: story chapters, sealed gates or fog that story events remove, and b
 
 - **Style:** anime cel-shading in the vein of Genshin Impact and Wuthering Waves: clear cel bands, outlines, richer colour, more realistic proportions than the current chibi.
 - **Mood:** grounded medieval fantasy, a little brighter than classic medieval. Each zone sets its own palette and mood (for example, a bright forest, a gloomy cave, a luminous sky city).
-- **Characters:** the witch is currently a chibi with a test preset; whether she stays chibi or moves to the more realistic anime proportions is **TBD** and decided before the final character model.
+- **Characters:** the witch goes **full anime** (realistic anime proportions, no chibi). The character design happens in a later milestone. The final model is made from AI image-to-3D and cleaned up in Maya, or built entirely by the owner. The current chibi is a placeholder.
 - **Spell effects:** 3D gold stars, glowing cores, crescent streaks and star trails (the "star synthesis" reference), one distinct look per spell (see `VFX_SPEC.md`).
 - **Camera:** third-person, wider and more cinematic than the current one. It pulls back for flight and big spells, and gives short cinematic moments for bosses and zone reveals.
 - **Asset sources:** mostly the owner with AI and code-built assets (editor tools under Tools > Magic). Keep toon shaders (`ToonCharacter`, `ToonGround`) as the shared look and upgrade them toward cel shading (branch `stylized-toon-shader`).
@@ -127,15 +149,15 @@ Zone gating: story chapters, sealed gates or fog that story events remove, and b
 
 ## 11. Audio
 
-- **Ambient music per zone**, **SFX** for spells, movement and enemies, and **chanting voice lines** per spell (the chant is spoken or sung as it is cast).
-- The Songs slider already exists and is inert until music is added.
-- Sources and voice approach (recorded, synthesized, or royalty-free): **TBD**.
+- **Ambient music per zone**, **SFX** for spells, movement and enemies, and **chanting voice lines** per spell (the chant is spoken or sung as it is cast). NPC helpers have their own voice lines.
+- **Voice lines are made with the owner's local voice AI** and **pre-generated** as audio files, then imported. Connecting it (how the AI is called, naming, an editor tool that batches lines from spell data and assigns clips) is a task for a later milestone; the owner already has the voice AI ready.
+- The Songs slider already exists and is inert until music is added. Music sources: **TBD**.
 
 ## 12. Technical notes
 
 - Unity 6.5, URP, new Input System. Rig parts, forest, and shared assets are scene objects or catalog assets, not runtime-built where possible.
 - Player data lives in a `PlayerSave` ScriptableObject, and it is wiped before every build.
-- Performance targets and the mobile plan: **TBD**. Windows build only after the owner says polishing is finished.
+- Performance targets: **TBD** (PC only; runtime fracture and co-op set the budget). Windows build only after the owner says polishing is finished.
 - Open technical decisions: networking solution for co-op, save format for a long open-world campaign, quest system design (data-driven recommended, since quests are not tied to a board).
 
 ## 13. Milestones
@@ -150,21 +172,23 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 | M3 | Full single-player (**recommended finish line**) | 5+ zones including hub and sky city, full story, all spell, wand and broom quests, all bosses, full audio, cosmetics | Complete story and all unlockables work end to end |
 | M4 | Co-op | Quest co-op for 2 to 4 players | Two players finish a quest together |
 | M5 | PvP arena | Duels using the rival-witch systems | A balanced match runs start to finish |
-| M6 | Mobile | Touch controls, performance mode | Runs acceptably on a mid-range phone |
+| M6 | Final polish and build | Full anime witch, QA, Windows build | Shippable to friends on PC |
+
+(Mobile was removed. The witch redesign and its model can move earlier if the owner wants.)
 
 ## 14. Open questions and next steps
 
-**Title ideas** (pick or give your own): *Hexflight*, *Starbound Witch* (note: "Starbound" is an existing game), *Wandering Spellwright*, *Sigil Sky*, *The Last Chantress*.
+**Title:** TBD. It should be something that matters inside the game (a place, artifact or concept from the story), so choose it once the story is written.
 
 **Open questions to answer:**
 1. Story premise, cast, and ending (owner writes).
-2. Zones 4 and 5, and any extra zones: themes and unique hooks.
+2. Zones 4 and later: themes and unique hooks, and the law of each zone.
 3. Which areas restrict flight, and is the restriction absolute?
-4. Witch proportions: keep chibi, or move to realistic anime?
-5. Controller support: yes or no?
-6. Co-op player count and networking approach.
-7. How many spells, wands, and fusions in the finished game (counts per zone and per rarity).
-8. Voice approach for chants.
+4. Controller support: yes or no?
+5. How many spells, wands, and fusions in the finished game (counts per zone and per rarity).
+6. Crime details: wanted levels, reputation tiers, repair minigame, which spell unlocks repair magic.
+7. NPC helper roster: who helps, who refuses, and what each needs.
+8. Boss scaling numbers for each boss.
 
 **Suggested next steps:**
 1. Answer the open questions above (they can be answered a few at a time).
