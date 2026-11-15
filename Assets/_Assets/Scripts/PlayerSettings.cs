@@ -45,10 +45,10 @@ public static class PlayerSettings
     // Shows the fusion paths diagram in the bottom-left while spells are held.
     public static bool FusionPaths
     {
-        get => PlayerPrefs.GetInt("fusionPaths", 1) == 1;
+        get => PlayerSave.GetInt("fusionPaths", 1) == 1;
         set
         {
-            PlayerPrefs.SetInt("fusionPaths", value ? 1 : 0);
+            PlayerSave.SetInt("fusionPaths", value ? 1 : 0);
             Changed?.Invoke();
         }
     }
@@ -56,10 +56,10 @@ public static class PlayerSettings
     // shadows: 0 Normal (soft real shadows), 1 Low (blob shadows), 2 Off
     public static int ShadowQuality
     {
-        get => PlayerPrefs.GetInt("shadowQuality", 0);
+        get => PlayerSave.GetInt("shadowQuality", 0);
         set
         {
-            PlayerPrefs.SetInt("shadowQuality", Mathf.Clamp(value, 0, 2));
+            PlayerSave.SetInt("shadowQuality", Mathf.Clamp(value, 0, 2));
             Changed?.Invoke();
         }
     }
@@ -77,13 +77,13 @@ public static class PlayerSettings
     public static string GetPath(string id)
     {
         string fallback = DefaultPath(id);
-        return fallback == null ? null : PlayerPrefs.GetString(Key(id), fallback);
+        return fallback == null ? null : PlayerSave.GetString(Key(id), fallback);
     }
 
     static void Store(string id, string path)
     {
-        if (path == DefaultPath(id)) PlayerPrefs.DeleteKey(Key(id));
-        else PlayerPrefs.SetString(Key(id), path);
+        if (path == DefaultPath(id)) PlayerSave.DeleteKey(Key(id));
+        else PlayerSave.SetString(Key(id), path);
     }
 
     // gives an action the key chosen for it (or its own default if none was chosen)
@@ -91,7 +91,7 @@ public static class PlayerSettings
     {
         if (action == null || action.bindings.Count == 0 || DefaultPath(id) == null) return;
 
-        if (PlayerPrefs.HasKey(Key(id))) action.ApplyBindingOverride(0, PlayerPrefs.GetString(Key(id)));
+        if (PlayerSave.HasKey(Key(id))) action.ApplyBindingOverride(0, PlayerSave.GetString(Key(id)));
         else action.RemoveBindingOverride(0);
     }
 
@@ -105,14 +105,14 @@ public static class PlayerSettings
             if (b.id != id && GetPath(b.id) == path) Store(b.id, old);
 
         Store(id, path);
-        PlayerPrefs.Save();
+        PlayerSave.Save();
         Changed?.Invoke();
     }
 
     public static void ResetBindings()
     {
-        foreach (var b in Binds) PlayerPrefs.DeleteKey(Key(b.id));
-        PlayerPrefs.Save();
+        foreach (var b in Binds) PlayerSave.DeleteKey(Key(b.id));
+        PlayerSave.Save();
         Changed?.Invoke();
     }
 

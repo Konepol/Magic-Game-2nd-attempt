@@ -18,10 +18,10 @@ public static class PlayerProfile
 
     public static float Volume
     {
-        get => PlayerPrefs.GetFloat(VolumeKey, 1f);
+        get => PlayerSave.GetFloat(VolumeKey, 1f);
         set
         {
-            PlayerPrefs.SetFloat(VolumeKey, Mathf.Clamp01(value));
+            PlayerSave.SetFloat(VolumeKey, Mathf.Clamp01(value));
             ApplyVolume();
         }
     }
@@ -29,14 +29,14 @@ public static class PlayerProfile
     // how loud the sound effects are on their own (the master volume still applies on top), and the songs (there are no songs yet: kept for later)
     public static float EffectVolume
     {
-        get => PlayerPrefs.GetFloat("effectVolume", 1f);
-        set => PlayerPrefs.SetFloat("effectVolume", Mathf.Clamp01(value));
+        get => PlayerSave.GetFloat("effectVolume", 1f);
+        set => PlayerSave.SetFloat("effectVolume", Mathf.Clamp01(value));
     }
 
     public static float SongVolume
     {
-        get => PlayerPrefs.GetFloat("songVolume", 1f);
-        set => PlayerPrefs.SetFloat("songVolume", Mathf.Clamp01(value));
+        get => PlayerSave.GetFloat("songVolume", 1f);
+        set => PlayerSave.SetFloat("songVolume", Mathf.Clamp01(value));
     }
 
     public static void ApplyVolume() => AudioListener.volume = Volume;
@@ -58,7 +58,7 @@ public static class PlayerProfile
     {
         int n = catalog != null ? catalog.slotCount : 4;
         var result = new string[n];
-        string saved = PlayerPrefs.GetString(LoadoutKey, null);
+        string saved = PlayerSave.GetString(LoadoutKey, null);
 
         string[] source = null;
         if (!string.IsNullOrEmpty(saved)) source = saved.Split(';');
@@ -91,7 +91,7 @@ public static class PlayerProfile
     {
         var parts = new string[names.Length];
         for (int i = 0; i < names.Length; i++) parts[i] = string.IsNullOrEmpty(names[i]) ? EmptySlot : names[i];
-        PlayerPrefs.SetString(LoadoutKey, string.Join(";", parts));
+        PlayerSave.SetString(LoadoutKey, string.Join(";", parts));
     }
 
     // the weapon the player carries into a stage, made from the chosen spells
@@ -115,15 +115,15 @@ public static class PlayerProfile
 
     // ---------- records ----------
 
-    public static float GetBestTime(int stage) => PlayerPrefs.GetFloat("best_" + stage, -1f);
+    public static float GetBestTime(int stage) => PlayerSave.GetFloat("best_" + stage, -1f);
 
     // returns true if this is a new best
     public static bool SubmitTime(int stage, float seconds)
     {
         float best = GetBestTime(stage);
         if (best >= 0f && seconds >= best) return false;
-        PlayerPrefs.SetFloat("best_" + stage, seconds);
-        PlayerPrefs.Save();
+        PlayerSave.SetFloat("best_" + stage, seconds);
+        PlayerSave.Save();
         return true;
     }
 
