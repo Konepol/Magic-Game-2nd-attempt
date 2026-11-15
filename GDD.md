@@ -283,7 +283,12 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 - **Fracture budget:** start with about **150 live pieces** at once, with the oldest fading out first, and tune after testing.
 - **Teacher:** an older, dry-humoured witch, slightly impatient, who teaches by giving tasks (placeholder until the story is written).
 - **Spell build order:** **Weaver** first (it proves the casting circle, scale and visual style), then Hollow Moon, Mirror Bloom, Lantern and Veil Step.
-- **Starter wand's unique ability:** **Held cast**: pause a chant halfway and keep the spell ready, then release it later. The starter wand must stay **viable late in the game and keep its uniqueness**, so players have a reason to keep using it even after finding stronger wands. It should offer **a variety of things to use** rather than one trick, and its ability should stay useful at every stage (how it grows or stays relevant: **TBD**). **Echo** (every spell leaves a weaker echo that repeats it once) and **Compass** (the wand points toward the nearest secret or quest site) are **set aside for other wands**, along with the unused ideas Sapling (the wand's glow and boost follow your most used spell), Gem reservoir (stored overflow mana released as a burst) and Chant partner (the wand hums half the chant).
+- **Starter wand's unique ability:** **Held cast**: pause a chant halfway and keep the spell ready, then release it later. The starter wand must stay **viable late in the game and keep its uniqueness**, so players have a reason to keep using it even after finding stronger wands. It should offer **a variety of things to use** rather than one trick, and its ability should stay useful at every stage. The wand's concept is **preparing ahead of time**: 
+  - **The bank grows with quests:** it starts holding one paused spell and later holds more.
+  - **Held spells can be fused**, so this wand can prepare a fusion before a fight.
+  - **A held spell scales with output:** pouring in mana while it is held makes it release bigger than a normal cast.
+  - **Held cast is unique to this wand**; stronger wands do not get it and have their own tricks.
+  - Exact bank sizes, quest steps, and any drawbacks: **TBD**. **Echo** (every spell leaves a weaker echo that repeats it once) and **Compass** (the wand points toward the nearest secret or quest site) are **set aside for other wands**, along with the unused ideas Sapling (the wand's glow and boost follow your most used spell), Gem reservoir (stored overflow mana released as a burst) and Chant partner (the wand hums half the chant).
 
 **M1 open questions (remaining):** the feel-check list, the tutorial's content, Echo's tuning, the spell designs after the first four, and the fracture piece budget.
 
