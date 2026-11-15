@@ -3,7 +3,9 @@ using UnityEngine;
 // Streaks that rush past the camera, against the direction of travel, when flying fast.
 // They are anchored to the camera (not the player), so they always frame the edge of the screen whatever the zoom,
 // and they are driven by real speed: the faster you fly, the faster, longer and denser the streaks.
-// Built at runtime, so it needs no assets; BroomFlight feeds it every frame.
+// The two particle systems (streaks, and a "Stars" child) are real objects in the scene: select them in the hierarchy and edit
+// them like any Particle System. They are made by Tools > Magic > Build Rig Parts or this component's menu "Rebuild Parts";
+// if they are missing the game makes them itself. BroomFlight feeds it every frame.
 public class SpeedLines : MonoBehaviour
 {
     [SerializeField] float maxRate = 140f;             // streaks per second at full intensity
@@ -23,7 +25,13 @@ public class SpeedLines : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] float starShare = 0.12f;   // stars per streak
     [SerializeField] float starSize = 0.2f;
 
-    ParticleSystem ps, stars;
+    [Header("Parts in the scene (made by Build Rig Parts; edit them directly)")]
+    [SerializeField] ParticleSystem ps;
+    [SerializeField] ParticleSystem stars;
+    [SerializeField] Material streakMaterial;
+    [SerializeField] Material starMaterial;
+    [SerializeField] Mesh starMesh;
+
     ParticleSystem.EmissionModule starEmission;
     ParticleSystem.VelocityOverLifetimeModule starDrift;
     ParticleSystem.MainModule starMain;
@@ -33,13 +41,41 @@ public class SpeedLines : MonoBehaviour
     Vector3 direction = Vector3.forward;
     float shown;   // smoothed intensity
 
+    // the one made in the scene, if there is one; otherwise a new one is made now
     public static SpeedLines Create()
     {
+        var inScene = FindAnyObjectByType<SpeedLines>(FindObjectsInactive.Include);
+        if (inScene != null) { inScene.gameObject.SetActive(true); return inScene; }
         return SceneGroups.Put(new GameObject("SpeedLines"), "Systems").AddComponent<SpeedLines>();
     }
 
     void Awake()
     {
+        if (ps == null || stars == null) { BuildParts(); Attach(); }
+        else Attach();
+    }
+
+    // the parts made in the scene are ready; only the modules this script drives need picking up
+    void Attach()
+    {
+        main = ps.main; emission = ps.emission; drift = ps.velocityOverLifetime;
+        starMain = stars.main; starEmission = stars.emission; starDrift = stars.velocityOverLifetime;
+        SetStreakSpeed(minStreakSpeed);
+        ps.Play();
+        stars.Play();
+    }
+
+    public void BuildInScene(Material streakMat, Material starMat, Mesh star)
+    {
+        streakMaterial = streakMat; starMaterial = starMat; starMesh = star;
+        BuildParts();
+    }
+
+    [ContextMenu("Rebuild Parts")]
+    void BuildParts()
+    {
+        if (stars != null) { if (Application.isPlaying) Destroy(stars.gameObject); else DestroyImmediate(stars.gameObject); stars = null; }
+        if (ps != null) { if (Application.isPlaying) Destroy(ps); else DestroyImmediate(ps); ps = null; }
         ps = gameObject.AddComponent<ParticleSystem>();
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // so the main module can be changed
 
@@ -81,11 +117,10 @@ public class SpeedLines : MonoBehaviour
         rend.cameraVelocityScale = 0f;
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows = false;
-        rend.material = MagicFX.Unlit(true, MagicFX.SoftDot(32, 1.5f));    // a soft dot, stretched into a glowing streak
+        rend.sharedMaterial = streakMaterial != null ? streakMaterial : MagicFX.Unlit(true, MagicFX.SoftDot(32, 1.5f));    // a soft dot, stretched into a glowing streak
 
         BuildStars(fade.color);
         SetStreakSpeed(minStreakSpeed);
-        ps.Play();
     }
 
     // a second, sparse system inside the same ring: small 3D stars that tumble as they rush past
@@ -133,12 +168,10 @@ public class SpeedLines : MonoBehaviour
 
         var rend = stars.GetComponent<ParticleSystemRenderer>();
         rend.renderMode = ParticleSystemRenderMode.Mesh;
-        rend.mesh = MagicFX.StarMesh();
-        rend.material = MagicFX.Unlit(false);
+        rend.mesh = starMesh != null ? starMesh : MagicFX.StarMesh();
+        rend.sharedMaterial = starMaterial != null ? starMaterial : MagicFX.Unlit(false);
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows = false;
-
-        stars.Play();
     }
 
     // local -Z is against the flight direction; the lifetime is whatever carries a streak from front to back

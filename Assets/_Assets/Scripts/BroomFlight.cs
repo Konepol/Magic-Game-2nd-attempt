@@ -295,7 +295,7 @@ public class BroomFlight : MonoBehaviour
         if (speedLines) lines = SpeedLines.Create();
 
         freeAimAction = new InputAction("FreeAim", InputActionType.Button, PlayerSettings.GetPath("freeAim"));
-        if (broomEffects) gameObject.AddComponent<BroomFX>();
+        if (broomEffects && GetComponent<BroomFX>() == null) gameObject.AddComponent<BroomFX>();
     }
 
     void Start()

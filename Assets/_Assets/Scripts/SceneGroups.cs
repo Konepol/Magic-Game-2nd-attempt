@@ -21,8 +21,10 @@ public static class SceneGroups
             name = path.Substring(slash + 1);
         }
 
-        t = new GameObject(name).transform;
-        if (parent != null) t.SetParent(parent, false);
+        // a group already made in the scene (an empty object with this name) is used instead of a new one
+        var existing = parent != null ? parent.Find(name) : GameObject.Find("/" + name)?.transform;
+        t = existing != null ? existing : new GameObject(name).transform;
+        if (parent != null && t.parent != parent) t.SetParent(parent, false);
         cache[path] = t;
         return t;
     }

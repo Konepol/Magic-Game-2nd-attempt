@@ -545,9 +545,18 @@ public class Barrier : MonoBehaviour
         b.health = go.AddComponent<Health>();
         b.health.Configure(maxHealth, true, 0.05f);
         // bar above the wall, shown while it is being damaged (same component and style as the enemy bars)
-        var barGo = new GameObject("HealthBar");
-        barGo.transform.SetParent(go.transform, false);
-        barGo.AddComponent<WorldHealthBar>();
+        var barPrefab = GameCatalog.Load()?.healthBarPrefab;
+        if (barPrefab != null)
+        {
+            var bar = Instantiate(barPrefab, go.transform);
+            bar.name = "HealthBar";
+        }
+        else
+        {
+            var barGo = new GameObject("HealthBar");
+            barGo.transform.SetParent(go.transform, false);
+            barGo.AddComponent<WorldHealthBar>();
+        }
 
         b.BuildCrackLayers();
         return b;

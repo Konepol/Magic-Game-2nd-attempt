@@ -5,7 +5,9 @@ using UnityEngine;
 //  - a glowing ribbon and a trickle of star dust from the tail of the broom, growing with speed and with the boost
 //  - a small star pop at the tail on every dash
 //  - the rider tucks forward over the broom the faster she flies
-// Built at runtime, so it needs no assets; BroomFlight adds it to the player.
+// The ribbon and the star dust are real objects in the scene (a "BroomTail" under the broom model, with a "StarDust" child):
+// select them in the hierarchy and change the TrailRenderer and the Particle System like any other. They are made by
+// Tools > Magic > Build Rig Parts, or by this component's menu "Rebuild Parts". If they are missing the game makes them itself.
 public class BroomFX : MonoBehaviour
 {
     [Header("Tail Trail")]
@@ -24,10 +26,16 @@ public class BroomFX : MonoBehaviour
     [SerializeField, Tooltip("Degrees she leans forward over the broom at the boost top speed.")]
     float speedTuck = 22f;
 
+    [Header("Parts in the scene (made by Build Rig Parts; edit them directly)")]
+    [SerializeField] Transform tail;
+    [SerializeField] TrailRenderer ribbon;
+    [SerializeField] ParticleSystem dust;
+    [SerializeField] Material ribbonMaterial;
+    [SerializeField] Material dustMaterial;
+    [SerializeField] Mesh starMesh;
+
     BroomFlight broom;
-    Transform tail, spine;
-    TrailRenderer ribbon;
-    ParticleSystem dust;
+    Transform spine;
     ParticleSystem.EmissionModule dustEmission;
     int seenDashes;
     bool wasFlying;
@@ -38,6 +46,25 @@ public class BroomFX : MonoBehaviour
         broom = GetComponent<BroomFlight>();
         var animator = GetComponent<Animator>();
         if (animator != null && animator.isHuman) spine = animator.GetBoneTransform(HumanBodyBones.Spine);
+        if (tail != null) AttachParts();
+    }
+
+    [ContextMenu("Rebuild Parts")]
+    void RebuildParts()
+    {
+        if (broom == null) broom = GetComponent<BroomFlight>();
+        if (tail != null) { if (Application.isPlaying) Destroy(tail.gameObject); else DestroyImmediate(tail.gameObject); }
+        tail = null; ribbon = null; dust = null;
+        BuildTail();
+        if (!Application.isPlaying) dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+    }
+
+    void AttachParts()
+    {
+        if (dust == null) return;
+        dustEmission = dust.emission;
+        if (ribbon != null) ribbon.Clear();
+        dust.Play();
     }
 
     // The tail is found from the broom model itself: the end of it that points backward. It can only be measured
@@ -53,7 +80,7 @@ public class BroomFX : MonoBehaviour
         foreach (var mf in model.GetComponentsInChildren<MeshFilter>())
         {
             var mr = mf.GetComponent<MeshRenderer>();
-            if (mf.sharedMesh == null || mr == null || !mr.enabled) continue;
+            if (mf.sharedMesh == null || mr == null || (Application.isPlaying && !mr.enabled)) continue;
             Bounds b = mf.sharedMesh.bounds;
             Matrix4x4 toModel = model.worldToLocalMatrix * mf.transform.localToWorldMatrix;
             for (int i = 0; i < 8; i++)   // the mesh's box, corner by corner
@@ -72,7 +99,7 @@ public class BroomFX : MonoBehaviour
 
         // the ribbon: a soft glow that tapers away behind the broom
         ribbon = tail.gameObject.AddComponent<TrailRenderer>();
-        ribbon.material = MagicFX.Unlit(true, MagicFX.SoftDot(32, 1.5f));
+        ribbon.sharedMaterial = ribbonMaterial != null ? ribbonMaterial : MagicFX.Unlit(true, MagicFX.SoftDot(32, 1.5f));
         ribbon.time = ribbonTime;
         ribbon.minVertexDistance = 0.15f;
         ribbon.numCapVertices = 4;
@@ -122,12 +149,19 @@ public class BroomFX : MonoBehaviour
 
         var rend = dust.GetComponent<ParticleSystemRenderer>();
         rend.renderMode = ParticleSystemRenderMode.Mesh;
-        rend.mesh = MagicFX.StarMesh();
-        rend.material = MagicFX.Unlit(false);
+        rend.mesh = starMesh != null ? starMesh : MagicFX.StarMesh();
+        rend.sharedMaterial = dustMaterial != null ? dustMaterial : MagicFX.Unlit(false);
         rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         rend.receiveShadows = false;
 
         dust.Play();
+    }
+
+    // the same, for the builder: also called outside play mode
+    public void BuildInScene(Material ribbonMat, Material dustMat, Mesh star, BroomFlight b)
+    {
+        ribbonMaterial = ribbonMat; dustMaterial = dustMat; starMesh = star; broom = b;
+        RebuildParts();
     }
 
     void Update()

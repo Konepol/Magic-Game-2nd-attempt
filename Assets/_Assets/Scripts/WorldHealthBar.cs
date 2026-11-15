@@ -14,9 +14,14 @@ public class WorldHealthBar : MonoBehaviour
     [SerializeField] Texture2D fillTexture;
     [SerializeField] Texture2D chipTexture;
 
+    [Header("Parts in the scene (made by Rebuild Parts; restyle or replace them directly)")]
+    [SerializeField] Transform visual;
+    [SerializeField] Transform bg, chip, fill;
+    [SerializeField, Tooltip("Materials the builder saved as assets (empty = made while playing).")]
+    Material bgMaterial, chipMaterial, fillMaterial;
+
     Health health;
     Collider ownerCollider;
-    Transform visual, fill, chip;
     Material bgMat, fillMat, chipMat;
     float hideAt;
     float target = 1f, shown = 1f, chipValue = 1f;
@@ -27,24 +32,40 @@ public class WorldHealthBar : MonoBehaviour
         health = GetComponentInParent<Health>();
         ownerCollider = health != null ? health.GetComponent<Collider>() : null;
 
+        if (visual == null) BuildParts();
+        else
+        {
+            // the bar was built in the scene: use its quads, with their own copies of the materials so each bar colours itself
+            bgMat = bg.GetComponent<Renderer>().material;
+            chipMat = chip.GetComponent<Renderer>().material;
+            fillMat = fill.GetComponent<Renderer>().material;
+        }
+        visual.gameObject.SetActive(false);
+    }
+
+    // makes the three quads (background, pale "chip" that drains slowly, fill) under a "Visual" object
+    [ContextMenu("Rebuild Parts")]
+    public void BuildParts()
+    {
+        if (visual != null) { if (Application.isPlaying) Destroy(visual.gameObject); else DestroyImmediate(visual.gameObject); }
+
         visual = new GameObject("Visual").transform;
         visual.SetParent(transform, false);
 
-        bgMat = SpellVisuals.Make(HealthBarStyle.Background, false);
-        chipMat = SpellVisuals.Make(HealthBarStyle.Chip, false);
-        fillMat = SpellVisuals.Make(HealthBarStyle.Full, false);
-        ApplyTexture(bgMat, backgroundTexture, true);
-        ApplyTexture(chipMat, chipTexture, false);
-        ApplyTexture(fillMat, fillTexture, false);
+        bgMat = bgMaterial != null ? bgMaterial : SpellVisuals.Make(HealthBarStyle.Background, false);
+        chipMat = chipMaterial != null ? chipMaterial : SpellVisuals.Make(HealthBarStyle.Chip, false);
+        fillMat = fillMaterial != null ? fillMaterial : SpellVisuals.Make(HealthBarStyle.Full, false);
+        if (bgMaterial == null) ApplyTexture(bgMat, backgroundTexture, true);
+        if (chipMaterial == null) ApplyTexture(chipMat, chipTexture, false);
+        if (fillMaterial == null) ApplyTexture(fillMat, fillTexture, false);
 
-        var bg = MakeQuad("BG", bgMat);
+        bg = MakeQuad("BG", bgMat);
         bg.localScale = new Vector3(width + 0.06f, height + 0.06f, 1f);
         bg.localPosition = new Vector3(0f, 0f, 0.003f);
         chip = MakeQuad("Chip", chipMat);
         chip.localPosition = new Vector3(0f, 0f, 0.002f);
         fill = MakeQuad("Fill", fillMat);
-
-        visual.gameObject.SetActive(false);
+        fill.localScale = new Vector3(width, height, 1f);
     }
 
     static void ApplyTexture(Material m, Texture2D tex, bool resetTint)
@@ -59,7 +80,8 @@ public class WorldHealthBar : MonoBehaviour
     {
         var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
         q.name = name;
-        Destroy(q.GetComponent<Collider>());
+        if (Application.isPlaying) Destroy(q.GetComponent<Collider>());
+        else DestroyImmediate(q.GetComponent<Collider>());
         var r = q.GetComponent<Renderer>();
         r.sharedMaterial = mat;
         r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

@@ -36,6 +36,8 @@ public class GameCatalog : ScriptableObject
     public GameObject wardenModel;
     public Material castingCircleMaterial;
     public SpellFXLibrary spellFXLibrary;
+    [Tooltip("The health bar a barrier shows once damaged (the shared EnemyHealthBar prefab, built in the editor).")]
+    public GameObject healthBarPrefab;
     [Tooltip("Menu canvases baked by the builders, found by prefab name (MainMenuCanvas, PauseMenu, DeathScreen, StageResults).")]
     public GameObject[] uiPrefabs;
 
