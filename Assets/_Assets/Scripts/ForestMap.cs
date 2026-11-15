@@ -46,6 +46,12 @@ public class ForestMap : MonoBehaviour
     [SerializeField, Tooltip("Most chunks made in one frame while flying.")]
     int chunksPerFrame = 2;
     [SerializeField] bool floatingMotes = true;
+    [SerializeField, Tooltip("Switch off the drawing of every chunk the camera is not looking at (behind you, off to the side). Colliders stay.")]
+    bool hideUnseen = true;
+    [SerializeField, Tooltip("Chunks this close to the camera are always drawn, so shadows of unseen trees still fall into view.")]
+    float alwaysDrawWithin = 90f;
+    [SerializeField, Tooltip("Seconds between checks of what the camera sees.")]
+    float seenCheckInterval = 0.12f;
 
     [Header("Materials (Magic/ToonStylized, made by the builder)")]
     [SerializeField] Material groundMaterial;
@@ -102,7 +108,10 @@ public class ForestMap : MonoBehaviour
         public readonly List<Tree> trees = new List<Tree>();
         public MeshRenderer farRenderer;
         public GameObject near;
-        public bool canBeNear, built, showingNear;
+        public MeshRenderer groundRenderer;
+        public MeshRenderer[] nearRenderers;
+        public Bounds bounds;                      // in world space, for the camera's view check
+        public bool canBeNear, built, showingNear, seen = true;
         public uint id;
     }
 
@@ -133,7 +142,7 @@ public class ForestMap : MonoBehaviour
     }
 
     [ContextMenu("Rebuild")]
-    void Rebuild()
+    public void Rebuild()
     {
         Clear();
         Generate();
@@ -338,7 +347,43 @@ public class ForestMap : MonoBehaviour
         if (!Application.isPlaying || root == null) return;
         if (cam == null) { if (Camera.main == null) return; cam = Camera.main.transform; }
         UpdateDetail(false);
+        if (hideUnseen && Time.unscaledTime >= nextSeenCheck)
+        {
+            nextSeenCheck = Time.unscaledTime + seenCheckInterval;
+            UpdateSeen();
+        }
         if (motes != null) motes.position = cam.position;
+    }
+
+    float nextSeenCheck;
+    static readonly Plane[] viewPlanes = new Plane[6];
+
+    // every chunk outside the camera's view stops being drawn; the ground collider and the trunk colliders are untouched
+    void UpdateSeen()
+    {
+        var camera = Camera.main;
+        if (camera == null) return;
+        GeometryUtility.CalculateFrustumPlanes(camera, viewPlanes);
+        Vector3 cp = camera.transform.position;
+        float near2 = alwaysDrawWithin * alwaysDrawWithin;
+
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            Chunk c = chunks[i];
+            Vector3 d = c.bounds.ClosestPoint(cp) - cp;
+            bool seen = d.sqrMagnitude < near2 || GeometryUtility.TestPlanesAABB(viewPlanes, c.bounds);
+            if (seen == c.seen) continue;
+            c.seen = seen;
+            ApplyDrawing(c);
+        }
+    }
+
+    static void ApplyDrawing(Chunk c)
+    {
+        if (c.groundRenderer != null) c.groundRenderer.enabled = c.seen;
+        if (c.farRenderer != null) c.farRenderer.enabled = c.seen && !c.showingNear;
+        if (c.nearRenderers != null)
+            foreach (var r in c.nearRenderers) if (r != null) r.enabled = c.seen;
     }
 
     void UpdateDetail(bool all)
@@ -370,7 +415,7 @@ public class ForestMap : MonoBehaviour
     {
         c.showingNear = near;
         if (c.near != null) c.near.SetActive(near);
-        if (c.farRenderer != null) c.farRenderer.enabled = !near;
+        if (c.farRenderer != null) c.farRenderer.enabled = !near && c.seen;
     }
 
     // ---------- ground ----------
@@ -423,6 +468,9 @@ public class ForestMap : MonoBehaviour
         var r = c.go.AddComponent<MeshRenderer>();
         r.sharedMaterial = groundMaterial;
         r.shadowCastingMode = ShadowCastingMode.Off;
+        c.groundRenderer = r;
+        // tall enough for the mountains, so a chunk is never judged unseen while its peak is in view
+        c.bounds = new Bounds(c.center + transform.position + Vector3.up * 120f, new Vector3(chunkSize, mountainHeight * 2f + 80f, chunkSize));
     }
 
     Color GroundColor(float x, float z, float h, float up)
@@ -586,6 +634,8 @@ public class ForestMap : MonoBehaviour
             r.sharedMaterial = glowMaterial;
             r.shadowCastingMode = ShadowCastingMode.Off;
         }
+        c.nearRenderers = c.near.GetComponentsInChildren<MeshRenderer>(true);
+        if (!c.seen) foreach (var r in c.nearRenderers) r.enabled = false;
         c.near.SetActive(false);
     }
 
