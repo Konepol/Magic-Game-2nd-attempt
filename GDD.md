@@ -79,7 +79,12 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
     - Output is shown as a **visible mana aura** on the witch, and the player can **suppress mana** (stealth) so enemies and NPCs notice less.
     - Normal tap and hold casting stays the base, and output is the extra layer.
   - M1's first spells should cover: a basic attack with a signature motion, a big charge spell that transforms (**not just ball to beam**), the movement spell (blink or dash), and a defensive or counter spell.
-  - The new spell designs: **TBD** (spell changes come before M1 content).
+  - **First concepts (approved, working names):**
+    - **Weaver** (basic attack): tap fires a glowing thread that snakes in a lazy S-curve to the target and stitches to it; hold stitches several threads between you and enemies, and on release they snap tight and yank the targets together.
+    - **Hollow Moon** (big charge spell): a dark disc grows over the wand while chanting; tap-release is a spinning crescent blade; held longer it becomes a moon hanging in the sky, and on release it collapses into a huge ring that shrinks and crushes everything inside.
+    - **Mirror Bloom** (defense and counter): glass petals open in front of the witch; a well-timed tap reflects an incoming projectile back as a shard storm; held, it becomes a slow dome that bends projectiles around you.
+    - **Movement spell:** concept **TBD** (the earlier "Veil Step" petal blink was rejected).
+  - The remaining spell designs: **TBD** (spell changes come before M1 content).
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
 - **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
