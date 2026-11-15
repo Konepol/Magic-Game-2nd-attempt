@@ -236,7 +236,11 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 
 **Story mission:** a **tutorial only, with no boss**. It is an interactive survival tutorial that ends by opening the first gate or area. Story content is a placeholder until written.
 
-**Other M1 content:** one spell quest, one wand quest, and broom trial 1 (the first broom upgrade).
+**Other M1 content:**
+- **Spell quest:** learn a spell from a **teacher NPC** (the teacher sets a task, then teaches).
+- **Wand quest:** a **unique starter wand given by the teacher**.
+- **Broom trial 1:** an **obstacle slalom through trees and ruins** (the first broom upgrade), with destructible gaps where it fits.
+- **Tutorial situation:** a **generic placeholder**, reworked when the story is written.
 
 **Suggested build order** (riskiest and most foundational first):
 1. Destruction prototype: runtime fracture with a capped, pooled piece count. It is the biggest technical risk.
@@ -247,7 +251,7 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 6. Quest content: tutorial, spell quest, wand quest, broom trial 1.
 7. Repair minigame and reputation, then a polish pass against the feel checks.
 
-**M1 open questions:** the feel-check list, the tutorial's content, which spell and wand the quests give, what broom trial 1 is, and the fracture piece budget.
+**M1 open questions:** the feel-check list, the tutorial's content, which spell and which unique wand the teacher gives, the teacher's character, and the fracture piece budget.
 
 ## 14. Open questions and next steps
 
