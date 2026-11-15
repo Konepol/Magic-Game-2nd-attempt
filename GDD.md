@@ -66,6 +66,13 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
 - **Sky-combat rules** (from `SPELLS.md`): everything reaches a flier; quick spells never restrict movement; siege spells (Starfall and others) are a big commitment.
 - Current spell list: Star Bolt, Seeker Swarm, Flak Burst, Gale Crescent, Thunderclap, Frost Spire, Gravity Well, Starfall, plus fusions (Nova Shell, Firefly Barrage, Storm Front, Absolute Zero, Heaven Piercer, Judgement). The finished game targets about **40 spells** (and about **12 wands**), which grows through quests.
 - **Spell themes:** the ~40 spells are **not fixed to elements**; what exists depends on what the player learns, in the spirit of *Frieren*. Themes to draw from: fire, frost, lightning, wind, gravity, space, time, nature, earth, poison, light, shadow and summoning.
+- **Spell redesign (next work):** the current spells are disliked because they are not unique enough, tap and hold read as two different spells, charge tiers just give a bigger version, fusions stack the ingredients' effects, and the visuals and scale look bad. The new rules:
+  - **Each spell is unique** in shape and motion, cast feel (animation, camera, sound), use in play, and theme or identity.
+  - **A spell can have any number of forms.** Holding to charge can **transform** it into something different, not only a stronger version (for example a lightning ball becomes a lightning beam). Each form has its own shape and look.
+  - **A fusion is an entirely new spell**, picked by a **hand-designed recipe table**; it does not have to combine its ingredients' properties.
+  - **Pre-fused spells can be equipped in a slot like any normal spell**, but casting one this way **costs more mana than fusing it live**. Live fusing with `B` stays.
+  - **Scale:** spells are **too small for the world and bosses** and should be bigger. The **casting circle is too big** and should be **smaller, but scale with the spell's size** (small for taps, large only for siege spells).
+  - Which current spells stay, and the new spell designs: **TBD** (spell changes come before M1 content).
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
 - **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
