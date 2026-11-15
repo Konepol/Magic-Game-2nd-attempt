@@ -13,30 +13,11 @@ MonoBehaviour:
   m_Name: GameCatalog
   m_EditorClassIdentifier: Assembly-CSharp::GameCatalog
   spells:
-  - {fileID: 11400000, guid: 0b10bd7098ac1d7818421dcf9cd96d54, type: 2}
-  - {fileID: 11400000, guid: 0f4ff321c3b5cba943d16455e966a606, type: 2}
-  - {fileID: 11400000, guid: bc186d70fb48d2ef8122107dfee9dba3, type: 2}
-  - {fileID: 11400000, guid: 33d5d1fa67896d7a1fc02895b7bc19db, type: 2}
-  - {fileID: 11400000, guid: 5a6be6b7c64a450bcec0836b87f04386, type: 2}
-  - {fileID: 11400000, guid: a665120aa2b1bb15303b506104ae9679, type: 2}
-  - {fileID: 11400000, guid: 7a55e2f898a130740f85dfeb12dd023a, type: 2}
-  - {fileID: 11400000, guid: 1aea2515970600229ff107a7e6354f57, type: 2}
-  combos:
-  - {fileID: 11400000, guid: fda7689609f0ed5b43661b34e8c0617d, type: 2}
-  - {fileID: 11400000, guid: d09b168dd8fde9f16923620170b83ed2, type: 2}
-  - {fileID: 11400000, guid: 24208b56fd52fe75f86a833b3268b3a7, type: 2}
-  - {fileID: 11400000, guid: b32174b5792184b0991b4d1ed8d35c6c, type: 2}
-  - {fileID: 11400000, guid: cf7b10093bd15bc7c1e48542d822110f, type: 2}
-  - {fileID: 11400000, guid: a17ae0b355cdde20fa51d68b3ba9cd49, type: 2}
+  - {fileID: 11400000, guid: 8e25d269bf226e54394905dadb45d3f7, type: 2}
+  combos: []
   slotCount: 7
   defaultLoadout:
-  - StarBolt
-  - FlakBurst
-  - SeekerSwarm
-  - Thunderclap
-  - GaleCrescent
-  - GravityWell
-  - Starfall
+  - TestSpell
   allowMulticast: 1
   multicastDelay: 0.15
   maxMulticast: 4

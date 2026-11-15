@@ -270,6 +270,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             Equip(loadout[(idx + 1) % loadout.Length]);
         }
 
+        UpdatePassivesAndOutput();
+
         // charging mana takes over: no casting or aiming until it stops
         if (mana != null && mana.IsCharging)
         {
@@ -351,7 +353,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     // mana already taken is lost, and what was paid is counted when the spell fires.
                     if (mana != null)
                     {
-                        float baseCost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
+                        float baseCost = (hasHold ? spell.hold.manaCost : spell.tap.manaCost) * SlotCostMul(spell);
                         bool basePhase = held < castTime;
                         float need = PayTarget(spell, held, hasHold) - paid[i];
 
@@ -425,7 +427,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                         if (hasHold)
                         {
                             firedTier = tier;
-                            while (firedTier > 0 && mana != null && !mana.CanAfford(spell.VariantForTier(firedTier).manaCost)) firedTier--;
+                            while (firedTier > 0 && mana != null && !mana.CanAfford(spell.VariantForTier(firedTier).manaCost * SlotCostMul(spell))) firedTier--;
                             fire = spell.VariantForTier(firedTier);
                         }
 
@@ -485,7 +487,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
     // how much of the spell's mana should have been paid after being held this long: the base cost over the cast time, then each charge tier's
     // extra cost over the time to reach it
-    float PayTarget(SpellData spell, float held, bool hasHold)
+    float PayTarget(SpellData spell, float held, bool hasHold) => PayTargetBase(spell, held, hasHold) * SlotCostMul(spell);
+
+    float PayTargetBase(SpellData spell, float held, bool hasHold)
     {
         float cost = hasHold ? spell.hold.manaCost : spell.tap.manaCost;
         float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
@@ -1064,7 +1068,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         var spec = cb.spec;
 
         if (mana != null && cb.paid > 0f) { mana.Restore(cb.paid); cb.paid = 0f; }       // the cost is taken again in full as it fires
+        liveFusing = true;                                            // fused live with B: no equipped-fusion surcharge
         bool ok = Cast(cb.slots[0], spec.variant, spec.result);       // the recipe's own cost is on its spell
+        liveFusing = false;
         if (!ok) { FizzleCombo("Not enough mana"); return; }
 
         // the whole group shares one cooldown, and one movement / recovery rule
@@ -1414,14 +1420,110 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
     }
 
+    // ---------- mana output (temporary debug control until the real output key exists), passives, fused-equip cost ----------
+
+    // the output level the next casts use (1 = normal). A spell backfires when this is past its own output limit.
+    public float Output { get; private set; } = 1f;
+    public event System.Action<float> OutputChanged;
+
+    bool liveFusing;                 // a fusion made live with B is being fired: it does not pay the equipped-fusion surcharge
+    bool[] passiveStarved;           // a WhileOn passive that ran out of mana
+
+    // a fused spell cast from its own slot costs more than the same fusion made live
+    float SlotCostMul(SpellData spell) => spell != null && spell.isFusion && !liveFusing ? Mathf.Max(1f, spell.fusedEquipCostMultiplier) : 1f;
+
+    // is this spell's passive toggled on and working (a WhileOn passive stops when it is starved of mana)
+    public bool PassiveActive(SpellData spell)
+    {
+        if (spell == null || !SpellPassives.IsOn(spell)) return false;
+        if (spell.passive.manaStyle == PassiveManaStyle.PerActivation) return true;
+        for (int i = 0; i < cooldownEnd.Length; i++)
+            if (GetSpell(i) == spell) return passiveStarved == null || i >= passiveStarved.Length || !passiveStarved[i];
+        return false;
+    }
+
+    void UpdatePassivesAndOutput()
+    {
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            if (kb.pageUpKey.wasPressedThisFrame) SetOutput(Output + 0.25f);
+            if (kb.pageDownKey.wasPressedThisFrame) SetOutput(Output - 0.25f);
+        }
+
+        if (passiveStarved == null || passiveStarved.Length != cooldownEnd.Length) passiveStarved = new bool[cooldownEnd.Length];
+        for (int i = 0; i < cooldownEnd.Length; i++)
+        {
+            var sp = GetSpell(i);
+            if (sp == null || !SpellPassives.IsOn(sp) || sp.passive.manaStyle != PassiveManaStyle.WhileOn || mana == null) { passiveStarved[i] = false; continue; }
+
+            float need = sp.passive.tiedUpPerSecond * Time.deltaTime;
+            float taken = mana.Drain(need);
+            passiveStarved[i] = taken < need - 0.0001f;       // ran dry this frame: the passive pauses until mana is back
+        }
+    }
+
+    // debug: PageUp / PageDown
+    void SetOutput(float value)
+    {
+        Output = Mathf.Clamp(Mathf.Round(value * 4f) / 4f, 0.25f, 4f);
+        CastFailed?.Invoke("Output x" + Output.ToString("0.##"));
+        OutputChanged?.Invoke(Output);
+    }
+
+    // pushed past the spell's own limit: it goes off in the caster's hands
+    void Backfire(SpellData spell, SpellVariant v, float cost)
+    {
+        if (mana != null) mana.Spend(Mathf.Min(cost, mana.Current));
+        float over = Output / Mathf.Max(spell.outputLimit, 0.01f);
+        if (health != null) health.TakeDamage(Mathf.Max(1f, spell.backfireDamage * over), transform.position + Vector3.up);
+
+        Vector3 at = muzzle != null ? muzzle.position : transform.position;
+        SpellFX.Play(Sfx.Fizzle, at, 1f);
+        SpellFX.Sparks(at, new Color(1f, 0.35f, 0.25f));
+        SpellFX.CastFlash(at, v.effectColor);
+        CameraShake.Add(0.6f);
+        CastFailed?.Invoke("Backfire!");
+    }
+
     bool Cast(int slot, SpellVariant v, SpellData spell)
     {
         if (Time.time < cooldownEnd[slot] || muzzle == null || mainCamera == null) return false;
 
-        if (mana != null && !mana.CanAfford(v.manaCost))
+        float cost = v.manaCost * SlotCostMul(spell);
+        if (mana != null && !mana.CanAfford(cost))
         {
             mana.NotifyInsufficient();
             return false;
+        }
+
+        bool wasHold = spell.hasHoldVariant && !ReferenceEquals(v, spell.tap);
+        bool isTapVariant = ReferenceEquals(v, spell.tap);
+
+        // past the spell's output limit it backfires instead of casting
+        if (spell.outputLimit > 0f && Output > spell.outputLimit)
+        {
+            Backfire(spell, v, cost);
+            cooldownEnd[slot] = Time.time + Mathf.Max(v.cooldown, fizzleCooldown);
+            cooldownTotal[slot] = Mathf.Max(v.cooldown, fizzleCooldown);
+            return true;
+        }
+
+        // the passive part: when it is on and working it changes the cast (and a per-activation one takes its mana)
+        float passiveCost = 0f;
+        if (spell.HasPassive && PassiveActive(spell))
+        {
+            if (spell.passive.manaStyle == PassiveManaStyle.PerActivation) passiveCost = spell.passive.activationCost;
+            if (mana == null || mana.CanAfford(cost + passiveCost))
+            {
+                if (!Mathf.Approximately(spell.passive.damageMultiplier, 1f))
+                {
+                    v = v.Clone();
+                    v.damage *= spell.passive.damageMultiplier;
+                    v.lingerTickDamage *= spell.passive.damageMultiplier;
+                }
+            }
+            else passiveCost = 0f;       // not enough mana for the extra: the spell casts without its passive
         }
 
         // the staff turns to the target at the moment the spell leaves, so it starts from the tip of a staff that points at it
@@ -1443,14 +1545,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (!cast) return false;
 
         cooldownEnd[slot] = Time.time + v.cooldown;
-        bool wasHold = spell.hasHoldVariant && ReferenceEquals(v, spell.hold);
         Casted?.Invoke(wasHold);
         SpellCasted?.Invoke(spell, wasHold);
         castingUntil = Time.time + (wasHold ? spell.heldRecovery : spell.tapRecovery);
         facingUntil = Time.time + Mathf.Max(faceAimAfterCast, wasHold ? spell.heldRecovery : spell.tapRecovery);
         lastCastMovement = wasHold ? spell.heldMovement : spell.tapMovement;
         cooldownTotal[slot] = v.cooldown;
-        if (mana != null) mana.Spend(v.manaCost);
+        if (mana != null) mana.Spend(cost + passiveCost);
 
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
         // a held beam fires every tick: its sound and cast flash are only repeated now and then
@@ -1462,7 +1563,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
 
         // a tapped (instant) spell gets a small quick circle; limited in rate so rapid-fire spells do not flood the screen
-        if (spell.tapCircle != null && ReferenceEquals(v, spell.tap) && Time.time - lastTapCircle[slot] > 0.3f)
+        if (spell.tapCircle != null && isTapVariant && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
             CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale);

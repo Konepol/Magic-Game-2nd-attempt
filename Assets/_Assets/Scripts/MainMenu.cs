@@ -569,7 +569,24 @@ public class MainMenu : MonoBehaviour
         string hold = spell.hasHoldVariant
             ? HoldChain(spell) + "\n" + Mathf.RoundToInt(spell.hold.manaCost) + " mana, " + spell.holdThreshold.ToString("0.#") + "s cast"
             : (spell.autoRepeatWhenHeld ? "keeps firing" : "-");
-        Cell(row.transform, "Hold", hold, 24, UIKit.Dim, 830f, 440f, false);
+        if (spell.isFusion) hold += "\nfused: x" + spell.fusedEquipCostMultiplier.ToString("0.##") + " mana in a slot";
+        Cell(row.transform, "Hold", hold, 24, UIKit.Dim, 830f, spell.HasPassive ? 300f : 440f, false);
+
+        // a spell with a passive part gets its own on/off switch here; the spell's active part works either way
+        if (spell.HasPassive)
+        {
+            bool on = SpellPassives.IsOn(spell);
+            string cost = spell.passive.manaStyle == PassiveManaStyle.PerActivation
+                ? spell.passive.activationCost.ToString("0.#") + " each"
+                : spell.passive.tiedUpPerSecond.ToString("0.#") + "/s";
+            var toggle = UIKit.MakeButton(row.transform, (on ? "ON  " : "OFF  ") + cost, new Vector2(150f, 64f), () =>
+            {
+                SpellPassives.Toggle(spell);
+                RefreshSpellMenu();
+            }, 22);
+            UIKit.SetChosen(toggle, on);
+            UIKit.Place((RectTransform)toggle.transform, new Vector2(0f, 0.5f), new Vector2(1160f + 75f, 0f), new Vector2(150f, 64f));
+        }
 
         string where = "";
         for (int i = 0; i < loadout.Length; i++) if (loadout[i] == spell.name) where = KeyLabel(i);

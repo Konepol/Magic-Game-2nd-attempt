@@ -26,6 +26,33 @@ public class ChargeTier
     [Range(0.3f, 3f)] public float circleScale = 1f;
     [Tooltip("Sentences chanted while charging toward this tier (they appear after the spell's own chant).")]
     public string[] chant;
+
+    [Header("Transformation (a different form, not just a bigger one)")]
+    [Tooltip("On = this form is a spell of its own: it fires the variant below (its own kind, shape, motion and look) instead of the hold version scaled by the multipliers above.")]
+    public bool ownForm = false;
+    public SpellVariant form = new SpellVariant();
+}
+
+public enum PassiveManaStyle
+{
+    PerActivation,   // costs mana each time the passive triggers
+    WhileOn,         // keeps mana tied up for as long as it is toggled on (drains continuously)
+}
+
+// The optional passive part of a spell. It is toggled on and off separately (in the spell list); the spell's active part stays usable either way.
+[Serializable]
+public class SpellPassive
+{
+    public bool enabled = false;
+    public string displayName = "Passive";
+    [TextArea] public string description;
+    public PassiveManaStyle manaStyle = PassiveManaStyle.PerActivation;
+    [Tooltip("PerActivation: mana taken each time the passive triggers.")]
+    public float activationCost = 5f;
+    [Tooltip("WhileOn: mana per second taken while toggled on. When mana runs out the passive stops working until there is some again.")]
+    public float tiedUpPerSecond = 2f;
+    [Tooltip("Simple generic effect: multiplies this spell's damage while the passive is on and active. 1 = none. Spells with a special passive (blink, healing...) use their own code instead.")]
+    public float damageMultiplier = 1f;
 }
 
 // One way of casting a spell. A spell has a tap variant and, optionally, a hold variant.
@@ -175,6 +202,22 @@ public class SpellData : ScriptableObject
     [Tooltip("Keep holding past the cast time and the spell grows into a stronger version at each of these times: bigger, harder hitting, with a bigger circle.")]
     public ChargeTier[] extraTiers;
 
+    [Header("Passive part (optional, toggled in the spell list)")]
+    public SpellPassive passive = new SpellPassive();
+    public bool HasPassive => passive != null && passive.enabled;
+
+    [Header("Mana output")]
+    [Tooltip("The highest output level this spell can take. Casting past it makes the spell backfire and hurt the caster. Differs per spell.")]
+    public float outputLimit = 2f;
+    [Tooltip("Damage the caster takes from a backfire at exactly the limit; it grows with how far past the limit the output is.")]
+    public float backfireDamage = 15f;
+
+    [Header("Fusion")]
+    [Tooltip("This spell is the result of a hand-designed recipe (see SpellCombo). It can be equipped in a slot like any spell, but then it costs more than fusing it live with B.")]
+    public bool isFusion = false;
+    [Tooltip("Mana multiplier when a fused spell is cast from its own slot instead of being fused live.")]
+    public float fusedEquipCostMultiplier = 1.5f;
+
     [Header("Tap-only spells")]
     public bool autoRepeatWhenHeld = false; // keeps casting the tap variant while the key is held (ignored when there is a hold variant)
 
@@ -223,6 +266,8 @@ public class SpellData : ScriptableObject
         if (tierVariants[tier] != null) return tierVariants[tier];
 
         var t = extraTiers[tier - 1];
+        if (t.ownForm && t.form != null) return tierVariants[tier] = t.form;     // a transformation: its own spell
+
         var v = hold.Clone();
         v.damage *= t.damageMultiplier;
         v.aoeRadius *= t.sizeMultiplier;
