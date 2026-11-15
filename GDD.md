@@ -84,7 +84,8 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
     - **Hollow Moon** (big charge spell): a dark disc grows over the wand while chanting; tap-release is a spinning crescent blade; held longer it becomes a moon hanging in the sky, and on release it collapses into a huge ring that shrinks and crushes everything inside.
     - **Mirror Bloom** (defense and counter): glass petals open in front of the witch; a well-timed tap reflects an incoming projectile back as a shard storm; held, it becomes a slow dome that bends projectiles around you.
     - **Veil Step** is **not a normal attack slot spell**: it is a **passive spell** that can be put in the spell list and **changes the dash into a blink** (petals dissolve and re-form at the aimed spot). It is a feature of the movement system, so passives are a spell type of their own.
-    - **Fourth M1 spell:** a **multipurpose spell** (one that is useful in several ways), concept **TBD**.
+    - **Lantern** (multipurpose): a floating light you place or throw. It lights dark places such as caves, marks enemies for homing, lures enemies when thrown, and held it grows into a beacon that others can teleport to.
+    - **Passive spells:** they sit in the spell list. A passive **costs mana when it activates**, or **continuously takes up mana while toggled on** in the spell list. Which passives work which way: **TBD**.
   - The remaining spell designs: **TBD** (spell changes come before M1 content).
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
