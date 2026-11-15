@@ -10,6 +10,8 @@ Status: draft 2, 2026-11-15. Anything marked **TBD** is not decided yet.
 
 A third-person magic action game in a bright, medieval-fantasy open region. You are a witch who flies a broom and casts spells that can be tapped, chanted, and fused together. The world is explored freely, but story progress opens new parts of the map. New wands and spells are earned through separate quests, where the more powerful the reward, the harder or more secret the quest.
 
+**The feeling that makes it worth finishing:** powerful, cinematic spellcasting **and** the freedom of flight and exploration.
+
 **Pillars** (every feature must serve at least one):
 1. **Spells are the game.** Tap, chant, multicast and fuse. Chanting is both a mechanic and a performance (voice lines, circles, camera).
 2. **The broom is freedom.** Flight is fast and fun, and the world is built to be flown over. Places where flying is forbidden feel like a deliberate change of pace.
@@ -44,6 +46,8 @@ This is a **personal project with no release date and no store**. It is "done" w
 
 The owner will write the story. This document only fixes the structure:
 - Premise, characters, and ending: **TBD (owner writes)**.
+- **Cast to plan for:** a **mentor/guide**, a **main rival witch** (an early opponent who is a rival, **not entirely an enemy**), a **main villain who appears later** in the story, and town leaders and merchants (who also judge crime).
+- **Opening:** an **interactive tutorial where the player must survive a situation**; details follow the story.
 - Story is delivered as missions that unlock zones. Placeholder chapter list in section 8.
 - Tone: grounded medieval fantasy with a brighter, more hopeful feel than classic "dark" fantasy; each zone sets its own mood (see section 9).
 
@@ -136,7 +140,7 @@ Most quests are **not repeatable**, so once finished they **stay finished** in t
 - **Player count follows boss scale.** Each boss gets a **recommended range**, for example 5 to 10, but the number is **not fixed**: you can enter with fewer or more. Bosses **also scale live** (health, phases and mechanics) with how many are fighting.
 - **Networking:** Steam-style peer-to-peer with a host; others join by invite. Keep spells, quests and world state data-driven so they can be synchronised.
 - **NPC helpers when playing alone:** which NPCs help is decided by the quests the player has completed (a character you helped can join later fights). **Some NPCs help and some will not**, each has a personality and their own voice lines, and there is no limit on how many you can recruit. NPC helpers can be **switched off individually**, and they are **also allowed in co-op**, with limits: every NPC has a **value**, every boss has a **value limit**, and the NPCs brought in count toward that limit. The more NPC value you bring, the more the boss scales up. When playing solo, NPCs count toward boss scaling like players. Value numbers, boss limits and the full roster: **TBD**.
-- **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. There are **several modes** (formats such as duels, teams and free-for-all: **TBD**), and PvP uses **separate PvP numbers** for damage and cooldowns so PvE balance is untouched. Matchmaking: **TBD**.
+- **PvP arena (after co-op):** built after the rival-witch enemy exists, since that enemy reuses the same casting and flight logic. There are **several modes** (candidates: 1v1 duel, team battle, free-for-all, and a co-op boss race; **what actually gets added is TBD**), and PvP uses **separate PvP numbers** for damage and cooldowns so PvE balance is untouched. Matchmaking: **TBD**.
 - Single-player must stay fully playable without any of this.
 
 ## 8. World and zones
