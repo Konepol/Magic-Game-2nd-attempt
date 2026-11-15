@@ -32,9 +32,30 @@ public class GameCatalog : ScriptableObject
     [Header("Stages")]
     public StageInfo[] stages;
 
+    [Header("Shared assets (were loaded by name from Resources)")]
+    public GameObject wardenModel;
+    public Material castingCircleMaterial;
+    public SpellFXLibrary spellFXLibrary;
+    [Tooltip("Menu canvases baked by the builders, found by prefab name (MainMenuCanvas, PauseMenu, DeathScreen, StageResults).")]
+    public GameObject[] uiPrefabs;
+
     public const string ResourcePath = "GameCatalog";
 
-    public static GameCatalog Load() => Resources.Load<GameCatalog>(ResourcePath);
+    static GameCatalog cached;
+
+    // the one asset that still has to be found by name; everything else is reached through its fields
+    public static GameCatalog Load()
+    {
+        if (cached == null) cached = Resources.Load<GameCatalog>(ResourcePath);
+        return cached;
+    }
+
+    public GameObject FindUIPrefab(string prefabName)
+    {
+        if (uiPrefabs == null) return null;
+        foreach (var p in uiPrefabs) if (p != null && p.name == prefabName) return p;
+        return null;
+    }
 
     public SpellData FindSpell(string assetName)
     {

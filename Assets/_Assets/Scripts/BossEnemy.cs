@@ -154,7 +154,7 @@ public class BossEnemy : MonoBehaviour
     // the toon model made by Tools > Magic > Build Boss Model: it keeps the same pivots (Head, ArmL, ArmR) the fight animation drives
     bool BuildFromModel()
     {
-        var prefab = Resources.Load<GameObject>("Boss/WardenModel");
+        var prefab = GameCatalog.Load()?.wardenModel;
         if (prefab == null) return false;
 
         visual = Instantiate(prefab, transform).transform;

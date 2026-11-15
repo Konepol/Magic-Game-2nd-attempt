@@ -137,7 +137,7 @@ public class CastingCircle : MonoBehaviour
     {
         if (materials.TryGetValue(tex, out var m) && m != null) return m;
 
-        if (baseMaterial == null) baseMaterial = Resources.Load<Material>("CastingCircleMaterial");
+        if (baseMaterial == null) baseMaterial = GameCatalog.Load()?.castingCircleMaterial;
         Material mat;
         if (baseMaterial != null) mat = new Material(baseMaterial);
         else mat = new Material(Shader.Find("Magic/CastingCircle"));

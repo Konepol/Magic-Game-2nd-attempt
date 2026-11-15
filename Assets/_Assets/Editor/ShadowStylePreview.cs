@@ -25,7 +25,7 @@ public static class ShadowStylePreview
             go.transform.rotation = Quaternion.Euler(0f, 160f, 0f);
             temps.Add(go);
         }
-        var boss = Object.Instantiate(Resources.Load<GameObject>("Boss/WardenModel"));
+        var boss = Object.Instantiate(GameCatalog.Load().wardenModel);
         boss.transform.position = c + new Vector3(1f, 0f, 15f);
         boss.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
         temps.Add(boss);

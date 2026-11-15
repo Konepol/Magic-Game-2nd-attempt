@@ -17,7 +17,7 @@ public static class SpellFX
         {
             if (!libraryLoaded)
             {
-                library = Resources.Load<SpellFXLibrary>("SpellFXLibrary");
+                library = GameCatalog.Load()?.spellFXLibrary;
                 libraryLoaded = true;
             }
             return library;

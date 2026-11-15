@@ -85,7 +85,7 @@ public static class UIKit
                 if (inScene != null) return inScene;
             }
 
-            var baked = Resources.Load<GameObject>("UI/" + name);
+            var baked = GameCatalog.Load()?.FindUIPrefab(name);
             if (baked != null)
             {
                 var copy = UnityEngine.Object.Instantiate(baked);
