@@ -238,7 +238,10 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 
 **Other M1 content:**
 - **Spell quest:** learn a spell from a **teacher NPC** (the teacher sets a task, then teaches).
-- **Wand quest:** a **unique starter wand given by the teacher**.
+- **The spell taught:** a **movement spell (blink or dash)**.
+- **Wand quest:** a **unique starter wand given by the teacher**, with a **unique ability** and a **distinctive look** (its own model and glow colour).
+- **Camera in M1:** a wider ground follow, a dynamic flight camera, cast zoom and framing for big chants, and cinematic moments in the tutorial.
+- **Existing content:** only a **small part** of the current spells and enemies carries into M1. **Spell changes come next** (to scope M1); which spells stay is decided then.
 - **Broom trial 1:** an **obstacle slalom through trees and ruins** (the first broom upgrade), with destructible gaps where it fits.
 - **Tutorial situation:** a **generic placeholder**, reworked when the story is written.
 
@@ -251,7 +254,7 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 6. Quest content: tutorial, spell quest, wand quest, broom trial 1.
 7. Repair minigame and reputation, then a polish pass against the feel checks.
 
-**M1 open questions:** the feel-check list, the tutorial's content, which spell and which unique wand the teacher gives, the teacher's character, and the fracture piece budget.
+**M1 open questions:** the feel-check list, the tutorial's content, the wand's unique ability, which existing spells stay (spell changes next), the teacher's character, and the fracture piece budget.
 
 ## 14. Open questions and next steps
 
