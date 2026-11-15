@@ -9471,7 +9471,7 @@ MonoBehaviour:
   LockCameraPosition: 0
   CarryVelocity: {x: 0, y: 0, z: 0}
   CarryDamping: 3
-  BroomFallAirDamping: 0.8
+  BroomFallAirDamping: 2.5
   FallGravityRamp: 1.2
   FallGravityMax: 3
   LockOn: {fileID: 879577232}
@@ -9528,8 +9528,8 @@ MonoBehaviour:
   dashRoll: 1
   dashRollTime: 0.4
   freeAimHold: 0
-  flightCeiling: 150
-  ceilingSoftZone: 25
+  flightCeiling: 400
+  ceilingSoftZone: 50
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
