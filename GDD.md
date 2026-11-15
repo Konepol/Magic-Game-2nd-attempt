@@ -83,13 +83,13 @@ There is no single defense. The player avoids damage by **dodging and dashing on
 Costs mana, has boost and a quick dash. The broom is upgraded through its own **trial quests** (broom control challenges). Some story chapters require a certain broom upgrade before they can begin.
 
 ### 6.5 Flight-restricted areas
-Some fights happen underground or in places where flying is forbidden or limited (caves, ruins, towns, sealed halls). Those fights are ground-based, use cover and the barrier, and favour spell choices that do not rely on height. There are three kinds of restriction: a **hard ban** underground and in sealed halls (no broom at all), a **low ceiling** in tight spaces (you can fly low but not climb), and **law-based** bans in towns (flying is possible but a crime, tied to the wanted level). Which specific areas use which: **TBD**.
+Some fights happen underground or in places where flying is forbidden or limited (caves, ruins, towns, sealed halls). Those fights are ground-based, use cover and the barrier, and favour spell choices that do not rely on height. There are three kinds of restriction: a **hard ban** underground and in sealed halls (no broom at all), a **low ceiling** in tight spaces (you can fly low but not climb), and **law-based** bans in towns (flying is possible but a crime, costs reputation with that town). Which specific areas use which: **TBD**.
 
 ### 6.6 Enemies and bosses
 - **The game is boss-focused.** Bosses are the main fights and regular enemies are fewer and serve as supporting encounters, not the bulk of play. Effort goes into boss design, boss scaling and boss spectacle first.
 - Enemy factions tie directly to the story and are **not set yet** (candidate groups: rival witches, creatures and monsters per zone, corrupted or cursed beings, human soldiers and guards). Boss count and structure: **TBD** with the story.
 - Ground and air enemies both matter (existing: Rusher, Charger, Heavy, Seeker, flying shooter).
-- **Rival witches on brooms** are elite enemies who cast spells like the player. They serve as mini-boss duels, as law guards who chase you at a high wanted level, and as recurring characters with their own stories. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
+- **Rival witches on brooms** are elite enemies who cast spells like the player. They serve as mini-boss duels, as law guards who chase you when a town or faction's reputation toward you is low, and as recurring characters with their own stories. They are also the foundation for PvP, so build their AI and spell use to share the player's casting code.
 - **Bosses** are set pieces (existing: The Warden of Ruins, three phases). It depends on the boss: many are multi-phase, some have a gimmick or puzzle, some are huge and fought in the air on the broom, many have destructible arenas, and **some have no gimmick at all**.
 - **Crime during boss fights:** it depends on the zone, but destruction is **mostly ignored while a boss fight is going**.
 - **Rematches:** a boss you beat is placed in a **simulation area** where you can fight it again. Rematch rewards: **TBD**.
@@ -114,9 +114,10 @@ Spells can destroy scenery, and destroying things has consequences.
 - **Repair quality:** a bad repair **looks shabby, is weaker, and returns less reputation, or can even negate the reputation you would get back**. To redo it the player must **destroy their own work** and repair it again. A repair **better than the original** earns **more reputation** than simply paying back the damage.
 - **Materials:** a **mix**: the repair center holds basic materials, and special materials come from the world.
 - **Carrying loads:** the player can **carry loads and deliveries on the broom** (also used for delivery quests). **Dropping a load reduces that piece's durability until it is destroyed**, and **hitting something destructible damages the load too**.
-- **Consequences:** a **wanted level** (guards hunt you, including witch guards on brooms) and **reputation** with towns and factions, which affects shops, quests and story options.
+- **Crime is wider than destruction.** Doing bad things in general counts, including hurting or killing NPCs and civilians, which is possible **with consequences**.
+- **No wanted-level stages.** Consequences depend on **reputation**, tracked **per town and per faction**, separately. Towns and factions can be allies, and a faction can come from the same town while still being a separate standing. Reputation affects **prices and barter terms**, **which quests and NPC helpers appear** (some refuse you if you're hated), **guard behavior** (including witch guards on brooms hunting you), and **story options**.
 - **Where crime applies depends on the zone**: each zone has its own law (a lawless wilderness versus a strict sky city). Table of zone laws: **TBD**.
-- Exact rules for what the wanted levels do, reputation tiers, and the repair minigame design: **TBD**.
+- Exact reputation tiers and thresholds, the list of crimes, and the repair minigame design: **TBD**.
 
 ### 6.8 Progression
 | What | How it grows |
@@ -224,7 +225,7 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 4. Spell counts per zone and per rarity, and how many of the ~40 are fusions.
 5. What each of the ~12 wands does (stats, unique ability, slot count).
 6. What happens with quests that are completed and cannot be repeated (also in co-op).
-6b. Crime details: wanted levels, reputation tiers, repair minigame, which spell unlocks repair magic.
+6b. Crime details: reputation tiers and thresholds, which towns and factions are allied, list of crimes, repair minigame, which spell unlocks repair magic.
 7. NPC helper roster: who helps, who refuses, and what each needs.
 8. Boss scaling numbers for each boss.
 
