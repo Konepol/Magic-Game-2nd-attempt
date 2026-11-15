@@ -69,6 +69,9 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
 ### 6.3 Mana, health, barrier
 Mana (max 200, regen, manual charge) pays for spells, the barrier (its health), and broom flight. Health is separate. These three share one resource, so choices matter.
 
+### 6.3b Defense
+There is no single defense. The player avoids damage by **dodging and dashing on the broom**, by **ground movement using magic**, by the **mana barrier**, by using **terrain and destructible cover** (which breaks), and by **counter or parry magic**. **Ground movement magic** includes blink or short teleport, a magic dash or slide, and spell-powered jumps and climbs, and some spells double as movement. **Counter and parry magic** includes timed parries and interrupting enemy casts; some spells exist **only as counter spells**, and some are combined spells like projectile versus projectile. Exact timings and which spells: **TBD**.
+
 ### 6.4 Broom flight
 Costs mana, has boost and a quick dash. The broom is upgraded through its own **trial quests** (broom control challenges). Some story chapters require a certain broom upgrade before they can begin.
 
@@ -123,7 +126,7 @@ Spells can destroy scenery, and destroying things has consequences.
 - **Saving:** **auto-save anywhere**, so drop-in play always keeps progress.
 
 ### 6.10 Extras
-- In-engine **cinematic cutscenes**, a **photo mode**, **subtitles** for chants and dialogue, and the existing **rebindable keys**. You also named "something else" here: **TBD, tell me what it was**.
+- In-engine **cinematic cutscenes**, a **photo mode**, **subtitles** for chants and dialogue, and the existing **rebindable keys**. You also asked for **more accessibility options** beyond subtitles and rebinding. The list (for example text size, colour-blind modes, reduced camera shake and flashes, hold-versus-toggle for chants): **TBD**.
 
 ### 6.11 Completed quests stay completed
 Most quests are **not repeatable**, so once finished they **stay finished** in the world and the save. What to do with them afterward (for example, whether their places change, give nothing, or offer a replay, and how a co-op player who already finished one is handled): **TBD, to be decided later**.
@@ -148,6 +151,8 @@ One large region with at least five zones, plus the hub. The owner wants zones t
 | Zone 4 | **TBD**, make it unique | Idea: flight-restricted underground |
 | Zone 5 | **TBD**, make it unique | |
 | More zones | **TBD** | Candidates previously considered: ruined kingdom (existing Warden boss), snow peaks, desert/canyon, cursed marsh |
+
+**Build method:** the world is **mostly handcrafted with AI assistance**. **Time and weather:** the world has a **day and night cycle with weather**; Weather interacts with spells, and **some spells change the weather itself**. Day and night and weather affect **enemy and boss behavior**. The player can **skip to day or night from the menu**. Specific weather rules: **TBD**. **AI assistance** is used across the whole build, roughly **half and half** with handmade work: terrain and foliage layout, props and building placement, concept art and 3D model drafts, and editor tools and scripts.
 
 Zone gating: story chapters, sealed gates or fog that story events remove, and broom-upgrade requirements. Exact chapter plan: **TBD** after the story is written.
 
