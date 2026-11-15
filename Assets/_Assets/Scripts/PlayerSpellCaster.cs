@@ -369,7 +369,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
 
                     if (holdCircles[i] == null && spell.holdCircle != null)
-                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale);
+                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale * CircleSizeNow);
 
                     if (holdCircles[i] != null)
                         holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
@@ -459,7 +459,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     if (keyDown)
                     {
                         if (holdCircles[i] == null)
-                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale);
+                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale * CircleSizeNow);
 
                         var rapidChant = spell.AllChantLines();
                         if (rapidChant.Length > 0) ChantDisplay.Show(i, rapidChant, rapidChant.Length, spell.tap.effectColor);
@@ -553,7 +553,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 if (list[t] == null)
                 {
                     var v = spell.VariantForTier(t + 1);
-                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale);
+                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale * CircleSizeNow);
                 }
 
                 if (list[t] != null)
@@ -581,7 +581,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale);
+            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale * CircleSizeNow);
         }
     }
 
@@ -1012,7 +1012,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         combo.readyPlayed = false;
 
         if (spec.circle != null)
-            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale));
+            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale * CircleSizeNow));
 
         SpellFX.Sparks(muzzle != null ? muzzle.position : transform.position, spec.color);
     }
@@ -1420,17 +1420,74 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
     }
 
-    // ---------- mana output (temporary debug control until the real output key exists), passives, fused-equip cost ----------
+    // ---------- mana output, passives, fused-equip cost ----------
+    // Keys (fixed for now, not in the rebind list): ] and [ raise and lower the output level, hold Left Alt while casting to pour in more,
+    // H toggles suppressing the mana aura.
 
-    // the output level the next casts use (1 = normal). A spell backfires when this is past its own output limit.
+    [Header("Mana output")]
+    [SerializeField, Tooltip("Overall size of every casting circle. The circles are small for taps and only large for big casts; this is the base.")]
+    float circleOverallScale = 0.45f;
+    [SerializeField, Tooltip("Spells are this much bigger than their asset values (so the biggest casts can be bigger than a boss).")]
+    float spellWorldScale = 1.5f;
+    [SerializeField, Tooltip("Output up to here costs in proportion; past it the cost rises much faster.")]
+    float safeOutput = 1.5f;
+    [SerializeField, Tooltip("Output added per second while Left Alt is held during a cast.")]
+    float pourRate = 0.9f;
+    [SerializeField] float pourMax = 2.5f;
+    [SerializeField, Tooltip("Seconds natural mana regeneration stops after a cast past the safe output (per unit of output over it).")]
+    float regenPausePerOver = 3f;
+
+    // the level the player set (0.5 .. 4, 1 = normal)
     public float Output { get; private set; } = 1f;
     public event System.Action<float> OutputChanged;
+    float pour;                      // extra output poured in while casting
+    float regenPauseUntil;
+    public bool Suppressed { get; private set; }
+    public float EffectiveOutput => Mathf.Min(Output + pour, 6f);
+    public float SafeOutput => safeOutput;
+
+    // the lowest output limit among the equipped spells (the aura turns red past it)
+    public float LowestLimit
+    {
+        get
+        {
+            float low = float.MaxValue;
+            for (int i = 0; i < cooldownEnd.Length; i++) { var s = GetSpell(i); if (s != null && s.outputLimit > 0f) low = Mathf.Min(low, s.outputLimit); }
+            return low;
+        }
+    }
+
+    float SizeFactor(float eff) => spellWorldScale * Mathf.Pow(eff, 0.75f);
+    float CircleSizeNow => circleOverallScale * Mathf.Pow(EffectiveOutput, 0.75f);
+
+    // proportional up to the safe level, then much steeper
+    float OutputCostMul(float eff)
+    {
+        float over = Mathf.Max(0f, eff - safeOutput);
+        return Mathf.Max(0.5f, eff) + 2.5f * over * over;
+    }
 
     bool liveFusing;                 // a fusion made live with B is being fired: it does not pay the equipped-fusion surcharge
     bool[] passiveStarved;           // a WhileOn passive that ran out of mana
 
-    // a fused spell cast from its own slot costs more than the same fusion made live
-    float SlotCostMul(SpellData spell) => spell != null && spell.isFusion && !liveFusing ? Mathf.Max(1f, spell.fusedEquipCostMultiplier) : 1f;
+    // everything that multiplies a spell's cost: the output level, and a fused spell cast from its own slot instead of fused live
+    float SlotCostMul(SpellData spell) =>
+        (spell != null && spell.isFusion && !liveFusing ? Mathf.Max(1f, spell.fusedEquipCostMultiplier) : 1f) * OutputCostMul(EffectiveOutput);
+
+    void ScaleSize(SpellVariant v, float s, float eff)
+    {
+        v.damage *= Mathf.Sqrt(eff);
+        v.lingerTickDamage *= Mathf.Sqrt(eff);
+        v.projectileScale *= s;
+        v.explosionRadius *= s;
+        v.hitHeight *= s;
+        v.proximityFuse *= s;
+        v.aoeRadius *= s;
+        v.laserWidth *= s;
+        v.laserRadius *= s;
+        v.barrierWidth *= s;
+        v.barrierHeight *= s;
+    }
 
     // is this spell's passive toggled on and working (a WhileOn passive stops when it is starved of mana)
     public bool PassiveActive(SpellData spell)
@@ -1447,9 +1504,21 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         var kb = Keyboard.current;
         if (kb != null)
         {
-            if (kb.pageUpKey.wasPressedThisFrame) SetOutput(Output + 0.25f);
-            if (kb.pageDownKey.wasPressedThisFrame) SetOutput(Output - 0.25f);
+            if (kb.rightBracketKey.wasPressedThisFrame) SetOutput(Output + 0.25f);
+            if (kb.leftBracketKey.wasPressedThisFrame) SetOutput(Output - 0.25f);
+            if (kb.hKey.wasPressedThisFrame)
+            {
+                Suppressed = !Suppressed;
+                CastFailed?.Invoke(Suppressed ? "Aura suppressed" : "Aura released");
+            }
+
+            // hold Left Alt while a cast is being chanted: more mana is poured in (the spell grows, the cost climbs steeply)
+            if (kb.leftAltKey.isPressed && IsChanting) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
+            else if (pour > 0f) pour = Mathf.Max(0f, pour - 4f * Time.deltaTime);
         }
+
+        if (mana != null) mana.SetRegenScale(this, Time.time < regenPauseUntil ? 0f : 1f);
+        if (aura == null && mana != null) { aura = ManaAura.Create(this); }
 
         if (passiveStarved == null || passiveStarved.Length != cooldownEnd.Length) passiveStarved = new bool[cooldownEnd.Length];
         for (int i = 0; i < cooldownEnd.Length; i++)
@@ -1463,10 +1532,11 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
     }
 
-    // debug: PageUp / PageDown
+    ManaAura aura;
+
     void SetOutput(float value)
     {
-        Output = Mathf.Clamp(Mathf.Round(value * 4f) / 4f, 0.25f, 4f);
+        Output = Mathf.Clamp(Mathf.Round(value * 4f) / 4f, 0.5f, 4f);
         CastFailed?.Invoke("Output x" + Output.ToString("0.##"));
         OutputChanged?.Invoke(Output);
     }
@@ -1475,7 +1545,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void Backfire(SpellData spell, SpellVariant v, float cost)
     {
         if (mana != null) mana.Spend(Mathf.Min(cost, mana.Current));
-        float over = Output / Mathf.Max(spell.outputLimit, 0.01f);
+        float over = EffectiveOutput / Mathf.Max(spell.outputLimit, 0.01f);
+        pour = 0f;
         if (health != null) health.TakeDamage(Mathf.Max(1f, spell.backfireDamage * over), transform.position + Vector3.up);
 
         Vector3 at = muzzle != null ? muzzle.position : transform.position;
@@ -1501,7 +1572,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         bool isTapVariant = ReferenceEquals(v, spell.tap);
 
         // past the spell's output limit it backfires instead of casting
-        if (spell.outputLimit > 0f && Output > spell.outputLimit)
+        float eff = EffectiveOutput;
+        if (spell.outputLimit > 0f && eff > spell.outputLimit)
         {
             Backfire(spell, v, cost);
             cooldownEnd[slot] = Time.time + Mathf.Max(v.cooldown, fizzleCooldown);
@@ -1524,6 +1596,14 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 }
             }
             else passiveCost = 0f;       // not enough mana for the extra: the spell casts without its passive
+        }
+
+        // the output level sets the size continuously (and the hit a little)
+        float size = SizeFactor(eff);
+        if (!Mathf.Approximately(size, 1f) || !Mathf.Approximately(eff, 1f))
+        {
+            v = v.Clone();
+            ScaleSize(v, size, eff);
         }
 
         // the staff turns to the target at the moment the spell leaves, so it starts from the tip of a staff that points at it
@@ -1553,6 +1633,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         cooldownTotal[slot] = v.cooldown;
         if (mana != null) mana.Spend(cost + passiveCost);
 
+        // a cast past the safe output leaves the caster drained: natural mana regeneration pauses for a few seconds
+        if (eff > safeOutput) regenPauseUntil = Time.time + regenPausePerOver * (eff - safeOutput);
+        pour = 0f;
+
         Sfx sound = v.kind == SpellKind.Laser ? Sfx.Laser : v.kind == SpellKind.Barrier ? Sfx.BarrierPlace : Sfx.Cast;
         // a held beam fires every tick: its sound and cast flash are only repeated now and then
         if (!IsSustained(spell) || Time.time - lastBeamEffect > 0.45f)
@@ -1566,7 +1650,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && isTapVariant && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale);
+            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale * CircleSizeNow);
         }
         return true;
     }
