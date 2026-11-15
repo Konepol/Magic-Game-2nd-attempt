@@ -72,7 +72,14 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
   - **A fusion is an entirely new spell**, picked by a **hand-designed recipe table**; it does not have to combine its ingredients' properties.
   - **Pre-fused spells can be equipped in a slot like any normal spell**, but casting one this way **costs more mana than fusing it live**. Live fusing with `B` stays.
   - **Scale:** spells are **too small for the world and bosses** and should be bigger. The **casting circle is too big** and should be **smaller, but scale with the spell's size** (small for taps, large only for siege spells).
-  - Which current spells stay, and the new spell designs: **TBD** (spell changes come before M1 content).
+  - **Start from scratch:** the current spell list is discarded. New spells are designed together (the owner gives references and ideas, Claude proposes concepts), and the M1 slice needs only **3 to 4 very polished spells**.
+  - **Spell scale follows the player's mana and mana output**, and there is a separate **mana output** control (own key) the player uses, in the spirit of *Frieren*:
+    - The player sets a **power level before casting**, which **multiplies how much each spell costs**, and the output **sets the spell's size continuously**.
+    - While casting, the player can **hold to pour in even more mana**. The drawbacks of this (so it isn't free power): **TBD**.
+    - Output is shown as a **visible mana aura** on the witch, and the player can **suppress mana** (stealth) so enemies and NPCs notice less.
+    - Normal tap and hold casting stays the base, and output is the extra layer.
+  - M1's first spells should cover: a basic attack with a signature motion, a big charge spell that transforms (**not just ball to beam**), the movement spell (blink or dash), and a defensive or counter spell.
+  - The new spell designs: **TBD** (spell changes come before M1 content).
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
 - **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
