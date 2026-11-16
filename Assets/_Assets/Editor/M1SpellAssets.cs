@@ -176,6 +176,8 @@ public static class M1SpellAssets
         go.name = "ProjectileDummy";
         go.transform.position = InFront(18f) + Vector3.up;
         go.tag = "Enemy";
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (enemyLayer >= 0) go.layer = enemyLayer;
         var h = go.AddComponent<Health>();
         h.Configure(500f, false, 0f);
         go.AddComponent<ProjectileDummy>();

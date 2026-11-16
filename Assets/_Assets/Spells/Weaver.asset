@@ -24,7 +24,7 @@ MonoBehaviour:
     effectColor: {r: 1, g: 0.55, b: 0.8, a: 1}
     projectilePrefab: {fileID: 0}
     projectileSpeed: 55
-    lifetime: 4
+    lifetime: 12
     projectileScale: 1
     explosionRadius: 0
     pierceCount: 0
@@ -42,7 +42,7 @@ MonoBehaviour:
     chainCount: 0
     chainRange: 14
     chainFalloff: 0.7
-    aoeRadius: 4
+    aoeRadius: 5
     aoeRange: 30
     aoeHeight: 6
     aoeDelay: 0.6

@@ -70,7 +70,7 @@ MonoBehaviour:
     manaCost: 8
     cooldown: 0.5
   hasHoldVariant: 1
-  holdThreshold: 0.45
+  holdThreshold: 0.25
   hold:
     kind: 4
     special: veil_gate
@@ -129,7 +129,7 @@ MonoBehaviour:
   holdingMovement: 0
   holdingStartsAfter: 0.15
   heldMovement: 0
-  heldRecovery: 0.1
+  heldRecovery: 0
   tapWindow: 0.2
   interruptible: 0
   interruptDamage: 1

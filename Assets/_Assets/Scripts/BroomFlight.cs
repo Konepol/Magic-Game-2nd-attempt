@@ -220,6 +220,19 @@ public class BroomFlight : MonoBehaviour
     float SpeedAmount => IsFlying ? Mathf.InverseLerp(maxSpeed, Mathf.Max(boostTopSpeed, maxSpeed + 1f), velocity.magnitude) : 0f;
 
     public bool IsDashing => dashTimer > 0f;
+
+    float launchSpeed;
+    // a spell throws the rider along a direction at speed for a moment (Veil Step's star gate); keeps flying faster afterwards, like a dash
+    public void Launch(Vector3 direction, float speed, float seconds)
+    {
+        dashDir = direction.normalized;
+        dashSide = false;
+        dashLength = seconds;
+        dashTimer = seconds;
+        launchSpeed = speed;
+        dashCooldownLeft = dashCooldown;
+        DashCount++;
+    }
     public Vector3 DashDirection => dashDir;
 
     // double-tap a direction (press, release, press within the window) to dash along the current input;
@@ -580,7 +593,8 @@ public class BroomFlight : MonoBehaviour
         {
             if (!wasDashing)   // a dash is always a clear burst, however fast you were already going
             {
-                dashSpeedNow = Mathf.Max(dashSpeed, speedBefore * 1.25f);
+                dashSpeedNow = launchSpeed > 0f ? launchSpeed : Mathf.Max(dashSpeed, speedBefore * 1.25f);
+                launchSpeed = 0f;
                 dashExitSpeed = Mathf.Max(speedBefore, maxSpeed * dashExitMultiplier);
             }
             velocity = dashDir * dashSpeedNow;

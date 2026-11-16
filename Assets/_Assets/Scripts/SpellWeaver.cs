@@ -101,8 +101,21 @@ public class WeaverThread : MonoBehaviour
     float t, phaseT;
     int phase;                // 0 flying, 1 stitched, 2 fading
     bool hit;
+    float slack = 7f, tetherTime = 6f, nextSlow;
+    bool towing;
 
     const float Width = 0.07f;
+
+    // Stitched threads stay attached and the witch can drag what is on the end (the first use is hauling a captured target along).
+    // Anything else (a future capture-the-criminal quest) can ask what is being towed or let it go.
+    static readonly List<WeaverThread> tethers = new List<WeaverThread>();
+    public static IReadOnlyList<WeaverThread> Tethers => tethers;
+    public Health Target => target;
+    public bool IsTowing => phase == 1 && target != null && !target.IsDead;
+    public void Release() { if (phase == 1) { phase = 2; phaseT = 0f; } }
+    public static void ReleaseAll() { foreach (var t in tethers.ToArray()) if (t != null) t.Release(); }
+    public static Health TowedTarget { get { foreach (var t in tethers) if (t != null && t.IsTowing) return t.target; return null; } }
+    const int MaxTethers = 3;
 
     public static void Tap(SpellCastContext c)
     {
@@ -131,6 +144,8 @@ public class WeaverThread : MonoBehaviour
             w.color = v.effectColor;
             w.damage = v.damage;
             w.speed = Mathf.Max(20f, v.projectileSpeed);
+            w.slack = Mathf.Max(4f, v.aoeRadius);
+            w.tetherTime = Mathf.Max(2f, v.lifetime);
             w.delay = i * 0.07f;
             w.sign = (i % 2 == 0) ? 1f : -1f;
             if (i < targets.Count) { w.target = targets[i]; w.end = SpellUtil.CenterOf(targets[i]); }
@@ -167,10 +182,10 @@ public class WeaverThread : MonoBehaviour
                 break;
             case 1:
                 phaseT += Time.deltaTime;
-                // the lazy S tightens as the stitch takes hold
-                line.Draw(start, end, 1f, Mathf.Lerp(1f, 0.15f, Mathf.Clamp01(phaseT / 0.9f)), 0.3f, 1f);
+                if (target == null || target.IsDead) { Release(); break; }
+                Drag(start);
                 UpdateStitch();
-                if (phaseT >= 1.1f) { phase = 2; phaseT = 0f; }
+                if (phaseT >= tetherTime) { Release(); }
                 break;
             default:
                 phaseT += Time.deltaTime;
@@ -195,6 +210,11 @@ public class WeaverThread : MonoBehaviour
             SpellFX.Play(Sfx.Hit, end, 0.7f);
         }
 
+        // one tether per target, and only a few at a time: the oldest lets go
+        foreach (var other in tethers.ToArray()) if (other != null && other != this && other.target == target) other.Release();
+        tethers.Add(this);
+        while (tethers.Count > MaxTethers) { tethers[0]?.Release(); tethers.RemoveAt(0); }
+
         // a few crossed stitches around the point the thread is sewn into
         stitchMat = SpellUtil.Glow(new Color(1f, 0.9f, 0.95f, 1f));
         var go = new GameObject("Stitches");
@@ -205,6 +225,39 @@ public class WeaverThread : MonoBehaviour
         stitch.sharedMaterial = stitchMat;
         stitch.widthMultiplier = 0.05f;
         stitch.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    // The thread has a length (slack). Walk or fly further than that and whatever is stitched on the end is hauled along behind you;
+    // the thread snaps if you get far beyond it. A tethered target is also slowed so it cannot just run off.
+    void Drag(Vector3 start)
+    {
+        Vector3 root = owner.PlayerRoot.position + Vector3.up;
+        Vector3 to = root - target.transform.position;
+        bool grounded = target.GetComponent<UnityEngine.AI.NavMeshAgent>() != null;
+        if (grounded) to.y = 0f;
+        float d = to.magnitude;
+
+        if (d > slack * 4f)
+        {
+            SpellFX.Sparks(end, color);
+            SpellFX.Play(Sfx.Fizzle, end, 0.6f);
+            owner.Notify("Thread snapped");
+            Release();
+            return;
+        }
+
+        towing = d > slack;
+        if (towing) SpellUtil.MoveBody(target.transform, to.normalized * (d - slack));
+
+        if (Time.time >= nextSlow)
+        {
+            nextSlow = Time.time + 0.25f;
+            StatusEffects.Apply(target, new StatusEffectSpec { type = StatusType.Slow, duration = 0.5f, magnitude = 0.5f });
+        }
+
+        // slack thread hangs in a lazy S; once it is pulled tight it is a straight line that hums
+        float ratio = Mathf.Clamp01(d / Mathf.Max(slack, 0.1f));
+        line.Draw(start, end, 1f, Mathf.Lerp(0.7f, 0.05f, ratio * ratio), towing ? 0.5f : 0.25f, 1f);
     }
 
     void UpdateStitch()
@@ -223,6 +276,7 @@ public class WeaverThread : MonoBehaviour
 
     void OnDestroy()
     {
+        tethers.Remove(this);
         line?.Destroy();
         if (stitchMat != null) Destroy(stitchMat);
     }

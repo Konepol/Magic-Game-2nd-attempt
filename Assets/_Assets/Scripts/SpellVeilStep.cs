@@ -162,33 +162,31 @@ public class AfterImage : MonoBehaviour
     void OnDestroy() { if (mat != null) Destroy(mat); }
 }
 
-// the fly-through: moves the player along a line fast
+// the launch on the ground: an extra push along a line that starts at once, is fastest at the start and eases out.
+// It is added on top of normal movement (nothing is paused), so WASD and the jump still work while it carries you.
 public class VeilDash : MonoBehaviour
 {
     CharacterController cc;
     Vector3 dir;
-    float speed, left;
+    float peakSpeed, total, t;
 
-    public static void Begin(Transform root, Vector3 dir, float distance, float seconds, float delay)
+    public static void Begin(Transform root, Vector3 dir, float speed, float seconds)
     {
         var d = root.gameObject.AddComponent<VeilDash>();
         d.cc = root.GetComponent<CharacterController>();
         d.dir = dir;
-        d.speed = distance / Mathf.Max(0.1f, seconds);
-        d.left = seconds;
-        d.delay = delay;
+        d.peakSpeed = speed;
+        d.total = Mathf.Max(0.1f, seconds);
     }
-
-    float delay;
 
     void Update()
     {
-        if (delay > 0f) { delay -= Time.deltaTime; return; }
-        float step = Mathf.Min(Time.deltaTime, left);
-        if (cc != null && cc.enabled) cc.Move(dir * speed * step);
-        else transform.position += dir * speed * step;
-        left -= step;
-        if (left <= 0f) Destroy(this);
+        t += Time.deltaTime;
+        float k = Mathf.Clamp01(t / total);
+        float speed = peakSpeed * (1f - k * k);            // ease out: a hard launch that bleeds off
+        if (cc != null && cc.enabled) cc.Move(dir * speed * Time.deltaTime);
+        else transform.position += dir * speed * Time.deltaTime;
+        if (k >= 1f) Destroy(this);
     }
 }
 
@@ -221,17 +219,26 @@ public static class VeilStep
         DashBlink(c.root, dir, dist, c.v.effectColor);
     }
 
+    // the held form is a launch: the player is thrown along the aim at once (no standing still), through a star gate that opens ahead,
+    // leaving an afterimage behind that enemies go for
     public static void Gate(SpellCastContext c)
     {
         Vector3 dir = c.aim;
         Vector3 start = c.root.position;
         float distance = Mathf.Max(10f, c.v.laserRange);
         float size = 2.3f * Mathf.Max(0.7f, c.v.projectileScale);
+        const float seconds = 0.45f;
 
-        StarGate.Spawn(start + Vector3.up * 1.1f + dir * 6f, dir, c.v.effectColor, size);
+        StarGate.Spawn(start + Vector3.up * 1.1f + dir * 5f, dir, c.v.effectColor, size);
         AfterImage.Spawn(start, c.v.effectColor, 4f);
         PetalBurst.Spawn(start + Vector3.up, c.v.effectColor, false);
-        VeilDash.Begin(c.root, dir, Clear(start, dir, distance), 0.32f, 0.18f);
+
+        // the distance covered by an ease-out launch is peak * seconds * 2/3
+        float peak = distance / (seconds * (2f / 3f));
+        var broom = c.root.GetComponent<BroomFlight>();
+        if (broom != null && broom.IsFlying) broom.Launch(dir, peak, seconds);
+        else VeilDash.Begin(c.root, dir, peak, seconds);
+
         SpellFX.Play(Sfx.Charge, start, 0.8f);
         CameraShake.Add(0.2f);
     }

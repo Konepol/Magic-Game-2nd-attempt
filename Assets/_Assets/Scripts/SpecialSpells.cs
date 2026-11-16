@@ -70,13 +70,23 @@ public static class SpellUtil
         return col != null ? col.bounds.center : h.transform.position + Vector3.up;
     }
 
-    static readonly Collider[] buffer = new Collider[128];
+    static readonly Collider[] buffer = new Collider[512];
+
+    // enemies live on the Enemy layer; looking only there keeps a dense forest of colliders from crowding them out of the result
+    static int EnemyMask
+    {
+        get
+        {
+            int layer = LayerMask.NameToLayer("Enemy");
+            return layer >= 0 ? 1 << layer : ~0;
+        }
+    }
 
     // every living enemy (by tag) within the radius, once each
     public static List<Health> Enemies(Vector3 center, float radius, string tag)
     {
         var list = new List<Health>();
-        int n = Physics.OverlapSphereNonAlloc(center, radius, buffer, ~0, QueryTriggerInteraction.Ignore);
+        int n = Physics.OverlapSphereNonAlloc(center, radius, buffer, EnemyMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < n; i++)
         {
             var h = buffer[i].GetComponentInParent<Health>();
