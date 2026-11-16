@@ -11,6 +11,14 @@ public class Projectile : MonoBehaviour
     [SerializeField] float damage = 10f;
     [SerializeField] string damageTag = "Enemy";    // only damages this tag (use "Player" for enemy bullets)
 
+    public static readonly List<Projectile> EnemyShots = new List<Projectile>();
+    string originalTag;
+    public bool IsEnemyShot => damageTag == "Player";
+    void RegisterShot() { if (originalTag == null) originalTag = damageTag; if (damageTag == "Player" && !EnemyShots.Contains(this)) EnemyShots.Add(this); }
+    void OnDisable() { EnemyShots.Remove(this); }
+    public float Damage => damage;
+    public void Reflect(Vector3 direction) { EnemyShots.Remove(this); damageTag = "Enemy"; transform.rotation = Quaternion.LookRotation(direction); pierced.Clear(); }
+
     float explosionRadius;
     int pierceRemaining;          // enemies it can still pass through (-1 = unlimited)
     bool explodeOnPierce;
@@ -60,6 +68,7 @@ public class Projectile : MonoBehaviour
         int pierceCount = 0, bool explodeOnPierce = false, bool breaksBarriers = false,
         StatusEffectSpec status = default, float homingTurnRate = 0f)
     {
+        if (originalTag != null && damageTag != originalTag) { damageTag = originalTag; if (damageTag == "Player" && !EnemyShots.Contains(this)) EnemyShots.Add(this); }
         this.damage = damage;
         this.speed = speed;
         this.lifetime = lifetime;
@@ -125,11 +134,12 @@ public class Projectile : MonoBehaviour
 
     void Awake()
     {
+        originalTag = damageTag;
         prefabScale = baseScale = transform.localScale;
         prefabRadius = radius;
     }
 
-    void OnEnable() { spawnTime = Time.time; }
+    void OnEnable() { spawnTime = Time.time; RegisterShot(); }
 
     void Start()
     {
@@ -320,9 +330,11 @@ public class Projectile : MonoBehaviour
             float distance = to.magnitude;
             if (distance > SeekRange) continue;
             float angle = Vector3.Angle(transform.forward, to);
-            if (angle > SeekCone) continue;
+            bool marked = LanternMark.Is(go);                                // a lantern-marked enemy is homed on from any angle
+            if (angle > SeekCone && !marked) continue;
 
             float score = angle / SeekCone + distance / SeekRange;          // prefers what is straight ahead and close
+            if (marked) score -= 2f;
             if (score < best) { best = score; seekTarget = go.transform; seekCollider = col; }
         }
     }

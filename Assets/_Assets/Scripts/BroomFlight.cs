@@ -249,6 +249,17 @@ public class BroomFlight : MonoBehaviour
             return;
         }
 
+        // Veil Step's passive: the dash becomes a blink (petals dissolve and re-form), paid by the passive instead of the dash cost
+        if (caster == null) caster = GetComponentInChildren<PlayerSpellCaster>();
+        Vector3 wanted = look * (tapped == 0 ? Vector3.forward : tapped == 1 ? Vector3.right : tapped == 2 ? Vector3.back : Vector3.left);
+        if (caster != null && caster.TryUsePassive("dash_to_blink"))
+        {
+            VeilStep.DashBlink(transform, wanted, 11f, new Color(1f, 0.7f, 0.85f));
+            dashCooldownLeft = dashCooldown;
+            DashCount++;
+            return;
+        }
+
         mana.Drain(dashManaCost);
         dashDir = look * (tapped == 0 ? Vector3.forward : tapped == 1 ? Vector3.right : tapped == 2 ? Vector3.back : Vector3.left);
         dashSide = tapped == 1 || tapped == 3;

@@ -1,0 +1,224 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22e43d7a5ccea3744a67548583f58f35, type: 3}
+  m_Name: HollowMoon
+  m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  displayName: Hollow Moon
+  defaultProjectile: {fileID: 7451169196986978315, guid: 80f35aa5b2e1dfd44bd1eac61d23aed5, type: 3}
+  fxStyle: ArcaneBolt
+  roleLabel: Crescent / moon
+  tap:
+    kind: 4
+    special: moon_blade
+    damage: 40
+    breaksBarriers: 0
+    effectColor: {r: 0.62, g: 0.4, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 38
+    lifetime: 1.3
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 4
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 0
+      duration: 0
+      magnitude: 0
+    output:
+      sizeExp: 0.6
+      speedExp: 0.3
+      reachExp: 0
+      extraProjectilesPerOutput: 0
+      spreadPerExtra: 5
+      damageExp: 0.5
+    manaCost: 14
+    cooldown: 0.6
+  hasHoldVariant: 1
+  holdThreshold: 1
+  hold:
+    kind: 4
+    special: moon_small
+    damage: 120
+    breaksBarriers: 0
+    effectColor: {r: 0.62, g: 0.4, b: 1, a: 1}
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 40
+    lifetime: 4
+    projectileScale: 1
+    explosionRadius: 0
+    pierceCount: 0
+    explodeOnPierce: 0
+    projectileCount: 1
+    spreadDegrees: 0
+    hitHeight: 0
+    proximityFuse: 0
+    homingTurnRate: 0
+    laserRange: 60
+    laserRadius: 0.15
+    laserPierces: 0
+    laserWidth: 0.3
+    laserDuration: 0.2
+    chainCount: 0
+    chainRange: 14
+    chainFalloff: 0.7
+    aoeRadius: 9
+    aoeRange: 30
+    aoeHeight: 6
+    aoeDelay: 0.6
+    lingerDuration: 0
+    lingerTickDamage: 0
+    lingerTickInterval: 0.5
+    lingerPull: 0
+    barrierWidth: 4
+    barrierHeight: 3
+    barrierThickness: 0.3
+    barrierHealth: 60
+    barrierDuration: 8
+    barrierDistance: 3
+    status:
+      type: 0
+      duration: 0
+      magnitude: 0
+    output:
+      sizeExp: 1
+      speedExp: 0
+      reachExp: 0
+      extraProjectilesPerOutput: 0
+      spreadPerExtra: 5
+      damageExp: 0.6
+    manaCost: 50
+    cooldown: 3
+  tapMovement: 0
+  tapRecovery: 0.2
+  holdingMovement: 1
+  holdingStartsAfter: 0.15
+  heldMovement: 2
+  heldRecovery: 0.8
+  tapWindow: 0.2
+  interruptible: 1
+  interruptDamage: 12
+  chargeVisual: DarkDisc
+  holdCircle: {fileID: 11400000, guid: 2d73929177bdfa94387df53194dce952, type: 2}
+  tapCircle: {fileID: 11400000, guid: 262198900cb45fb4791565b120f07ecb, type: 2}
+  circleScale: 1.4
+  tapCircleScale: 0.45
+  holdDisplayName: Hollow Moon
+  multicastable: 0
+  chant:
+  - A disc of night above my hand,
+  - hollow, hanging, hungry.
+  tapDoesNothing: 0
+  extraTiers:
+  - displayName: Great Hollow Moon
+    time: 2.6
+    damageMultiplier: 1.5
+    sizeMultiplier: 1.3
+    manaMultiplier: 1
+    circle: {fileID: 0}
+    circleScale: 1
+    chant:
+    - Fall inward, ring, and take what is within.
+    ownForm: 1
+    form:
+      kind: 4
+      special: moon_great
+      damage: 320
+      breaksBarriers: 0
+      effectColor: {r: 0.62, g: 0.4, b: 1, a: 1}
+      projectilePrefab: {fileID: 0}
+      projectileSpeed: 40
+      lifetime: 4
+      projectileScale: 1
+      explosionRadius: 0
+      pierceCount: 0
+      explodeOnPierce: 0
+      projectileCount: 1
+      spreadDegrees: 0
+      hitHeight: 0
+      proximityFuse: 0
+      homingTurnRate: 0
+      laserRange: 60
+      laserRadius: 0.15
+      laserPierces: 0
+      laserWidth: 0.3
+      laserDuration: 0.2
+      chainCount: 0
+      chainRange: 14
+      chainFalloff: 0.7
+      aoeRadius: 20
+      aoeRange: 30
+      aoeHeight: 6
+      aoeDelay: 0.6
+      lingerDuration: 0
+      lingerTickDamage: 0
+      lingerTickInterval: 0.5
+      lingerPull: 0
+      barrierWidth: 4
+      barrierHeight: 3
+      barrierThickness: 0.3
+      barrierHealth: 60
+      barrierDuration: 8
+      barrierDistance: 3
+      status:
+        type: 0
+        duration: 0
+        magnitude: 0
+      output:
+        sizeExp: 1
+        speedExp: 0
+        reachExp: 0
+        extraProjectilesPerOutput: 0
+        spreadPerExtra: 5
+        damageExp: 0.6
+      manaCost: 120
+      cooldown: 6
+  passive:
+    enabled: 0
+    displayName: Passive
+    description: 
+    manaStyle: 0
+    activationCost: 5
+    tiedUpPerSecond: 2
+    damageMultiplier: 1
+    special: 
+  outputLimit: 1.7
+  backfireDamage: 30
+  isFusion: 0
+  fusedEquipCostMultiplier: 1.5
+  autoRepeatWhenHeld: 0

@@ -13,10 +13,20 @@ MonoBehaviour:
   m_Name: GameCatalog
   m_EditorClassIdentifier: Assembly-CSharp::GameCatalog
   spells:
+  - {fileID: 11400000, guid: 16ba0430d4c9eff45ab7cd8701495bc7, type: 2}
+  - {fileID: 11400000, guid: ba04575f6bbea9f4b815b439e1b9ad52, type: 2}
+  - {fileID: 11400000, guid: 439f12209b842b64686b16c44fa90f00, type: 2}
+  - {fileID: 11400000, guid: acf99b43f42e0f1438805eafac094077, type: 2}
+  - {fileID: 11400000, guid: 4654737fd7ff5dc4f83c8135bf6d184e, type: 2}
   - {fileID: 11400000, guid: 8e25d269bf226e54394905dadb45d3f7, type: 2}
   combos: []
   slotCount: 7
   defaultLoadout:
+  - Weaver
+  - HollowMoon
+  - MirrorBloom
+  - Lantern
+  - VeilStep
   - TestSpell
   allowMulticast: 1
   multicastDelay: 0.15

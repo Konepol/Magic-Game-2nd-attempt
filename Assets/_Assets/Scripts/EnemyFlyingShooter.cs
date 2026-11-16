@@ -154,6 +154,10 @@ public class EnemyFlyingShooter : MonoBehaviour
         if (health != null && health.IsDead) return;
         if (target == null) { FindTarget(); if (target == null) return; }
 
+        var decoy = Decoy.Pick(transform.position);
+        if (decoy != null) { if (target != decoy.transform) { target = decoy.transform; targetHealth = null; } }
+        else if (target != null && target.GetComponent<Decoy>() != null) { target = null; FindTarget(); if (target == null) return; }
+
         float dt = Time.deltaTime;
 
         if (targetHealth == null) targetHealth = target.GetComponentInParent<Health>();

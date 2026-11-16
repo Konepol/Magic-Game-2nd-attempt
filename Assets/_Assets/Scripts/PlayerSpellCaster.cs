@@ -381,6 +381,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                         if (chantLines.Length > 0) ChantDisplay.Show(i, chantLines, ChantReveal(spell, held), baseVariant.effectColor);
                     }
 
+                    if (hasHold) UpdateChantExtras(i, spell, held, castTime, tier, baseVariant.effectColor);
+
                     // charging past the cast time: each tier adds a bigger circle, and a chime and a small jolt mark the step up
                     if (hasHold && spell.TierCount > 0)
                     {
@@ -1310,6 +1312,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void FinishHoldCast(int slot, bool success, int tier = 0)
     {
         if (!success) { FizzleCast(slot, "Not enough mana"); return; }
+        KillOrb(slot);
+        if (chantSeen != null && slot < chantSeen.Length) chantSeen[slot] = 0;
 
         ChantDisplay.Finish(slot, GetSpell(slot) != null ? GetSpell(slot).TierName(tier) : null);
         if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.35f);
@@ -1331,6 +1335,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         CastFailed?.Invoke(reason);
 
+        KillOrb(slot);
+        if (chantSeen != null && slot < chantSeen.Length) chantSeen[slot] = 0;
         ChantDisplay.Fail(slot);
         if (holdCircles[slot] != null) holdCircles[slot].Fizzle();
         holdCircles[slot] = null;
@@ -1348,6 +1354,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     void DropCircle(int slot)
     {
         if (holdCircles == null) return;
+        KillOrb(slot);
+        if (chantSeen != null && slot < chantSeen.Length) chantSeen[slot] = 0;
         ChantDisplay.Drop(slot);
         EachTierCircle(slot, c => c.FadeOut(0.2f));
         if (holdCircles[slot] == null) return;
@@ -1474,6 +1482,43 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     float SlotCostMul(SpellData spell) =>
         (spell != null && spell.isFusion && !liveFusing ? Mathf.Max(1f, spell.fusedEquipCostMultiplier) : 1f) * OutputCostMul(EffectiveOutput);
 
+    // ---------- what hand-coded (Special) spells need from the caster ----------
+
+    public string DamageTag => damageTag;
+    public void Notify(string message) => CastFailed?.Invoke(message);
+    public Mana ManaRef => mana;
+    public Transform LockedTarget => lockOn != null && lockOn.IsLocked ? lockOn.CurrentTarget : null;
+    public Vector3 LaunchPoint => muzzle != null ? LaunchPosition : transform.position;
+    public Vector3 CursorPoint => mainCamera != null ? GetCursorAimPoint() : transform.position + transform.forward * 20f;
+    public Transform PlayerRoot { get { var cc = GetComponentInParent<CharacterController>(); return cc != null ? cc.transform : transform.root; } }
+
+    SpellCastContext MakeContext(SpellData spell, SpellVariant v, float eff)
+    {
+        return new SpellCastContext
+        {
+            owner = this, spell = spell, v = v, eff = eff,
+            origin = LaunchPosition, aim = GetAimDirection(), aimPoint = GetCursorAimPoint(),
+            lockTarget = LockedTarget, damageTag = damageTag, root = PlayerRoot, mana = mana,
+        };
+    }
+
+    // a hand-coded passive other code asks for (dash_to_blink ...): true when an equipped spell has it toggled on and the mana was paid
+    public bool TryUsePassive(string special)
+    {
+        for (int i = 0; i < cooldownEnd.Length; i++)
+        {
+            var sp = GetSpell(i);
+            if (sp == null || !sp.HasPassive || sp.passive.special != special || !PassiveActive(sp)) continue;
+            if (sp.passive.manaStyle == PassiveManaStyle.PerActivation)
+            {
+                if (mana == null || !mana.CanAfford(sp.passive.activationCost)) return false;
+                mana.Spend(sp.passive.activationCost);
+            }
+            return true;
+        }
+        return false;
+    }
+
     // what output does to this form: its own response (faster, bigger, more projectiles, longer reach), plus the base world scale
     void ScaleSize(SpellVariant v, float eff)
     {
@@ -1499,10 +1544,10 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         v.lifetime *= reach;
 
         int extra = Mathf.RoundToInt(r.extraProjectilesPerOutput * (eff - 1f));
-        if (extra > 0 && v.kind == SpellKind.Projectile)
+        if (extra > 0 && (v.kind == SpellKind.Projectile || v.kind == SpellKind.Special))
         {
             v.projectileCount += extra;
-            if (v.spreadDegrees <= 0f) v.spreadDegrees = r.spreadPerExtra * extra;
+            if (v.spreadDegrees <= 0f && v.kind == SpellKind.Projectile) v.spreadDegrees = r.spreadPerExtra * extra;
         }
     }
 
@@ -1550,6 +1595,34 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     }
 
     ManaAura aura;
+    WandChargeVisual[] orbs;
+    int[] chantSeen;
+    // a line of the chant just started (for voice lines later): the spell and the line's index
+    public event System.Action<SpellData, int> ChantLineStarted;
+
+    void KillOrb(int slot)
+    {
+        if (orbs == null || slot < 0 || slot >= orbs.Length || orbs[slot] == null) return;
+        orbs[slot].Release();
+        orbs[slot] = null;
+    }
+
+    // the visual that grows over the wand while the spell is chanted, and the chant-line hook
+    void UpdateChantExtras(int slot, SpellData spell, float held, float castTime, int tier, Color color)
+    {
+        if (orbs == null || orbs.Length != cooldownEnd.Length) orbs = new WandChargeVisual[cooldownEnd.Length];
+        if (chantSeen == null || chantSeen.Length != cooldownEnd.Length) chantSeen = new int[cooldownEnd.Length];
+
+        if (!string.IsNullOrEmpty(spell.chargeVisual))
+        {
+            if (orbs[slot] == null) orbs[slot] = WandChargeVisual.Create(spell.chargeVisual, color);
+            float p = Mathf.Clamp01(held / Mathf.Max(castTime, 0.05f));
+            orbs[slot].Set(LaunchPosition, 0.25f + 0.75f * p + 0.45f * tier);
+        }
+
+        int reveal = ChantReveal(spell, held);
+        while (chantSeen[slot] < reveal) { ChantLineStarted?.Invoke(spell, chantSeen[slot]); chantSeen[slot]++; }
+    }
 
     void SetOutput(float value)
     {
@@ -1633,6 +1706,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 cast = true;
                 break;
             case SpellKind.Barrier: cast = CastBarrier(v); break;
+            case SpellKind.Special: cast = SpecialSpells.Cast(MakeContext(spell, v, eff)); break;
         }
 
         if (!cast) return false;

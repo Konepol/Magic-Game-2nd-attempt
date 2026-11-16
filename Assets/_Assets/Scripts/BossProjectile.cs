@@ -5,7 +5,19 @@ public class BossProjectile : MonoBehaviour
 {
     static Material sharedMat;
 
+    public static readonly System.Collections.Generic.List<BossProjectile> Active = new System.Collections.Generic.List<BossProjectile>();
     Vector3 velocity;
+    bool friendly;                 // reflected by the player: hurts enemies instead
+    public Vector3 Velocity { get => velocity; set => velocity = value; }
+    public bool Friendly => friendly;
+    public float Damage => damage;
+
+    void OnEnable() { Active.Add(this); }
+    void OnDisable() { Active.Remove(this); }
+
+    // sent back by a parry: it now flies the other way and damages enemies
+    public void Reflect(Vector3 newVelocity) { velocity = newVelocity; friendly = true; life = Mathf.Max(life, 3f); }
+    public void Kill() => Despawn();
     float damage, radius, life;
     int mask;
     ProjectilePool.Pool pool;
@@ -19,6 +31,7 @@ public class BossProjectile : MonoBehaviour
         p.damage = damage;
         p.radius = size * 0.5f;
         p.life = life;
+        p.friendly = false;
         p.mask = ~((1 << LayerMask.NameToLayer("Enemy")) | (1 << 2));     // everything except the enemies themselves and Ignore Raycast
     }
 
@@ -52,8 +65,16 @@ public class BossProjectile : MonoBehaviour
 
         Vector3 step = velocity * Time.deltaTime;
         float distance = step.magnitude;
-        if (distance > 0f && Physics.SphereCast(transform.position, radius, step / distance, out RaycastHit hit, distance, mask, QueryTriggerInteraction.Ignore))
+        int useMask = friendly ? ~((1 << LayerMask.NameToLayer("Player")) | (1 << 2)) : mask;
+        if (distance > 0f && Physics.SphereCast(transform.position, radius, step / distance, out RaycastHit hit, distance, useMask, QueryTriggerInteraction.Ignore))
         {
+            if (friendly)
+            {
+                var eh = hit.collider.GetComponentInParent<Health>();
+                if (eh != null && eh.gameObject.CompareTag("Enemy")) eh.TakeDamage(damage * 2f, hit.point);
+                Burst(hit.point);
+                return;
+            }
             var barrier = hit.collider.GetComponentInParent<Barrier>();
             if (barrier != null)
             {

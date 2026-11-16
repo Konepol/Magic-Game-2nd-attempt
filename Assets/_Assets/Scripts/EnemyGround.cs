@@ -107,6 +107,17 @@ public class EnemyGround : MonoBehaviour
 
     void Start() => FindTarget();
 
+    // an afterimage or a thrown lantern draws the enemy away from the player; damage to the player stops while it is chasing one
+    void UpdateDecoy()
+    {
+        var d = Decoy.Pick(transform.position);
+        if (d != null)
+        {
+            if (target != d.transform) { target = d.transform; targetHealth = null; }
+        }
+        else if (target != null && target.GetComponent<Decoy>() != null) { target = null; FindTarget(); }
+    }
+
     void FindTarget()
     {
         var go = GameObject.FindGameObjectWithTag(targetTag);
@@ -147,6 +158,7 @@ public class EnemyGround : MonoBehaviour
         }
         if (!agent.enabled || !agent.isOnNavMesh) return;
         if (target == null) { FindTarget(); if (target == null) return; }
+        UpdateDecoy();
 
         if (status == null) status = GetComponent<StatusEffects>();
         agent.speed = moveSpeed * (status != null ? status.SpeedMultiplier : 1f);

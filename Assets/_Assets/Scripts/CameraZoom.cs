@@ -29,6 +29,8 @@ public class CameraZoom : MonoBehaviour
 
     // added on top of the zoomed distance (the broom drops the camera back at speed)
     [System.NonSerialized] public float ExtraDistance;
+    // pulled back by a big cast (separate from the broom's speed pull, which is rewritten every frame)
+    [System.NonSerialized] public float CastPullOut;
 
     void Awake()
     {
@@ -78,11 +80,11 @@ public class CameraZoom : MonoBehaviour
             {
                 // Group Framing owns the distance, so zoom through its size.
                 // Larger framing size = group fills more of the screen = camera closer.
-                framings[i].FramingSize = baseFramingSizes[i] / currentZoom;
+                framings[i].FramingSize = baseFramingSizes[i] / (currentZoom + CastPullOut * 0.05f);
             }
             else if (followers[i] != null)
             {
-                followers[i].CameraDistance = baseDistances[i] * currentZoom + ExtraDistance;
+                followers[i].CameraDistance = baseDistances[i] * currentZoom + ExtraDistance + CastPullOut;
             }
         }
     }

@@ -7,6 +7,7 @@ public enum SpellKind
     Laser,        // instant line, hits immediately
     GroundAoE,    // hold to aim a ring on the ground, release to unleash it
     Barrier,      // a wall with health that blocks enemy shots
+    Special,      // a spell with its own code (Weaver, Hollow Moon ...), picked by the variant's 'special' id
 }
 
 // A stronger version of a hold spell, reached by keeping the key held past the cast time (see SpellData.extraTiers).
@@ -53,6 +54,8 @@ public class SpellPassive
     public float tiedUpPerSecond = 2f;
     [Tooltip("Simple generic effect: multiplies this spell's damage while the passive is on and active. 1 = none. Spells with a special passive (blink, healing...) use their own code instead.")]
     public float damageMultiplier = 1f;
+    [Tooltip("Id of a hand-coded passive other code looks for (for example dash_to_blink). Empty = none.")]
+    public string special = "";
 }
 
 // What mana output does to one form of a spell. Each spell decides for itself: faster, bigger, more projectiles, longer reach, or a mix.
@@ -79,6 +82,9 @@ public class OutputResponse
 public class SpellVariant
 {
     public SpellKind kind = SpellKind.Projectile;
+
+    [Tooltip("Special kind only: which hand-coded behaviour runs (see SpecialSpells).")]
+    public string special = "";
 
     [Header("Damage (all kinds)")]
     public float damage = 10f;
@@ -195,6 +201,9 @@ public class SpellData : ScriptableObject
     public bool interruptible = false;
     [Tooltip("A hit has to do at least this much damage to interrupt the cast.")]
     public float interruptDamage = 1f;
+
+    [Tooltip("A visual that grows over the wand while this spell is chanted (DarkDisc ...). Empty = none.")]
+    public string chargeVisual = "";
 
     [Header("Casting circle")]
     [Tooltip("Drawn while the key is held. It completes when the cast time (Hold Threshold) is up.")]
