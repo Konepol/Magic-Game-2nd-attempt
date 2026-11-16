@@ -135,6 +135,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public void Equip(WeaponData newWeapon)
     {
         DropAllCircles();
+        heldSpells.Clear();
         weapon = newWeapon;
         AllocateSlots(Mathf.Max(CapacityFor(newWeapon), 1));       // a different weapon may have more or fewer spells
         ProjectilePool.WarmFor(newWeapon);
@@ -285,7 +286,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             return;
         }
 
-        if (pendingSpec != null && Time.time >= pendingUntil) ClearPending();
+        if (pendingSpec != null && Time.time >= pendingUntil && !pendingHeld) ClearPending();
         if (combineAction.WasPressedThisFrame())
         {
             if (cancelAction.IsPressed()) CancelCombine();          // F + B: the barrier keeps working, F is only read here
@@ -310,6 +311,14 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
             // queueing a combination: the keys pick spells for it, they do not cast (casts already going carry on)
             if (queueing && !charging[i]) continue;
+
+            // a spell held on the wand: its key releases it
+            var heldHere = FindHeld(i);
+            if (heldHere != null)
+            {
+                if (action.WasPressedThisFrame()) ReleaseHeld(heldHere);
+                continue;
+            }
 
             // a press that was refused (nothing to combine with) stays ignored until the key is let go
             if (ignoredPress[i])
@@ -345,6 +354,13 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 bool complete = held >= castTime;
                 int tier = hasHold && complete ? spell.TierAt(held) : 0;
                 var heldVariant = hasHold ? spell.VariantForTier(tier) : spell.tap;     // the variant this hold cast would fire as right now
+
+                // Tab while chanting pauses the chant and keeps the spell ready on the wand (the starter wand's held cast)
+                if (tabPressed && HeldCast.Enabled && hasHold && held >= spell.tapWindow && held >= castTime * 0.5f && !inCombo[i])
+                {
+                    tabPressed = false;
+                    if (PauseChant(i, spell, held, castTime, tier)) continue;
+                }
 
                 // after the tap window the player has committed to a hold cast: the circle starts drawing and finishes with the cast time
                 if (held >= spell.tapWindow)
@@ -480,6 +496,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 }
             }
         }
+
+        HandleTabIdle();
+        if (heldOrbs == null && HeldCast.Enabled) heldOrbs = HeldOrbs.Create(this);
 
         UpdateCombo();
         UpdateMulticastLayout();
@@ -802,11 +821,14 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public bool HasPending => pendingSpec != null;
     public string PendingName => pendingSpec != null ? pendingSpec.name : "";
     public float PendingCost => pendingSpec != null ? pendingSpec.manaCost : 0f;
-    public float PendingLeft01 => pendingSpec != null ? Mathf.Clamp01((pendingUntil - Time.time) / PendingTime) : 0f;
+    public float PendingLeft01 => pendingSpec != null ? (pendingHeld ? 1f : Mathf.Clamp01((pendingUntil - Time.time) / PendingTime)) : 0f;
+    bool pendingHeld;
+    public bool PendingHeld => pendingSpec != null && pendingHeld;
     public Color PendingColor => pendingSpec != null ? pendingSpec.color : Color.white;
 
     void ClearPending()
     {
+        pendingHeld = false;
         pendingSpec = null;
         pendingSlots = null;
     }
@@ -891,6 +913,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         queueing = false;
         var set = new List<int>(queued);
         queued.Clear();
+        foreach (int slotUsed in set) DropHeldAt(slotUsed, 1f);      // a held spell that is fused is used up (its mana comes back)
         SetPending(set, spec);
     }
 
@@ -1451,7 +1474,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     float pour;                      // extra output poured in while casting
     float regenPauseUntil;
     public bool Suppressed { get; private set; }
-    public float EffectiveOutput => Mathf.Min(Output + pour, 6f);
+    float? forcedOutput;             // a held spell is released at the output it was held with (or higher)
+    float prepaidCost;               // mana a held spell already paid
+    public float EffectiveOutput => forcedOutput ?? Mathf.Min(Output + pour, 6f);
     public float SafeOutput => safeOutput;
 
     // the lowest output limit among the equipped spells (the aura turns red past it)
@@ -1568,6 +1593,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         {
             if (kb.rightBracketKey.wasPressedThisFrame) SetOutput(Output + 0.25f);
             if (kb.leftBracketKey.wasPressedThisFrame) SetOutput(Output - 0.25f);
+            if (kb.tabKey.wasPressedThisFrame && HeldCast.Enabled) tabPressed = true;
             if (kb.hKey.wasPressedThisFrame)
             {
                 Suppressed = !Suppressed;
@@ -1575,7 +1601,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             }
 
             // hold Left Alt while a cast is being chanted: more mana is poured in (the spell grows, the cost climbs steeply)
-            if (kb.leftAltKey.isPressed && IsChanting) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
+            if (kb.leftAltKey.isPressed && (IsChanting || HeldCount > 0)) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
             else if (pour > 0f) pour = Mathf.Max(0f, pour - 4f * Time.deltaTime);
         }
 
@@ -1595,6 +1621,109 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     }
 
     ManaAura aura;
+    HeldOrbs heldOrbs;
+    bool tabPressed;
+    readonly List<HeldSpell> heldSpells = new List<HeldSpell>();
+
+    // ---------- held cast (the starter wand) ----------
+
+    public IReadOnlyList<HeldSpell> HeldSpells => heldSpells;
+    public int HeldCount => heldSpells.Count + (PendingHeld ? 1 : 0);
+
+    HeldSpell FindHeld(int slot)
+    {
+        foreach (var h in heldSpells) if (h.slot == slot) return h;
+        return null;
+    }
+
+    // pauses the chant of this slot: the form reached so far is paid for now and stays ready
+    bool PauseChant(int slot, SpellData spell, float held, float castTime, int tier)
+    {
+        if (HeldCount >= HeldCast.BankSize) { Notify("Held bank full"); return false; }
+
+        var variant = held >= castTime ? spell.VariantForTier(tier) : spell.hold;
+        int usedTier = held >= castTime ? tier : 0;
+        if (variant.kind == SpellKind.GroundAoE) { Notify("Cannot hold this"); return false; }
+
+        RefundPaid(slot);
+        float cost = variant.manaCost * SlotCostMul(spell);
+        if (mana != null && !mana.CanAfford(cost)) { mana.NotifyInsufficient(); Notify("Not enough mana"); return false; }
+        if (mana != null) mana.Spend(cost);
+
+        heldSpells.Add(new HeldSpell
+        {
+            slot = slot, spell = spell, variant = variant, tier = usedTier, outputAtHold = EffectiveOutput, prepaid = cost,
+            color = variant.effectColor, name = spell.TierName(usedTier),
+        });
+
+        // the chant stops and the circle folds away; the key can be let go without the spell fizzling
+        charging[slot] = false;
+        latched[slot] = false;
+        KillOrb(slot);
+        ChantDisplay.Finish(slot, spell.TierName(usedTier));
+        if (holdCircles[slot] != null) holdCircles[slot].FadeOut(0.4f);
+        holdCircles[slot] = null;
+        EachTierCircle(slot, c => c.FadeOut(0.4f));
+        if (chantSeen != null && slot < chantSeen.Length) chantSeen[slot] = 0;
+        if (muzzle != null) { SpellFX.Play(Sfx.Ready, muzzle.position, 0.8f); SpellFX.Sparks(muzzle.position, variant.effectColor); }
+        Notify("Held: " + spell.TierName(usedTier));
+        return true;
+    }
+
+    // the key of a held spell was pressed: it comes out now, at the output it was held with or higher if more was poured in
+    void ReleaseHeld(HeldSpell h)
+    {
+        if (Time.time < cooldownEnd[h.slot]) return;
+
+        float effNow = Mathf.Max(h.outputAtHold, Mathf.Min(Output + pour, 6f));
+        forcedOutput = effNow;
+        prepaidCost = h.prepaid;
+        bool ok = Cast(h.slot, h.variant, h.spell);
+        if (!ok && effNow > h.outputAtHold)
+        {
+            // the extra output could not be paid for: it comes out as it was held
+            forcedOutput = h.outputAtHold;
+            ok = Cast(h.slot, h.variant, h.spell);
+        }
+        forcedOutput = null;
+        prepaidCost = 0f;
+
+        if (ok) heldSpells.Remove(h);
+    }
+
+    void DropHeldAt(int slot, float refundFraction)
+    {
+        var h = FindHeld(slot);
+        if (h == null) return;
+        if (mana != null) mana.Restore(h.prepaid * refundFraction);
+        heldSpells.Remove(h);
+    }
+
+    // Tab with no chant to pause: a ready fusion is held (no time limit), otherwise the newest held spell is let go (half its mana back)
+    void HandleTabIdle()
+    {
+        if (!tabPressed) return;
+        tabPressed = false;
+        if (!HeldCast.Enabled) return;
+
+        if (pendingSpec != null && !pendingHeld)
+        {
+            if (HeldCount >= HeldCast.BankSize) { Notify("Held bank full"); return; }
+            pendingHeld = true;
+            Notify("Held: " + pendingSpec.name);
+            return;
+        }
+        if (pendingHeld) { pendingHeld = false; pendingUntil = Time.time + PendingTime; Notify("Fusion no longer held"); return; }
+        if (heldSpells.Count > 0)
+        {
+            var h = heldSpells[heldSpells.Count - 1];
+            if (mana != null) mana.Restore(h.prepaid * 0.5f);
+            heldSpells.Remove(h);
+            Notify("Dropped: " + h.name);
+        }
+    }
+
+    void LateUpdate() => tabPressed = false;
     WandChargeVisual[] orbs;
     int[] chantSeen;
     // a line of the chant just started (for voice lines later): the spell and the line's index
@@ -1651,7 +1780,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         if (Time.time < cooldownEnd[slot] || muzzle == null || mainCamera == null) return false;
 
-        float cost = v.manaCost * SlotCostMul(spell);
+        float cost = Mathf.Max(0f, v.manaCost * SlotCostMul(spell) - prepaidCost);
         if (mana != null && !mana.CanAfford(cost))
         {
             mana.NotifyInsufficient();

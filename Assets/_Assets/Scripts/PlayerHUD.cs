@@ -125,6 +125,7 @@ public class PlayerHUD : MonoBehaviour
         PlayerSettings.Changed += RefreshKeyLabels;
         pathsView = new FusionPathsView(transform, caster);
         pendingView = new PendingComboView(transform, caster);
+        heldView = new HeldCastView(transform, caster);
         PlaceComboBox();
 
         if (health != null) health.Damaged += OnPlayerDamaged;
@@ -230,6 +231,7 @@ public class PlayerHUD : MonoBehaviour
         UpdateCombo();
         pathsView?.Update();
         pendingView?.Update();
+        heldView?.Update();
         UpdateMana();
         UpdateHealth();
         UpdateVignette();
@@ -396,6 +398,7 @@ public class PlayerHUD : MonoBehaviour
     // the combined-spell box lives in the bottom-left corner of the screen
     FusionPathsView pathsView;
     PendingComboView pendingView;
+    HeldCastView heldView;
 
     void PlaceComboBox()
     {

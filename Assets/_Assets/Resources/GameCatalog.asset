@@ -19,7 +19,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: acf99b43f42e0f1438805eafac094077, type: 2}
   - {fileID: 11400000, guid: 4654737fd7ff5dc4f83c8135bf6d184e, type: 2}
   - {fileID: 11400000, guid: 8e25d269bf226e54394905dadb45d3f7, type: 2}
-  combos: []
+  combos:
+  - {fileID: 11400000, guid: e0ba0e2b2b7aec74590c79fd12cc72f5, type: 2}
   slotCount: 7
   defaultLoadout:
   - Weaver

@@ -24,10 +24,11 @@ public class WandGlow : MonoBehaviour
         if (rend == null) return;
 
         bool chanting = caster != null && (caster.IsChanting || caster.Queueing);
-        float target = chanting ? chantGlow : (caster != null && caster.HasPending ? chantGlow * 0.6f : idleGlow);
+        bool held = caster != null && caster.HeldCount > 0;
+        float target = chanting ? chantGlow : (held ? chantGlow * 0.75f : (caster != null && caster.HasPending ? chantGlow * 0.6f : idleGlow));
         level = Mathf.MoveTowards(level <= 0f ? idleGlow : level, target, Time.deltaTime * 6f);
 
-        float pulse = chanting ? 0.25f * Mathf.Sin(Time.time * 14f) : 0.1f * Mathf.Sin(Time.time * 3f);
+        float pulse = chanting ? 0.25f * Mathf.Sin(Time.time * 14f) : (held ? 0.35f * Mathf.Sin(Time.time * 4.5f) : 0.1f * Mathf.Sin(Time.time * 3f));
         rend.GetPropertyBlock(block, gemIndex);
         block.SetFloat("_EmissionStrength", Mathf.Max(0f, level + pulse));
         rend.SetPropertyBlock(block, gemIndex);
