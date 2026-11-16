@@ -249,6 +249,11 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 
 ### M1 detail (current goal)
 
+**Added to M1 (2026-11-16):**
+- **Ground movement magic** (blink, magic dash or slide, spell-powered jumps and climbs) and a **rework of ground player movement**: magic-powered movement, a snappier and more responsive feel, and new locomotion animation aimed at the full anime witch.
+- **Per-spell output effects** (faster, bigger, more projectiles per spell) as part of the spells.
+- **Magic circle rework:** the circle's look changes to fit each spell, shows what output does, shows that spell's backfire limit, and anchors to the new movement.
+
 **Scope (nothing cut):** forest free roam, quest system, one story mission, one spell quest, one wand quest, broom trial 1, a hub (placeholder town), new camera, immersive HUD, spellbook menu, plus the destruction and crime pieces below.
 
 **Done means:** it **feels good and looks like the target** (quality bar, not just a checklist). Because that is subjective, write a short list of "feel checks" when M1 starts (for example: flight feels free, a chant feels powerful, breaking a wall feels satisfying, the HUD stays out of the way).

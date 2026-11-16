@@ -22,17 +22,19 @@ Read GDD.md first, especially the sections named in the task. Work on only this 
 | 6 | Lantern | Multipurpose utility |
 | 7 | Veil Step and the toggled passive | Movement and passives |
 | 8 | Starter wand: held cast | The prepare-ahead wand |
-| 9 | Destruction prototype | Biggest technical risk |
-| 10 | Quest system | Everything quest-shaped uses it |
-| 11 | New camera and immersive HUD | Feel |
-| 12 | Spellbook menu | Loadout, quests, map, reputation |
-| 13 | Forest rebuild (handcrafted, small) | The world |
-| 14 | Placeholder town | Hub and test site |
-| 15 | Reputation and crime | Needs town and destruction |
-| 16 | Repair minigame | Needs destruction and reputation |
-| 17 | Tutorial, teacher, wand and spell quests | Uses everything above |
-| 18 | Broom trial 1 | Slalom |
-| 19 | Polish against the feel checks | Quality bar |
+| 9 | Magic circle rework | Circle fits each spell, shows output and the backfire limit |
+| 10 | Ground movement rework | Magic-powered movement, feel, full anime animation |
+| 11 | Destruction prototype | Biggest technical risk |
+| 12 | Quest system | Everything quest-shaped uses it |
+| 13 | New camera and immersive HUD | Feel |
+| 14 | Spellbook menu | Loadout, quests, map, reputation |
+| 15 | Forest rebuild (handcrafted, small) | The world |
+| 16 | Placeholder town | Hub and test site |
+| 17 | Reputation and crime | Needs town and destruction |
+| 18 | Repair minigame | Needs destruction and reputation |
+| 19 | Tutorial, teacher, wand and spell quests | Uses everything above |
+| 20 | Broom trial 1 | Slalom |
+| 21 | Polish against the feel checks | Quality bar |
 
 ---
 
@@ -130,7 +132,38 @@ Do: the wand model placeholder with a distinctive glow, the held-cast mechanic a
 Play-test: hold a spell then release it, hold two after raising the bank, fuse held spells, pour output into a held spell.
 ```
 
-## Part 9: Destruction prototype
+## Part 9: Magic circle rework
+
+```
+Task: rework the casting circle (GDD.md section 6.2, "Spell redesign" and the M1 detail).
+
+Do:
+- The circle's visual changes to fit each spell: every spell (and each of its forms) gets its own circle look instead of one shared design, matching that spell's identity (Weaver, Hollow Moon, Mirror Bloom, Lantern, Veil Step).
+- The circle shows what output does: it reflects the spell's own response to output (bigger, faster, more projectiles), so the player reads the power level from the circle.
+- The circle shows the spell's backfire limit: a warning change (ring, colour or flicker) as output nears that spell's own limit.
+- The circle anchors to the movement: it follows the witch correctly while walking, sliding, blinking and flying, and does not fight the new ground movement.
+- Keep it small and scaling with the spell's size. Do NOT re-run the circle builder; change values or add per-spell circle assets only, and tell me exactly which of my Inspector tweaks you touched (none, ideally).
+
+Done when: each of the five spells has a distinct circle, output and the backfire limit are readable from the circle, and it stays attached during movement.
+Play-test: cast each spell at low, normal and high output, push toward the backfire limit, and cast while running, sliding and flying.
+```
+
+## Part 10: Ground movement rework
+
+```
+Task: rework ground player movement (GDD.md sections 6.1 and 6.3b).
+
+Do:
+- Magic-powered movement: ground movement magic such as a magic dash or slide, blink, and spell-powered jumps and climbs, working with Veil Step's toggled passive (dash becomes blink), costing mana as the GDD describes. Some spells can double as movement.
+- Feel and responsiveness: tune the controller so it feels snappy and anime-action, replacing the plain Starter Assets run and jump feel (acceleration, turning, jump, landing, coyote time, air control).
+- Animation: new locomotion and movement animations for the full anime witch direction, so the ground set matches the later model (use the current witch as a placeholder, keep it swappable).
+- Keep the broom flight working and the transition between ground and broom smooth.
+
+Done when: moving on the ground feels responsive and fun on its own, and the magic movement options work with the spell system.
+Play-test: run, stop, turn, jump, dash, slide, blink, climb a slope or wall where supported, and switch between ground and broom.
+```
+
+## Part 11: Destruction prototype
 
 ```
 Task: runtime physics fracture of props and buildings or walls (GDD.md section 6.7).
@@ -141,7 +174,7 @@ Done when: destroying many objects at once keeps frame rate healthy.
 Play-test: destroy one object, then a whole wall, then spam spells at a cluster; watch the frame rate and the piece cap.
 ```
 
-## Part 10: Quest system
+## Part 12: Quest system
 
 ```
 Task: build the data-driven quest system (GDD.md sections 4 and 6.8): story missions, spell and wand quests, broom trials and NPC favor quests; quests are not limited to a quest board; some have map markers and some do not; completed quests stay completed; completing a quest can give a spell, a wand, a stat upgrade, reputation or a cosmetic.
@@ -151,7 +184,7 @@ Do: the quest data, objectives, rewards, save and load into the save system (aut
 Play-test: start, progress and complete a test quest, quit and reload, confirm it stays complete.
 ```
 
-## Part 11: New camera and immersive HUD
+## Part 13: New camera and immersive HUD
 
 ```
 Task: the new camera and HUD (GDD.md sections 9 and 10): a wider ground follow, a dynamic flight camera (pulls out with speed), cast zoom and framing for big chants, and scripted cinematic moments. The HUD hides unless needed, shows combat state on the witch (aura, wand glow, barrier), and stays clean fantasy style with thin gold trim.
@@ -159,7 +192,7 @@ Task: the new camera and HUD (GDD.md sections 9 and 10): a wider ground follow, 
 Play-test: walk, fly fast, cast a big spell, check the HUD fading in and out.
 ```
 
-## Part 12: Spellbook menu
+## Part 14: Spellbook menu
 
 ```
 Task: the diegetic spellbook (GDD.md section 10): a book in the witch's hands with the world dimmed behind it, with tabs for loadout and fusion recipes (locked recipes shown), quest log with rumors and clues, map (fog of war, bought maps greyed, fast travel), and reputation, NPC helpers and settings. The game pauses while it is open in single player.
@@ -167,7 +200,7 @@ Task: the diegetic spellbook (GDD.md section 10): a book in the witch's hands wi
 Play-test: open it, equip spells, read the quest log, open the map and fast travel.
 ```
 
-## Part 13: Forest rebuild
+## Part 15: Forest rebuild
 
 ```
 Task: rebuild the forest as a handcrafted world, small (about 2 minutes of flight across), dense and polished, with AI assistance where useful (GDD.md sections 8 and 9, M1 detail). Keep the existing edge and culling work. Build quest sites as handmade points of interest, with day and night and weather as a first simple version.
@@ -175,7 +208,7 @@ Task: rebuild the forest as a handcrafted world, small (about 2 minutes of fligh
 Play-test: fly across, check frame rate, look at the anime-style lighting and mood.
 ```
 
-## Part 14: Placeholder town
+## Part 16: Placeholder town
 
 ```
 Task: a generated placeholder town (M1 detail): houses and walls that can be destroyed, a quest board and a merchant with the barter economy (anything of equal or higher value), a guard NPC and a repair center. Flying inside town costs reputation.
@@ -183,7 +216,7 @@ Task: a generated placeholder town (M1 detail): houses and walls that can be des
 Play-test: walk the town, trade, read the quest board, talk to the guard.
 ```
 
-## Part 15: Reputation and crime
+## Part 17: Reputation and crime
 
 ```
 Task: reputation per town and per faction (GDD.md section 6.7): crime includes destruction and harming NPCs; consequences are guard behavior, shop prices and which quests and helpers appear; making amends by repair, fines or favor quests; reputation is per player.
@@ -191,7 +224,7 @@ Task: reputation per town and per faction (GDD.md section 6.7): crime includes d
 Play-test: break a wall in town and watch the guard and prices react; pay a fine.
 ```
 
-## Part 16: Repair minigame
+## Part 18: Repair minigame
 
 ```
 Task: the repair minigame (GDD.md section 6.7): a repair center appears near the damage; you carry the materials (basic from the center, special from the world; dropping or crashing damages the load) and fix it yourself; a perfection meter decides the result; the repair is permanent; a better-than-original repair earns more reputation; a bad repair looks shabby and is weaker; redo by destroying your own work.
@@ -199,7 +232,7 @@ Task: the repair minigame (GDD.md section 6.7): a repair center appears near the
 Play-test: repair well, repair badly, drop a load.
 ```
 
-## Part 17: Tutorial, teacher and quests
+## Part 19: Tutorial, teacher and quests
 
 ```
 Task: the tutorial and first quests (M1 detail): an interactive survival tutorial (generic placeholder situation, no boss) that ends by opening the first gate; the teacher NPC (older, dry-humoured, impatient) with the spell quest that teaches Veil Step and the wand quest that gives the starter wand; chant voice lines hooked up from the pre-generated audio (placeholder files are fine).
@@ -207,7 +240,7 @@ Task: the tutorial and first quests (M1 detail): an interactive survival tutoria
 Play-test: play from a new save through the tutorial and both quests.
 ```
 
-## Part 18: Broom trial 1
+## Part 20: Broom trial 1
 
 ```
 Task: the obstacle slalom through trees and ruins (M1 detail), the first broom upgrade, with destructible gaps where it fits and a clear reward on completion.
@@ -215,7 +248,7 @@ Task: the obstacle slalom through trees and ruins (M1 detail), the first broom u
 Play-test: fly it, crash into things, finish it, check the upgrade.
 ```
 
-## Part 19: Polish against the feel checks
+## Part 21: Polish against the feel checks
 
 ```
 Task: go through the M1 feel checks in GDD.md and report where each one fails: flying across the forest feels free; a chant makes the player feel powerful; breaking a wall feels satisfying; the HUD stays out of the way; each of the four spells looks different at a glance. Fix the worst items. Do not add features.
