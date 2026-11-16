@@ -1430,7 +1430,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             case CircleAnchor.Front:
             {
                 Vector3 aim = GetAimDirection();
-                return new Pose(muzzle.position + aim * data.frontDistance, Quaternion.LookRotation(aim));
+                return new Pose(muzzle.position + aim * data.frontDistance, SpellUtil.FacingRotation(aim));      // stable when aiming steeply down or up
             }
             case CircleAnchor.Feet:
             {

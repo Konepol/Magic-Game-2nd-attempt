@@ -146,6 +146,22 @@ public static class SpellUtil
         }
     }
 
+    // Faces a direction with a stable roll, also when it points straight up or down. The sideways axis stays level, so a flat shape
+    // (a blade, a petal) tilts with the direction instead of staying flat in the world.
+    public static Quaternion FacingRotation(Vector3 dir)
+    {
+        dir.Normalize();
+        Vector3 side = Vector3.Cross(Vector3.up, dir);
+        if (side.sqrMagnitude < 0.0004f)
+        {
+            Transform cam = Camera.main != null ? Camera.main.transform : null;
+            side = cam != null ? cam.right : Vector3.right;
+        }
+        side.Normalize();
+        Vector3 up = Vector3.Cross(dir, side);
+        return Quaternion.LookRotation(dir, up);
+    }
+
     // the ground under a point (or the point itself if there is none)
     public static Vector3 GroundAt(Vector3 p)
     {

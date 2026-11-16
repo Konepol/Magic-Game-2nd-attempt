@@ -63,6 +63,7 @@ public class MoonBlade : MonoBehaviour
         b.enemyTag = c.damageTag;
         b.color = c.v.effectColor;
         b.Build();
+        b.transform.rotation = SpellUtil.FacingRotation(b.dir);       // the blade turns to where it is going, up or down
         SpellFX.Play(Sfx.Cast, c.origin, 0.8f);
         CameraShake.Add(0.1f);
     }
