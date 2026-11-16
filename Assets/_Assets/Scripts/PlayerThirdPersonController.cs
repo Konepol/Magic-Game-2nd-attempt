@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -103,10 +103,77 @@ namespace StarterAssets
             _verticalVelocity = verticalSpeed;
             _broomFall = true;
             _broomFallTime = 0f;
+            ClearMagicState();
         }
 
         [Header("Lock On")]
         public TargetLockOn LockOn;
+
+        // ======================= Ground movement rework (M1) =======================
+        // The old Starter Assets walk, sprint and jump values above are kept for the old model (switch Use New Ground Motion off to get it back).
+        [Header("Ground feel (M1 rework)")]
+        [Tooltip("On: the snappy ground movement below. Off: the old Starter Assets feel.")]
+        public bool UseNewGroundMotion = true;
+        public float RunSpeed = 6.5f;
+        public float SprintRunSpeed = 10.5f;
+        [Tooltip("Metres per second gained each second on the ground while a direction is held (higher = snappier start).")]
+        public float GroundAcceleration = 60f;
+        [Tooltip("How fast she stops on the ground when no direction is held. Also what turns her around quickly when she reverses.")]
+        public float GroundDeceleration = 80f;
+        [Tooltip("Air control: how fast the held direction changes her speed in the air.")]
+        public float AirAcceleration = 24f;
+        public float AirDeceleration = 6f;
+        [Tooltip("Seconds to turn to face the way she runs (smaller = snappier turn).")]
+        public float TurnSmoothTime = 0.05f;
+        [Tooltip("Seconds after stepping off a ledge when a jump still works.")]
+        public float CoyoteTime = 0.12f;
+        [Tooltip("A jump pressed this long before landing still happens when she lands.")]
+        public float JumpBufferTime = 0.14f;
+        public float NewJumpHeight = 1.7f;
+        public float NewGravity = -32f;
+        [Tooltip("Gravity multiplier while falling (a quicker, weightier fall).")]
+        public float FallGravityMultiplier = 1.35f;
+        [Tooltip("Gravity multiplier while rising and the jump key is let go (a short hop).")]
+        public float JumpCutMultiplier = 2.4f;
+
+        [Header("Magic movement (ground)")]
+        [Tooltip("Left Ctrl: a magic dash in the held direction (or the way she faces). Hold it after the dash to slide. Costs mana. With Veil Step's passive on, the dash is a blink instead.")]
+        public float MagicDashSpeed = 26f;
+        public float MagicDashTime = 0.18f;
+        public float MagicDashCost = 6f;
+        public float MagicDashCooldown = 0.6f;
+        [Tooltip("The slide after a dash: speed lost per second while Left Ctrl is held.")]
+        public float SlideFriction = 16f;
+        [Tooltip("How far Veil Step's blink goes when it replaces the dash.")]
+        public float BlinkDistance = 11f;
+        [Tooltip("Extra jumps in the air (a burst of magic) and what each costs in mana.")]
+        public int AirJumps = 1;
+        public float AirJumpHeight = 1.5f;
+        public float AirJumpCost = 8f;
+        [Tooltip("Tap jump in the air against a wall to climb it with magic: speed, mana per second, how far she reaches for the wall, how high it goes.")]
+        public float ClimbSpeed = 5.5f;
+        public float ClimbCostPerSecond = 7f;
+        public float ClimbReach = 0.75f;
+        public float MaxClimbHeight = 5f;
+
+        // state of the new movement
+        Vector3 _groundVel;
+        bool _prevJumpHeld;
+        float _coyote, _jumpBuffer, _fallingSince;
+        int _airJumpsLeft;
+        float _dashTimer, _dashCooldown, _slideTime;
+        Vector3 _dashDir;
+        bool _sliding, _climbing, _airDashUsed;
+        float _climbStartY, _climbBlockedUntil;
+        float _airJumpFx;
+        System.Collections.Generic.HashSet<int> _animParams;
+
+        public Vector3 GroundVelocity => _groundVel;
+        public bool IsMagicDashing => _dashTimer > 0f;
+        public bool IsSliding => _sliding;
+        public bool IsClimbing => _climbing;
+        public bool JustAirJumped => Time.time < _airJumpFx;
+        public bool IsNewMotion => UseNewGroundMotion;
 
         // cinemachine
         private float _cinemachineTargetYaw;
@@ -211,6 +278,12 @@ namespace StarterAssets
 #endif
 
             AssignAnimationIDs();
+            if (GetComponent<GroundMotionPose>() == null) gameObject.AddComponent<GroundMotionPose>();      // placeholder lean for the new ground movement
+            if (_hasAnimator)
+            {
+                _animParams = new System.Collections.Generic.HashSet<int>();
+                foreach (var p in _animator.parameters) _animParams.Add(p.nameHash);
+            }
 
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
@@ -221,7 +294,7 @@ namespace StarterAssets
         {
             _hasAnimator = TryGetComponent(out _animator);
 
-            if (IsFlying) return;   // BroomFlight controls movement
+            if (IsFlying) { if (_groundVel != Vector3.zero || _climbing || _sliding) ClearMagicState(); return; }   // BroomFlight controls movement
 
             JumpAndGravity();
             GroundedCheck();
@@ -393,8 +466,280 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f) * _exitOffset;
         }
 
+        // ---------- the new ground movement ----------
+
+        static readonly int AnimDashing = Animator.StringToHash("Dashing");
+        static readonly int AnimSliding = Animator.StringToHash("Sliding");
+        static readonly int AnimClimbing = Animator.StringToHash("Climbing");
+        static readonly int AnimAirJump = Animator.StringToHash("AirJump");
+
+        // sets an optional animator parameter (a future locomotion set can add them; missing ones are skipped quietly)
+        private void SetAnimBool(int id, bool value)
+        {
+            if (_hasAnimator && _animParams != null && _animParams.Contains(id)) _animator.SetBool(id, value);
+        }
+
+        private bool TrySpend(float cost)
+        {
+            if (cost <= 0f) return true;
+            if (_mana == null) _mana = GetComponent<Mana>();
+            if (_mana == null) return true;
+            if (!_mana.CanAfford(cost)) { _mana.NotifyInsufficient(); return false; }
+            _mana.Spend(cost);
+            return true;
+        }
+
+        private void MoveNew()
+        {
+            float dt = Time.deltaTime;
+            if (_mana == null) _mana = GetComponent<Mana>();
+            bool rooted = Rooted;
+            bool casting = Casting;
+            bool sprinting = _input.sprint && (_mana == null || !_mana.IsCharging) && !casting;
+            float targetSpeed = sprinting ? SprintRunSpeed : RunSpeed;
+            if (casting && !rooted) targetSpeed *= SlowCastSpeedMultiplier;
+
+            bool hasInput = _input.move != Vector2.zero && !rooted;
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            Vector3 desired = Vector3.zero;
+            if (hasInput)
+            {
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + _mainCamera.transform.eulerAngles.y;
+                float magnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+                desired = Quaternion.Euler(0f, _targetRotation, 0f) * Vector3.forward * (targetSpeed * magnitude);
+            }
+
+            bool controlled = _dashTimer <= 0f && !_sliding && !_climbing;
+            if (controlled)
+            {
+                float rate = hasInput ? (Grounded ? GroundAcceleration : AirAcceleration) : (Grounded ? GroundDeceleration : AirDeceleration);
+                _groundVel = Vector3.MoveTowards(_groundVel, desired, rate * dt);
+            }
+
+            UpdateMagicMove(dt, hasInput, desired);
+
+            // face the way she runs, or the aim while casting (strafing)
+            if (TryGetFacing(out Vector3 faceDir))
+            {
+                float yaw = Mathf.Atan2(faceDir.x, faceDir.z) * Mathf.Rad2Deg;
+                float faced = Mathf.SmoothDampAngle(transform.eulerAngles.y, yaw, ref _lockFaceVelocity, TurnSmoothTime);
+                transform.rotation = Quaternion.Euler(0.0f, faced, 0.0f);
+            }
+            else if ((hasInput || _dashTimer > 0f || _sliding) && !rooted)
+            {
+                float face = (_dashTimer > 0f || _sliding) && _groundVel.sqrMagnitude > 0.01f
+                    ? Mathf.Atan2(_groundVel.x, _groundVel.z) * Mathf.Rad2Deg : _targetRotation;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, face, ref _rotationVelocity, TurnSmoothTime);
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
+
+            // the carried broom momentum fades (faster on the ground)
+            float damping = Grounded ? CarryDamping * 2f : _broomFall ? BroomFallAirDamping : CarryDamping;
+            CarryVelocity = Vector3.Lerp(CarryVelocity, Vector3.zero, 1f - Mathf.Exp(-damping * dt));
+
+            _controller.Move(_groundVel * dt + new Vector3(0f, _verticalVelocity, 0f) * dt + CarryVelocity * dt);
+            _appliedCarry = CarryVelocity;
+
+            // running into something takes the speed away instead of storing it
+            Vector3 achieved = _controller.velocity - CarryVelocity;
+            achieved.y = 0f;
+            if (achieved.sqrMagnitude < _groundVel.sqrMagnitude) _groundVel = Vector3.MoveTowards(_groundVel, achieved, 80f * dt);
+
+            // the animator keeps the old Speed scale (idle 0, walk about 2, run about 4, sprint 5.3) so the current clips still blend
+            float speed = _groundVel.magnitude;
+            float anim = speed <= RunSpeed ? speed / Mathf.Max(RunSpeed, 0.01f) * 4f : 4f + (speed - RunSpeed) / Mathf.Max(SprintRunSpeed - RunSpeed, 0.01f) * 1.335f;
+            _animationBlend = Mathf.Lerp(_animationBlend, anim, 1f - Mathf.Exp(-14f * dt));
+            if (_animationBlend < 0.01f) _animationBlend = 0f;
+            if (_hasAnimator)
+            {
+                _animator.SetFloat(_animIDSpeed, _animationBlend);
+                _animator.SetFloat(_animIDMotionSpeed, _input.analogMovement ? Mathf.Max(0.3f, _input.move.magnitude) : 1f);
+            }
+            SetAnimBool(AnimDashing, _dashTimer > 0f);
+            SetAnimBool(AnimSliding, _sliding);
+            SetAnimBool(AnimClimbing, _climbing);
+            SetAnimBool(AnimAirJump, Time.time < _airJumpFx);
+        }
+
+        // Left Ctrl: a magic dash, and a slide while it stays held. With Veil Step's passive on the dash is a blink.
+        private void UpdateMagicMove(float dt, bool hasInput, Vector3 desired)
+        {
+            _dashCooldown -= dt;
+            if (Grounded) _airDashUsed = false;
+
+            var kb = Keyboard.current;
+            bool ctrlPressed = kb != null && kb.leftCtrlKey.wasPressedThisFrame;
+            bool ctrlHeld = kb != null && kb.leftCtrlKey.isPressed;
+
+            if (ctrlPressed && _dashCooldown <= 0f && !Rooted && !_climbing && (Grounded || !_airDashUsed))
+            {
+                Vector3 dir = hasInput ? desired.normalized : transform.forward;
+                dir.y = 0f;
+                if (dir.sqrMagnitude < 0.01f) dir = transform.forward;
+                dir.Normalize();
+
+                if (_caster == null) _caster = GetComponentInChildren<PlayerSpellCaster>();
+                if (_caster != null && _caster.TryUsePassive("dash_to_blink"))
+                {
+                    VeilStep.DashBlink(transform, dir, BlinkDistance, new Color(1f, 0.7f, 0.85f));
+                    _dashCooldown = MagicDashCooldown;
+                    if (!Grounded) _airDashUsed = true;
+                }
+                else if (TrySpend(MagicDashCost))
+                {
+                    _dashTimer = MagicDashTime;
+                    _dashDir = dir;
+                    _dashCooldown = MagicDashCooldown;
+                    _sliding = false;
+                    if (!Grounded) _airDashUsed = true;
+                    SpellFX.Play(Sfx.Cast, transform.position, 0.5f);
+                    SpellFX.Burst(transform.position + Vector3.up * 0.9f, 0.6f, new Color(0.7f, 0.85f, 1f), 10);
+                    CameraShake.Add(0.06f);
+                }
+            }
+
+            if (_dashTimer > 0f)
+            {
+                _dashTimer -= dt;
+                _groundVel = _dashDir * MagicDashSpeed;
+                if (!Grounded) _verticalVelocity = Mathf.Max(_verticalVelocity, 0f);       // an air dash goes level
+                if (_dashTimer <= 0f)
+                {
+                    // the dash ends: she carries on as a slide if Ctrl is still held on the ground, otherwise she runs out of it
+                    _sliding = ctrlHeld && Grounded;
+                    _slideTime = 0f;
+                    if (!_sliding) _groundVel = _dashDir * Mathf.Max(MagicDashSpeed * 0.45f, RunSpeed);
+                }
+            }
+            else if (_sliding)
+            {
+                _slideTime += dt;
+                float speed = _groundVel.magnitude;
+                // a little steering while she slides, and the speed bleeds off
+                if (hasInput) _groundVel = Vector3.RotateTowards(_groundVel, desired.normalized * speed, 1.6f * dt, 0f);
+                speed = Mathf.MoveTowards(speed, 0f, SlideFriction * dt);
+                _groundVel = _groundVel.normalized * speed;
+                if (!ctrlHeld || !Grounded || speed < RunSpeed * 0.5f) _sliding = false;
+            }
+        }
+
+        private void JumpAndGravityNew()
+        {
+            float dt = Time.deltaTime;
+            bool jumpHeld = _input.jump;
+            bool pressed = jumpHeld && !_prevJumpHeld;
+            _prevJumpHeld = jumpHeld;
+            _jumpBuffer = pressed ? JumpBufferTime : _jumpBuffer - dt;
+
+            if (Grounded)
+            {
+                _coyote = CoyoteTime;
+                _airJumpsLeft = AirJumps;
+                _fallTimeoutDelta = FallTimeout;
+                _climbing = false;
+                if (_hasAnimator) { _animator.SetBool(_animIDJump, false); _animator.SetBool(_animIDFreeFall, false); }
+                if (_broomFall && _verticalVelocity <= 0.0f) { _broomFall = false; _broomFallTime = 0f; }
+                if (_verticalVelocity < 0.0f) _verticalVelocity = -2f;
+            }
+            else
+            {
+                _coyote -= dt;
+                if (_fallTimeoutDelta >= 0.0f) _fallTimeoutDelta -= dt;
+                else if (_hasAnimator) _animator.SetBool(_animIDFreeFall, true);
+            }
+
+            // jump: from the ground, or just after leaving it, or a press that was made a moment before landing
+            if (_jumpBuffer > 0f && _coyote > 0f && !Rooted)
+            {
+                _verticalVelocity = Mathf.Sqrt(NewJumpHeight * -2f * NewGravity);
+                _jumpBuffer = 0f;
+                _coyote = 0f;
+                _sliding = false;
+                if (_hasAnimator) _animator.SetBool(_animIDJump, true);
+            }
+            else if (pressed && !Grounded && _coyote <= 0f && !Rooted)
+            {
+                // in the air: against a wall it climbs, otherwise a burst of magic gives another jump
+                if (!_climbing && Time.time >= _climbBlockedUntil && WallAhead(out _)) StartClimb();
+                else if (!_climbing && _airJumpsLeft > 0 && TrySpend(AirJumpCost))
+                {
+                    _airJumpsLeft--;
+                    _verticalVelocity = Mathf.Sqrt(AirJumpHeight * -2f * NewGravity);
+                    _airJumpFx = Time.time + 0.4f;
+                    SpellFX.Burst(transform.position + Vector3.up * 0.2f, 0.8f, new Color(0.75f, 0.85f, 1f), 14);
+                    SpellFX.Play(Sfx.Ready, transform.position, 0.5f);
+                    PetalBurst.Spawn(transform.position + Vector3.up * 0.4f, new Color(0.75f, 0.85f, 1f), false);
+                }
+            }
+
+            if (_climbing) { UpdateClimb(jumpHeld, dt); return; }
+
+            // gravity: heavier falling, and a short hop when the jump key is let go early
+            float g = NewGravity;
+            if (_verticalVelocity < 0f) g *= FallGravityMultiplier;
+            else if (!jumpHeld) g *= JumpCutMultiplier;
+            if (_broomFall && !Grounded)
+            {
+                _broomFallTime += dt;
+                g *= Mathf.Min(1f + FallGravityRamp * _broomFallTime, FallGravityMax);
+            }
+            if (_verticalVelocity > -_terminalVelocity) _verticalVelocity += g * dt;
+        }
+
+        // a wall in front of her chest that she can climb (steep, not an enemy or the player)
+        private bool WallAhead(out RaycastHit hit)
+        {
+            int mask = Physics.DefaultRaycastLayers & ~((1 << 2) | (1 << gameObject.layer) | (1 << LayerMask.NameToLayer("Enemy")));
+            Vector3 origin = transform.position + Vector3.up * 1.0f;
+            if (Physics.Raycast(origin, transform.forward, out hit, ClimbReach, mask, QueryTriggerInteraction.Ignore))
+                return Mathf.Abs(hit.normal.y) < 0.35f;
+            return false;
+        }
+
+        private void StartClimb()
+        {
+            if (!TrySpend(2f)) return;                       // a small cost to start
+            _climbing = true;
+            _climbStartY = transform.position.y;
+            _verticalVelocity = ClimbSpeed;
+            _groundVel = Vector3.zero;
+            _airJumpFx = Time.time + 0.3f;
+            SpellFX.Burst(transform.position + Vector3.up + transform.forward * 0.4f, 0.5f, new Color(0.75f, 0.85f, 1f), 10);
+        }
+
+        // climbing: she goes up the wall while the jump key is held, spending mana; at the top she hauls herself over
+        private void UpdateClimb(bool jumpHeld, float dt)
+        {
+            bool wall = WallAhead(out RaycastHit hit);
+            bool head = Physics.Raycast(transform.position + Vector3.up * 2.0f, transform.forward, ClimbReach + 0.3f,
+                Physics.DefaultRaycastLayers & ~((1 << 2) | (1 << gameObject.layer) | (1 << LayerMask.NameToLayer("Enemy"))), QueryTriggerInteraction.Ignore);
+
+            bool paid = _mana == null || _mana.Drain(ClimbCostPerSecond * dt) >= ClimbCostPerSecond * dt - 0.0001f;
+            bool tooHigh = transform.position.y - _climbStartY > MaxClimbHeight;
+
+            if (!jumpHeld || !wall || !paid || tooHigh)
+            {
+                _climbing = false;
+                _climbBlockedUntil = Time.time + 0.25f;
+                // reached the top: the wall chest-high is gone while she is still pushing up, so she vaults over the edge
+                if (jumpHeld && !wall && paid && !tooHigh)
+                {
+                    _verticalVelocity = 6.5f;
+                    _groundVel = transform.forward * 4.5f;
+                }
+                return;
+            }
+
+            // up the wall, pressed against it
+            _verticalVelocity = ClimbSpeed;
+            _groundVel = -hit.normal * 0.6f;
+            _groundVel.y = 0f;
+            if (!head && transform.position.y - _climbStartY > 0.5f) { /* the top is near: keep going until the wall ends below the chest */ }
+        }
+
         private void Move()
         {
+            if (UseNewGroundMotion) { MoveNew(); return; }
             // set target speed based on move speed, sprint speed and if sprint is pressed
             // no sprinting while charging mana
             if (_mana == null) _mana = GetComponent<Mana>();
@@ -485,6 +830,7 @@ namespace StarterAssets
 
         private void JumpAndGravity()
         {
+            if (UseNewGroundMotion) { JumpAndGravityNew(); return; }
             if (Grounded)
             {
                 // reset the fall timeout timer
@@ -613,6 +959,17 @@ namespace StarterAssets
             _animationBlend = 0f;
             _fallTimeoutDelta = FallTimeout;
             _jumpTimeoutDelta = JumpTimeout;
+            ClearMagicState();
+        }
+
+        private void ClearMagicState()
+        {
+            _groundVel = Vector3.zero;
+            _dashTimer = 0f;
+            _sliding = false;
+            _climbing = false;
+            _coyote = 0f;
+            _jumpBuffer = 0f;
         }
     }
 }
