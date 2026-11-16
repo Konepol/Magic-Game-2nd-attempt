@@ -10,6 +10,9 @@ public class CastingCircle : MonoBehaviour
     public interface IAnchorSource
     {
         Pose GetCirclePose(CircleAnchor anchor, CastingCircleData data, SpellVariant variant);
+        // the output level the player is casting at, and the level where the cost starts to climb (the circle shows both)
+        float OutputLevel => 1f;
+        float SafeOutputLevel => 1.5f;
     }
 
     enum Mode { Building, Complete, Fading, Fizzling }
@@ -39,6 +42,9 @@ public class CastingCircle : MonoBehaviour
     SpellVariant variant;
     Color spellColor = Color.white;
     float scale = 1f;
+    float outputLimit;          // this spell's backfire limit; above 0 the circle draws its output readout
+    CircleReadout readout;
+    float danger;               // 0..1: how close the output is to the limit (tints the circle red)
 
     Mode mode = Mode.Building;
     float progress;
@@ -56,7 +62,7 @@ public class CastingCircle : MonoBehaviour
     // ---------- creating ----------
 
     // a circle you drive yourself with SetProgress, then Complete / FadeOut / Fizzle
-    public static CastingCircle Create(CastingCircleData data, Color color, IAnchorSource source, SpellVariant variant, float scale)
+    public static CastingCircle Create(CastingCircleData data, Color color, IAnchorSource source, SpellVariant variant, float scale, float outputLimit = 0f)
     {
         if (data == null || data.layers == null || data.layers.Length == 0 || source == null) return null;
 
@@ -67,15 +73,16 @@ public class CastingCircle : MonoBehaviour
         c.source = source;
         c.variant = variant;
         c.scale = scale;
+        c.outputLimit = outputLimit;
         c.block = new MaterialPropertyBlock();
         c.Build();
         return c;
     }
 
     // a small circle that draws itself quickly and fades away (for tapped, instant spells)
-    public static void PlayOneShot(CastingCircleData data, Color color, IAnchorSource source, SpellVariant variant, float scale, float drawSeconds = 0.22f)
+    public static void PlayOneShot(CastingCircleData data, Color color, IAnchorSource source, SpellVariant variant, float scale, float drawSeconds = 0.22f, float outputLimit = 0f)
     {
-        var c = Create(data, color, source, variant, scale);
+        var c = Create(data, color, source, variant, scale, outputLimit);
         if (c != null) c.autoDrawSeconds = Mathf.Max(drawSeconds, 0.05f);
     }
 
@@ -452,6 +459,7 @@ public class CastingCircle : MonoBehaviour
             }
 
             Color c = def.useSpellColor ? spellColor * def.tint : def.tint;
+            if (danger > 0f && !def.exitOnly) c = Color.Lerp(c, new Color(1f, 0.25f, 0.2f, c.a), danger * 0.55f);      // near this spell's limit the whole circle reddens
             if (overrideAmount > 0f && !def.exitOnly) c = Color.Lerp(c, tintOverride, overrideAmount);
             float baseAlpha = def.opacity * styleAlpha * (def.exitOnly ? 1f : alphaMul);
 
@@ -479,6 +487,69 @@ public class CastingCircle : MonoBehaviour
                 UpdateArrowRing(l, t, l.ringAngle, c, accent, def.opacity * Mathf.Min(1f, t * 8f) * alphaMul);
             }
         }
+
+        UpdateReadout(alphaMul, dt);
+    }
+
+    // ---------- output readout (the gauge around the circle) ----------
+
+    // where the circle really is right now (its first layer's anchor, with the multicast placement applied) and how big it is
+    bool ReadoutFrame(out Vector3 center, out Quaternion rot, out float radius)
+    {
+        center = Vector3.zero; rot = Quaternion.identity; radius = 0f;
+        CircleLayer first = null;
+        float maxSize = 0f;
+        foreach (var l in layers)
+        {
+            if (l.def.exitOnly) continue;
+            if (first == null) first = l.def;
+            if (l.def.anchor == first.anchor) maxSize = Mathf.Max(maxSize, l.def.scaleToAoeRadius && variant != null ? variant.aoeRadius * 2f * l.def.size : l.def.size * placementScale * scale);
+        }
+        if (first == null) return false;
+
+        Pose pose = source.GetCirclePose(first.anchor, data, variant);
+        center = pose.position;
+        rot = pose.rotation;
+        if (first.anchor != CircleAnchor.Front)
+            rot = rot * Quaternion.Euler(-90f, 0f, 0f);          // a flat circle's rings lie in its XZ plane: stand the gauge's plane up to match
+        radius = maxSize * 0.5f * 1.12f;
+
+        if (first.anchor == CircleAnchor.Front && (Mathf.Abs(placementAngle) > 0.01f || Mathf.Abs(placementRadius - 1f) > 0.001f))
+        {
+            Vector3 feet = source.GetCirclePose(CircleAnchor.Feet, data, variant).position;
+            Vector3 pivot = new Vector3(feet.x, center.y, feet.z);
+            Vector3 v = center - pivot;
+            v.x *= placementRadius; v.z *= placementRadius;
+            Quaternion swing = Quaternion.AngleAxis(placementAngle, Vector3.up);
+            center = pivot + swing * v;
+            rot = swing * rot;
+        }
+        return radius > 0.01f;
+    }
+
+    void UpdateReadout(float alphaMul, float dt)
+    {
+        if (outputLimit <= 0f || source == null) { if (readout != null) readout.gameObject.SetActive(false); danger = 0f; return; }
+
+        float eff = source.OutputLevel;
+        float safe = source.SafeOutputLevel;
+        danger = Mathf.Clamp01((eff - outputLimit * 0.8f) / (outputLimit * 0.2f));
+        if (eff > outputLimit) danger = 1f;
+
+        if (!ReadoutFrame(out Vector3 center, out Quaternion rot, out float radius)) return;
+        if (readout == null) readout = CircleReadout.Create(transform);
+        readout.gameObject.SetActive(true);
+
+        int count = 0;
+        float speedExp = 0f;
+        if (variant != null)
+        {
+            var r = variant.output;
+            speedExp = r.speedExp;
+            if (variant.kind == SpellKind.Projectile || variant.kind == SpellKind.Special)
+                count = variant.projectileCount + Mathf.Max(0, Mathf.RoundToInt(r.extraProjectilesPerOutput * (eff - 1f)));
+        }
+        readout.Draw(center, rot, radius, eff, safe, outputLimit, count, speedExp, spellColor, Mathf.Clamp01(alphaMul), dt);
     }
 
     // which reveal the shader uses: 0 clockwise draw-on, 1 random glyphs, 2 glyphs from the middle, 3 travelling ring from the middle

@@ -385,7 +385,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
 
                     if (holdCircles[i] == null && spell.holdCircle != null)
-                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale * CircleSize(baseVariant));
+                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale * CircleSize(baseVariant), spell.outputLimit);
 
                     if (holdCircles[i] != null)
                         holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
@@ -477,7 +477,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     if (keyDown)
                     {
                         if (holdCircles[i] == null)
-                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale * CircleSize(spell.tap));
+                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale * CircleSize(spell.tap), spell.outputLimit);
 
                         var rapidChant = spell.AllChantLines();
                         if (rapidChant.Length > 0) ChantDisplay.Show(i, rapidChant, rapidChant.Length, spell.tap.effectColor);
@@ -574,7 +574,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 if (list[t] == null)
                 {
                     var v = spell.VariantForTier(t + 1);
-                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale * CircleSize(v));
+                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale * CircleSize(v), spell.outputLimit);
                 }
 
                 if (list[t] != null)
@@ -602,7 +602,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale * CircleSize(spell.hold));
+            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale * CircleSize(spell.hold), 0.22f, spell.outputLimit);
         }
     }
 
@@ -1037,7 +1037,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         combo.readyPlayed = false;
 
         if (spec.circle != null)
-            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale * CircleSize(spec.variant)));
+            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale * CircleSize(spec.variant), spec.result != null ? spec.result.outputLimit : 0f));
 
         SpellFX.Sparks(muzzle != null ? muzzle.position : transform.position, spec.color);
     }
@@ -1502,6 +1502,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     public bool Suppressed { get; private set; }
     float? forcedOutput;             // a held spell is released at the output it was held with (or higher)
     float prepaidCost;               // mana a held spell already paid
+    public float OutputLevel => EffectiveOutput;
+    public float SafeOutputLevel => safeOutput;
     public float EffectiveOutput => forcedOutput ?? Mathf.Min(Output + pour, 6f);
     public float SafeOutput => safeOutput;
 
@@ -1904,7 +1906,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && isTapVariant && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale * CircleSize(v));
+            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale * CircleSize(v), 0.22f, spell.outputLimit);
         }
         return true;
     }
