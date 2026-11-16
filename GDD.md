@@ -58,6 +58,8 @@ Most of these already exist in the project (details in `HANDOFF_project.md` and 
 ### 6.1 Player and controls
 Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (7 slots, rebindable). Combine `B`, barrier `F`, broom `X`, lock-on `V`, mana charge `C`. Esc pauses. Movement is not rebindable for now.
 
+**Planned rework (not scheduled yet):** the **ground player movement will be reworked** (feel, speed, jump, how it connects to the broom and to casting). Treat the current walk, sprint and jump as a placeholder.
+
 ### 6.2 Spells
 - Each spell has a **tap** version and a **hold (chant)** version; some have charge tiers.
 - Tap is instant. Hold shows a casting circle and drains mana gradually; releasing early fizzles.
@@ -71,7 +73,7 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
   - **A spell can have any number of forms.** Holding to charge can **transform** it into something different, not only a stronger version (for example a lightning ball becomes a lightning beam). Each form has its own shape and look.
   - **A fusion is an entirely new spell**, picked by a **hand-designed recipe table**; it does not have to combine its ingredients' properties.
   - **Pre-fused spells can be equipped in a slot like any normal spell**, but casting one this way **costs more mana than fusing it live**. Live fusing with `B` stays.
-  - **Scale:** spells are **too small for the world and bosses** and should be bigger. The **casting circle is too big** and should be **smaller, but scale with the spell's size** (small for taps, large only for siege spells).
+  - **Scale:** spells are **too small for the world and bosses** and should be bigger. The **casting circle is too big** and should be **smaller, but scale with the spell's size** (small for taps, large only for siege spells). The **magic circle itself will be redesigned later** (its look, layers and how it draws); until then M1 only rescales the current circle through its scale values and does not rebuild it.
   - **Start from scratch:** the current spell list is discarded. New spells are designed together (the owner gives references and ideas, Claude proposes concepts), and the M1 slice needs only **3 to 4 very polished spells**.
   - **Spell power follows the player's mana and mana output**, and there is a separate **mana output** control (own key) the player uses, in the spirit of *Frieren*:
     - The player sets a **power level before casting**, which **multiplies how much each spell costs**, and the output **raises the spell continuously**.
