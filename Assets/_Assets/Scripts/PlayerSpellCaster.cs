@@ -346,7 +346,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
 
                 if (!charging[i]) { latched[i] = false; continue; }
 
-                if (!inCombo[i]) effHeld[i] += Time.deltaTime / multicastFactor;
+                if (!inCombo[i]) effHeld[i] += Time.deltaTime * ChargeBoost / multicastFactor;
                 float realHeld = Time.time - pressTime[i];                 // for the tap window
                 float held = effHeld[i];                                   // for the circle and the cast time
                 float castTime = Mathf.Max(spell.holdThreshold, 0.05f);
@@ -1046,7 +1046,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     {
         if (combo == null) return;
 
-        combo.effHeld += Time.deltaTime / MulticastFactor;
+        combo.effHeld += Time.deltaTime * ChargeBoost / MulticastFactor;
         float p = ComboProgress;
         bool ready = p >= 1f;
 
@@ -1465,13 +1465,39 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     [SerializeField, Tooltip("Output added per second while Left Alt is held during a cast.")]
     float pourRate = 0.9f;
     [SerializeField] float pourMax = 2.5f;
+    [SerializeField, Tooltip("While the chant is still charging, holding Left Alt pours mana into it: the chant charges faster instead of the output rising.")]
+    float chargePourMax = 2f;
+    [SerializeField, Tooltip("How fast the poured amount builds up while Left Alt is held on a charging chant (units per second).")]
+    float chargePourRate = 3f;
+    [SerializeField, Tooltip("Chant speed gained per unit of poured mana (1 = up to 3x faster at the default max).")]
+    float chargeSpeedPerPour = 1f;
+    [SerializeField, Tooltip("Mana per second taken for each unit of mana being poured into a charging chant.")]
+    float chargePourManaPerSecond = 7f;
     [SerializeField, Tooltip("Seconds natural mana regeneration stops after a cast past the safe output (per unit of output over it).")]
     float regenPausePerOver = 3f;
 
     // the level the player set (0.5 .. 4, 1 = normal)
     public float Output { get; private set; } = 1f;
     public event System.Action<float> OutputChanged;
-    float pour;                      // extra output poured in while casting
+    float pour;                      // extra output poured in once the chant has finished charging (the excess)
+    float chargePour;                // mana being poured into a chant that is still charging: it charges faster
+    public float ChargeBoost => 1f + chargePour * chargeSpeedPerPour;
+
+    // is any chant still on its way to its last form: before its cast time, or short of its highest charge tier
+    bool AnyChantStillCharging()
+    {
+        if (combo != null && ComboProgress < 1f) return true;
+        for (int i = 0; i < cooldownEnd.Length; i++)
+        {
+            if (!charging[i] || inCombo[i] || ignoredPress[i]) continue;
+            var sp = GetSpell(i);
+            if (sp == null || !sp.hasHoldVariant) continue;
+            float held = effHeld[i];
+            if (held < Mathf.Max(sp.holdThreshold, 0.05f)) return true;
+            if (sp.TierCount > 0 && sp.TierAt(held) < sp.TierCount) return true;
+        }
+        return false;
+    }
     float regenPauseUntil;
     public bool Suppressed { get; private set; }
     float? forcedOutput;             // a held spell is released at the output it was held with (or higher)
@@ -1600,8 +1626,20 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 CastFailed?.Invoke(Suppressed ? "Aura suppressed" : "Aura released");
             }
 
-            // hold Left Alt while a cast is being chanted: more mana is poured in (the spell grows, the cost climbs steeply)
-            if (kb.leftAltKey.isPressed && (IsChanting || HeldCount > 0)) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
+            // Hold Left Alt to pour mana in. While a chant is still charging the mana makes it charge faster; once nothing is left to charge
+            // (or only held spells are waiting) the excess goes into the output instead: the spell grows and the cost climbs steeply.
+            bool alt = kb.leftAltKey.isPressed;
+            bool stillCharging = AnyChantStillCharging();
+            if (alt && stillCharging && mana != null)
+            {
+                float next = Mathf.Min(chargePour + chargePourRate * Time.deltaTime, chargePourMax);
+                float need = next * chargePourManaPerSecond * Time.deltaTime;
+                if (mana.Drain(need) >= need - 0.0001f) chargePour = next;
+                else chargePour = Mathf.Max(0f, chargePour - 6f * Time.deltaTime);      // out of mana: the boost fades
+            }
+            else if (chargePour > 0f) chargePour = Mathf.Max(0f, chargePour - 6f * Time.deltaTime);
+
+            if (alt && !stillCharging && (IsChanting || HeldCount > 0)) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
             else if (pour > 0f) pour = Mathf.Max(0f, pour - 4f * Time.deltaTime);
         }
 
