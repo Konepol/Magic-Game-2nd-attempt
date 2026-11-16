@@ -6,7 +6,7 @@ Ice-themed movement/control spell.
 - **Press (toggle):** toggles the spell on/off. While on, the player leaves an ice path under their feet as they move and can slide around on it.
 - **Hold:** the player creates a field of ice on the ground. The player can slide on it, and opponents who are in the air get slowed down.
 
-Open questions to decide later:
-- Does the toggle drain mana/cooldown while active, and does the ice path fade after some time?
-- Field size, duration and slow strength for the hold variant.
-- Do grounded opponents on the field slide too, or only the caster?
+Decisions:
+- **Mana:** the toggle costs mana while active. It consumes less when used out of combat.
+- **Field size/duration:** scales with the player's output. Bigger output makes the field bigger and longer-lasting. The base is a pretty large dome around the player, big enough to catch opponents in the air.
+- **Grounded opponents:** they are not slowed. The ice is slippery and hard for them to control unless they have this spell equipped.
