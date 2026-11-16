@@ -236,7 +236,7 @@ public static class VeilStep
         // the distance covered by an ease-out launch is peak * seconds * 2/3
         float peak = distance / (seconds * (2f / 3f));
         var broom = c.root.GetComponent<BroomFlight>();
-        if (broom != null && broom.IsFlying) broom.Launch(dir, peak, seconds);
+        if (broom != null && broom.IsFlying) broom.Launch(dir, distance / seconds, seconds);      // the broom holds a steady speed for the burst
         else VeilDash.Begin(c.root, dir, peak, seconds);
 
         SpellFX.Play(Sfx.Charge, start, 0.8f);

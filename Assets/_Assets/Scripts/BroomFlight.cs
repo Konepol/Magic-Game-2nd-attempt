@@ -221,7 +221,6 @@ public class BroomFlight : MonoBehaviour
 
     public bool IsDashing => dashTimer > 0f;
 
-    float launchSpeed;
     // a spell throws the rider along a direction at speed for a moment (Veil Step's star gate); keeps flying faster afterwards, like a dash
     public void Launch(Vector3 direction, float speed, float seconds)
     {
@@ -229,7 +228,11 @@ public class BroomFlight : MonoBehaviour
         dashSide = false;
         dashLength = seconds;
         dashTimer = seconds;
-        launchSpeed = speed;
+        // the dash code only sets its speed when a dash starts from standing, and a launch begins with the timer already running,
+        // so the launch sets the speed itself (otherwise the old dash speed, possibly zero, would be used and the rider would just stop)
+        dashSpeedNow = speed;
+        dashExitSpeed = Mathf.Max(velocity.magnitude, maxSpeed * dashExitMultiplier, speed * 0.5f);   // keeps flying fast afterwards
+        velocity = dashDir * speed;
         dashCooldownLeft = dashCooldown;
         DashCount++;
     }
@@ -593,8 +596,7 @@ public class BroomFlight : MonoBehaviour
         {
             if (!wasDashing)   // a dash is always a clear burst, however fast you were already going
             {
-                dashSpeedNow = launchSpeed > 0f ? launchSpeed : Mathf.Max(dashSpeed, speedBefore * 1.25f);
-                launchSpeed = 0f;
+                dashSpeedNow = Mathf.Max(dashSpeed, speedBefore * 1.25f);
                 dashExitSpeed = Mathf.Max(speedBefore, maxSpeed * dashExitMultiplier);
             }
             velocity = dashDir * dashSpeedNow;
