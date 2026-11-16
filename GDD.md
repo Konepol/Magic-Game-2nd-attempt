@@ -73,10 +73,11 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
   - **Pre-fused spells can be equipped in a slot like any normal spell**, but casting one this way **costs more mana than fusing it live**. Live fusing with `B` stays.
   - **Scale:** spells are **too small for the world and bosses** and should be bigger. The **casting circle is too big** and should be **smaller, but scale with the spell's size** (small for taps, large only for siege spells).
   - **Start from scratch:** the current spell list is discarded. New spells are designed together (the owner gives references and ideas, Claude proposes concepts), and the M1 slice needs only **3 to 4 very polished spells**.
-  - **Spell scale follows the player's mana and mana output**, and there is a separate **mana output** control (own key) the player uses, in the spirit of *Frieren*:
-    - The player sets a **power level before casting**, which **multiplies how much each spell costs**, and the output **sets the spell's size continuously**.
+  - **Spell power follows the player's mana and mana output**, and there is a separate **mana output** control (own key) the player uses, in the spirit of *Frieren*:
+    - The player sets a **power level before casting**, which **multiplies how much each spell costs**, and the output **raises the spell continuously**.
+    - **Each spell decides what output does to it**: one may fly faster, another grow bigger, another fire more projectiles (higher count), or a mix, or something else suited to it. Size is only one possible result, not the rule.
     - While casting, the player can **hold to pour in even more mana**. Drawbacks so it isn't free power: past a safe level the **cost rises much faster**, and **mana regeneration pauses for a few seconds afterward**.
-    - **Every spell has its own output limit.** Pushing extra output past that point makes the spell **backfire and damage the caster**. The limit differs per spell and is part of its design.
+    - **Backfire is per spell, not overall.** Every spell has its **own output limit**, and pushing extra output past that spell's limit makes **that spell** backfire and damage the caster. One spell can have a lower limit than another, and the limit is part of each spell's design.
     - Output is shown as a **visible mana aura** on the witch, and the player can **suppress mana** (stealth) so enemies and NPCs notice less.
     - Normal tap and hold casting stays the base, and output is the extra layer.
   - M1's first spells should cover: a basic attack with a signature motion, a big charge spell that transforms (**not just ball to beam**), the movement spell (blink or dash), and a defensive or counter spell.
@@ -286,7 +287,7 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 - **Starter wand's unique ability:** **Held cast**: pause a chant halfway and keep the spell ready, then release it later. The starter wand must stay **viable late in the game and keep its uniqueness**, so players have a reason to keep using it even after finding stronger wands. It should offer **a variety of things to use** rather than one trick, and its ability should stay useful at every stage. The wand's concept is **preparing ahead of time**: 
   - **The bank grows with quests:** it starts holding one paused spell and later holds more.
   - **Held spells can be fused**, so this wand can prepare a fusion before a fight.
-  - **A held spell scales with output:** pouring in mana while it is held makes it release bigger than a normal cast.
+  - **A held spell scales with output:** pouring in mana while it is held makes it release stronger than a normal cast, in whatever way that spell uses output (faster, bigger, more projectiles).
   - **Held cast is unique to this wand**; stronger wands do not get it and have their own tricks.
   - Exact bank sizes, quest steps, and any drawbacks: **TBD**. **Echo** (every spell leaves a weaker echo that repeats it once) and **Compass** (the wand points toward the nearest secret or quest site) are **set aside for other wands**, along with the unused ideas Sapling (the wand's glow and boost follow your most used spell), Gem reservoir (stored overflow mana released as a burst) and Chant partner (the wand hums half the chant).
 

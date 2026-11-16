@@ -43,7 +43,7 @@ Task: replace the old spell structure with the new spell foundation described in
 
 Do:
 - Remove the old spell list from the game catalog (keep the old assets in the project but out of the catalog so nothing is lost).
-- Design the data for a spell: any number of forms, where holding to charge can transform the spell into a different form (each form has its own shape, motion, visuals); an optional passive part that is toggled separately and costs mana either per activation or continuously, chosen per spell; a per-spell output limit past which it backfires and damages the caster; a size that follows mana output.
+- Design the data for a spell: any number of forms, where holding to charge can transform the spell into a different form (each form has its own shape, motion, visuals); an optional passive part that is toggled separately and costs mana either per activation or continuously, chosen per spell; a per-spell output limit (each spell has its own, and some are lower than others) past which that spell backfires and damages the caster; and a per-spell definition of what mana output does to it (for example faster, bigger, more projectiles, or a mix) rather than one global size scaling.
 - Support fusions as hand-designed recipes producing entirely new spells, and support equipping an already-fused spell in a slot at a higher mana cost than fusing live. Keep live fusing with B.
 - Add a throwaway test spell so the system can be exercised before real spells exist.
 
@@ -58,12 +58,12 @@ Play-test: equip the test spell, tap it, hold it until it changes form, toggle i
 Task: implement the mana output control (GDD.md section 6.2, "Spell scale follows the player's mana and mana output") and rescale the casting circle.
 
 Do:
-- Add a separate key for mana output: set a power level before casting that multiplies spell cost and sets spell size continuously; hold while casting to pour in more mana; cost rises much faster past a safe level and mana regeneration pauses for a few seconds afterward; each spell's output limit causes backfire.
+- Add a separate key for mana output: set a power level before casting that multiplies spell cost and raises the spell continuously; each spell decides what output does to it (faster, bigger, more projectiles, or a mix); hold while casting to pour in more mana; cost rises much faster past a safe level and mana regeneration pauses for a few seconds afterward; backfire is per spell, so each spell has its own output limit and some limits are lower than others.
 - Show output as a visible mana aura on the witch (simple first version), and a suppress mode that lowers the aura.
 - Make the casting circle much smaller and scale with the spell's size (small for taps, large only for siege-sized casts). Do NOT re-run the circle builder; change the circle through its scale or component values only, and tell me exactly which values you changed.
 - Make spell scale overall bigger relative to the world and bosses so the biggest casts can be bigger than a boss's body.
 
-Done when: changing output visibly changes the test spell's size and cost, and the circle matches it.
+Done when: changing output visibly changes the test spell in the way its own definition says (give the test spell two forms that respond differently, for example one gets faster and one gets more projectiles), the cost changes, and the circle matches the spell's size.
 Play-test: cast at low, normal and high output; watch the aura; push past the limit; compare the circle size for a tap and for a large cast.
 ```
 
@@ -76,7 +76,7 @@ Weaver: tap fires a glowing thread that snakes in a lazy S-curve to the target a
 
 Do: the thread visuals (anime-style, glowing, a distinct look from all other spells), the S-curve motion, the stitch and the snap, cast animation and camera feel, sound placeholders, and the casting circle for it. It should read clearly at flight speed and at distance.
 
-Done when: it looks and feels unique, scales with output, and works against the existing test enemies.
+Done when: it looks and feels unique, responds to output in its own way (propose what output does to Weaver, for example more threads and a longer reach, and tell me), has its own backfire limit, and works against the existing test enemies.
 Play-test: tap at a near and far target, hold with several targets, cast on the ground and on the broom, at low and high output. Tell me what looks wrong.
 ```
 
@@ -85,7 +85,7 @@ Play-test: tap at a near and far target, hold with several targets, cast on the 
 ```
 Task: build Hollow Moon (GDD.md section 6.2): a dark disc grows over the wand while chanting; tap-release is a spinning crescent blade; held longer it becomes a moon hanging in the sky and on release collapses into a huge ring that shrinks and crushes everything inside.
 
-Do: all three forms with distinct visuals, the transform timing, scale tied to output, an output limit with backfire, chant timing hooks for the voice lines later, cast animation and camera pull-out for the big form.
+Do: all three forms with distinct visuals, the transform timing, its own response to output (propose what output does to it and tell me), its own output limit with backfire, chant timing hooks for the voice lines later, cast animation and camera pull-out for the big form.
 
 Play-test: tap, medium hold, full hold; do it on a boss-sized target; push past the output limit.
 ```
