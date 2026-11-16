@@ -64,20 +64,15 @@ public class CircleReadout : MonoBehaviour
     // extraCount: how many shots / threads the form fires at this output, speedExp: how strongly output speeds this form up
     public void Draw(Vector3 center, Quaternion rot, float radius, float eff, float safe, float limit, int count, float speedExp, Color spellColor, float alpha, float dt)
     {
-        float danger = Mathf.Clamp01((eff - limit * 0.8f) / (limit * 0.2f));       // 0 until 80% of the limit, 1 at the limit
-        bool over = eff > limit;
-        float shake = over ? 0.05f : danger * 0.02f;
-        if (shake > 0f) radius *= 1f + shake * Mathf.Sin(Time.time * (over ? 70f : 40f));
-
-        float span = limit * 1.25f;                       // the full ring is 125% of the limit
+        // (no backfire warning here: no limit tick, shaking, sparks or red; the gauge only shows the output level)
+        const float danger = 0f;
+        float span = 4f;                                  // the full ring is output 4
         float f = Mathf.Clamp01(eff / span);
 
-        // colour: cool at low output, gold past the safe level, red near the limit
+        // colour: cool at low output, gold past the safe level
         Color col = Color.Lerp(spellColor, Color.white, 0.35f);
-        if (eff > safe) col = Color.Lerp(col, new Color(1f, 0.72f, 0.28f), Mathf.Clamp01((eff - safe) / Mathf.Max(0.01f, limit * 0.8f - safe)));
-        col = Color.Lerp(col, new Color(1f, 0.22f, 0.18f), danger);
-        if (over) col.a = Mathf.Sin(Time.time * 45f) > 0f ? 1f : 0.45f;
-        else col.a = 1f;
+        if (eff > safe) col = Color.Lerp(col, new Color(1f, 0.72f, 0.28f), Mathf.Clamp01((eff - safe) / 1.5f));
+        col.a = 1f;
 
         float w = Mathf.Max(0.02f, radius * 0.05f);
         Color backC = new Color(1f, 1f, 1f, 0.16f * alpha);
@@ -93,22 +88,15 @@ public class CircleReadout : MonoBehaviour
             fill.SetPosition(i, P(center, rot, radius, Mathf.PI * 0.5f - k * Mathf.PI * 2f));
         }
         col.a *= alpha;
-        Paint(fill, col, w * (1f + 0.6f * danger));
+        Paint(fill, col, w);
 
-        // ticks: white at the safe level, red at the backfire limit
+        // a white tick at the safe level (where the cost starts to climb)
         Tick(safeTick, center, rot, radius, Mathf.Clamp01(safe / span), new Color(1f, 1f, 1f, 0.8f * alpha), w * 0.7f);
-        Tick(limitTick, center, rot, radius, Mathf.Clamp01(limit / span), new Color(1f, 0.25f, 0.2f, (0.7f + 0.3f * danger) * alpha), w * 0.9f);
+        limitTick.enabled = false;
 
         DrawPips(center, rot, radius, count, col, w, alpha);
         DrawChevrons(center, rot, radius, eff, speedExp, spellColor, w, alpha, dt);
 
-        // past the limit it throws sparks
-        if (over && Time.time >= nextSpark)
-        {
-            nextSpark = Time.time + 0.25f;
-            Vector3 at = P(center, rot, radius, Random.value * Mathf.PI * 2f);
-            SpellFX.Burst(at, 0.35f, new Color(1f, 0.3f, 0.22f), 5);
-        }
     }
 
     void Tick(LineRenderer lr, Vector3 center, Quaternion rot, float radius, float k, Color c, float width)

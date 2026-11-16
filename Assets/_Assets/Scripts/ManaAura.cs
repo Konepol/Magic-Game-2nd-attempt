@@ -29,8 +29,7 @@ public class ManaAura : MonoBehaviour
         smoothed = Mathf.Lerp(smoothed, eff, 1f - Mathf.Exp(-8f * Time.deltaTime));
 
         Color c;
-        if (eff > caster.LowestLimit) c = new Color(1f, 0.25f, 0.2f);
-        else if (eff > caster.SafeOutput) c = new Color(1f, 0.65f, 0.25f);
+        if (eff > caster.SafeOutput) c = new Color(1f, 0.65f, 0.25f);
         else c = Color.Lerp(new Color(0.55f, 0.8f, 1f), new Color(0.9f, 0.95f, 1f), Mathf.InverseLerp(0.5f, 1.5f, eff));
 
         float radius = 0.6f + 0.45f * smoothed;

@@ -533,8 +533,7 @@ public class CastingCircle : MonoBehaviour
 
         float eff = source.OutputLevel;
         float safe = source.SafeOutputLevel;
-        danger = Mathf.Clamp01((eff - outputLimit * 0.8f) / (outputLimit * 0.2f));
-        if (eff > outputLimit) danger = 1f;
+        danger = 0f;        // no backfire warning on the circle
 
         if (!ReadoutFrame(out Vector3 center, out Quaternion rot, out float radius)) return;
         if (readout == null) readout = CircleReadout.Create(transform);

@@ -1641,8 +1641,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             }
             else if (chargePour > 0f) chargePour = Mathf.Max(0f, chargePour - 6f * Time.deltaTime);
 
+            // the poured output only goes up while Alt is held; letting go keeps what was poured until the next cast uses it
             if (alt && !stillCharging && (IsChanting || HeldCount > 0)) pour = Mathf.Min(pour + pourRate * Time.deltaTime, pourMax);
-            else if (pour > 0f) pour = Mathf.Max(0f, pour - 4f * Time.deltaTime);
         }
 
         if (mana != null) mana.SetRegenScale(this, Time.time < regenPauseUntil ? 0f : 1f);
