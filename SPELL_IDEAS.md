@@ -9,4 +9,4 @@ Ice-themed movement/control spell.
 Decisions:
 - **Mana:** the toggle costs mana while active. It consumes less when used out of combat.
 - **Field size/duration:** scales with the player's output. Bigger output makes the field bigger and longer-lasting. The base is a pretty large dome around the player, big enough to catch opponents in the air.
-- **Grounded opponents:** they are not slowed. The ice is slippery and hard for them to control unless they have this spell equipped.
+- **Grounded opponents:** they are not slowed. The ice is slippery and hard for them to control unless they have this spell available in their inventory.
