@@ -369,7 +369,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     }
 
                     if (holdCircles[i] == null && spell.holdCircle != null)
-                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale * CircleSizeNow);
+                        holdCircles[i] = CastingCircle.Create(spell.holdCircle, baseVariant.effectColor, this, baseVariant, spell.circleScale * CircleSize(baseVariant));
 
                     if (holdCircles[i] != null)
                         holdCircles[i].SetProgress((held - spell.tapWindow) / Mathf.Max(castTime - spell.tapWindow, 0.05f));
@@ -459,7 +459,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                     if (keyDown)
                     {
                         if (holdCircles[i] == null)
-                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale * CircleSizeNow);
+                            holdCircles[i] = CastingCircle.Create(spell.holdCircle, spell.tap.effectColor, this, spell.tap, spell.circleScale * CircleSize(spell.tap));
 
                         var rapidChant = spell.AllChantLines();
                         if (rapidChant.Length > 0) ChantDisplay.Show(i, rapidChant, rapidChant.Length, spell.tap.effectColor);
@@ -553,7 +553,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
                 if (list[t] == null)
                 {
                     var v = spell.VariantForTier(t + 1);
-                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale * CircleSizeNow);
+                    list[t] = CastingCircle.Create(tiers[t].circle, v.effectColor, this, v, spell.circleScale * tiers[t].circleScale * CircleSize(v));
                 }
 
                 if (list[t] != null)
@@ -581,7 +581,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale * CircleSizeNow);
+            CastingCircle.PlayOneShot(spell.tapCircle, spell.hold.effectColor, this, spell.hold, spell.tapCircleScale * CircleSize(spell.hold));
         }
     }
 
@@ -1012,7 +1012,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         combo.readyPlayed = false;
 
         if (spec.circle != null)
-            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale * CircleSizeNow));
+            combo.circles.Add(CastingCircle.Create(spec.circle, spec.color, this, spec.variant, spec.circleScale * CircleSize(spec.variant)));
 
         SpellFX.Sparks(muzzle != null ? muzzle.position : transform.position, spec.color);
     }
@@ -1457,8 +1457,8 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         }
     }
 
-    float SizeFactor(float eff) => spellWorldScale * Mathf.Pow(eff, 0.75f);
-    float CircleSizeNow => circleOverallScale * Mathf.Pow(EffectiveOutput, 0.75f);
+    // the circle follows the spell's size: a little with output for every spell, more for a form whose output response makes it bigger
+    float CircleSize(SpellVariant v) => circleOverallScale * Mathf.Pow(EffectiveOutput, 0.15f + (v != null ? v.output.sizeExp : 0f));
 
     // proportional up to the safe level, then much steeper
     float OutputCostMul(float eff)
@@ -1474,10 +1474,15 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
     float SlotCostMul(SpellData spell) =>
         (spell != null && spell.isFusion && !liveFusing ? Mathf.Max(1f, spell.fusedEquipCostMultiplier) : 1f) * OutputCostMul(EffectiveOutput);
 
-    void ScaleSize(SpellVariant v, float s, float eff)
+    // what output does to this form: its own response (faster, bigger, more projectiles, longer reach), plus the base world scale
+    void ScaleSize(SpellVariant v, float eff)
     {
-        v.damage *= Mathf.Sqrt(eff);
-        v.lingerTickDamage *= Mathf.Sqrt(eff);
+        var r = v.output;
+        float dmg = Mathf.Pow(eff, r.damageExp);
+        v.damage *= dmg;
+        v.lingerTickDamage *= dmg;
+
+        float s = spellWorldScale * Mathf.Pow(eff, r.sizeExp);
         v.projectileScale *= s;
         v.explosionRadius *= s;
         v.hitHeight *= s;
@@ -1487,6 +1492,18 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         v.laserRadius *= s;
         v.barrierWidth *= s;
         v.barrierHeight *= s;
+
+        v.projectileSpeed *= Mathf.Pow(eff, r.speedExp);
+        float reach = Mathf.Pow(eff, r.reachExp);
+        v.laserRange *= reach;
+        v.lifetime *= reach;
+
+        int extra = Mathf.RoundToInt(r.extraProjectilesPerOutput * (eff - 1f));
+        if (extra > 0 && v.kind == SpellKind.Projectile)
+        {
+            v.projectileCount += extra;
+            if (v.spreadDegrees <= 0f) v.spreadDegrees = r.spreadPerExtra * extra;
+        }
     }
 
     // is this spell's passive toggled on and working (a WhileOn passive stops when it is starved of mana)
@@ -1598,13 +1615,9 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
             else passiveCost = 0f;       // not enough mana for the extra: the spell casts without its passive
         }
 
-        // the output level sets the size continuously (and the hit a little)
-        float size = SizeFactor(eff);
-        if (!Mathf.Approximately(size, 1f) || !Mathf.Approximately(eff, 1f))
-        {
-            v = v.Clone();
-            ScaleSize(v, size, eff);
-        }
+        // the output level changes the spell the way this form's own output response says
+        v = v.Clone();
+        ScaleSize(v, eff);
 
         // the staff turns to the target at the moment the spell leaves, so it starts from the tip of a staff that points at it
         if (wandAim == null) wandAim = GetComponentInParent<WandAim>();
@@ -1650,7 +1663,7 @@ public class PlayerSpellCaster : MonoBehaviour, CastingCircle.IAnchorSource
         if (spell.tapCircle != null && isTapVariant && Time.time - lastTapCircle[slot] > 0.3f)
         {
             lastTapCircle[slot] = Time.time;
-            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale * CircleSizeNow);
+            CastingCircle.PlayOneShot(spell.tapCircle, v.effectColor, this, v, spell.tapCircleScale * CircleSize(v));
         }
         return true;
     }

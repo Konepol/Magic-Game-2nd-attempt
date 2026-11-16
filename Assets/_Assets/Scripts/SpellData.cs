@@ -55,6 +55,25 @@ public class SpellPassive
     public float damageMultiplier = 1f;
 }
 
+// What mana output does to one form of a spell. Each spell decides for itself: faster, bigger, more projectiles, longer reach, or a mix.
+// Every value is an exponent or a count rate applied to the output level (1 = normal): value 1 means "in proportion to output", 0 means "not at all".
+[Serializable]
+public class OutputResponse
+{
+    [Tooltip("Size (projectile, blast, beam width, barrier) grows as output ^ this.")]
+    public float sizeExp = 0f;
+    [Tooltip("Projectile speed grows as output ^ this.")]
+    public float speedExp = 0f;
+    [Tooltip("Beam range and projectile lifetime grow as output ^ this.")]
+    public float reachExp = 0f;
+    [Tooltip("Extra projectiles per +1 output above 1 (fractions round).")]
+    public float extraProjectilesPerOutput = 0f;
+    [Tooltip("Degrees of extra fan per added projectile when the spell had no spread.")]
+    public float spreadPerExtra = 5f;
+    [Tooltip("Damage grows as output ^ this.")]
+    public float damageExp = 0.5f;
+}
+
 // One way of casting a spell. A spell has a tap variant and, optionally, a hold variant.
 [Serializable]
 public class SpellVariant
@@ -118,6 +137,9 @@ public class SpellVariant
 
     [Header("Status Effect (applied to enemies it damages)")]
     public StatusEffectSpec status;         // type None = nothing; burn magnitude = damage per second, slow = fraction of speed removed
+
+    [Header("Mana output")]
+    public OutputResponse output = new OutputResponse();
 
     [Header("Cost and Timing")]
     public float manaCost = 0f;

@@ -24,6 +24,8 @@ public static class SpellFoundationSetup
             test.fxStyle = "ArcaneBolt";
             test.chant = new[] { "Test, test, one two." };
 
+            // output does something different to each form: the tap gets faster and fires more bolts, the beam gets wider and longer
+            test.tap.output = new OutputResponse { speedExp = 0.6f, extraProjectilesPerOutput = 2f, damageExp = 0.3f };
             test.tap.damage = 8f; test.tap.manaCost = 3f; test.tap.cooldown = 0.25f;
 
             test.hasHoldVariant = true;
@@ -40,7 +42,7 @@ public static class SpellFoundationSetup
             form.form = new SpellVariant
             {
                 kind = SpellKind.Laser, damage = 45f, manaCost = 28f, cooldown = 1.2f, laserRange = 70f, laserWidth = 0.7f,
-                laserDuration = 0.35f, laserPierces = true, effectColor = new Color(0.4f, 1f, 0.8f),
+                laserDuration = 0.35f, laserPierces = true, output = new OutputResponse { sizeExp = 0.8f, reachExp = 0.4f }, effectColor = new Color(0.4f, 1f, 0.8f),
             };
             test.extraTiers = new[] { form };
 

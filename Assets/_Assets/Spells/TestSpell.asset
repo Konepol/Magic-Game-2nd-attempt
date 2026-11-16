@@ -59,6 +59,13 @@ MonoBehaviour:
       type: 0
       duration: 0
       magnitude: 0
+    output:
+      sizeExp: 0
+      speedExp: 0.6
+      reachExp: 0
+      extraProjectilesPerOutput: 2
+      spreadPerExtra: 5
+      damageExp: 0.3
     manaCost: 3
     cooldown: 0.25
   hasHoldVariant: 1
@@ -106,6 +113,13 @@ MonoBehaviour:
       type: 0
       duration: 0
       magnitude: 0
+    output:
+      sizeExp: 0.5
+      speedExp: 0
+      reachExp: 0
+      extraProjectilesPerOutput: 0
+      spreadPerExtra: 5
+      damageExp: 0.5
     manaCost: 12
     cooldown: 0.6
   tapMovement: 0
@@ -180,6 +194,13 @@ MonoBehaviour:
         type: 0
         duration: 0
         magnitude: 0
+      output:
+        sizeExp: 0.8
+        speedExp: 0
+        reachExp: 0.4
+        extraProjectilesPerOutput: 0
+        spreadPerExtra: 5
+        damageExp: 0.5
       manaCost: 28
       cooldown: 1.2
   passive:
