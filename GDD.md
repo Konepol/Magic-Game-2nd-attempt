@@ -91,6 +91,7 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
     - **Mana style is decided per spell**: each spell chooses whether its passive costs mana per activation or keeps mana tied up while on (Veil Step uses per activation, since constant drain would cost too much). **Any kind of passive is allowed**, for example passive healing, trap sense or eagle eye.
     - **Veil Step** is the example: its **active part is unchanged when equipped** (holding it still opens the star gate portal ahead of you, with the afterimage), and its **toggleable passive part turns the dash into a blink** (petals dissolve and re-form at the aimed spot). So it is an ordinary castable spell and a movement modifier at once. **Tapping Veil Step** makes a short blink toward where you aim; holding opens the star gate.
   - The remaining spell designs: **TBD** (spell changes come before M1 content).
+- **Mastery shortens chants:** the more a spell is used, the shorter its chant and cast time become (inspired by *Mushoku Tensei*'s truncated chanting). **Silent casting** is not a mastery reward but a **secret quest line**.
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
 - **Getting spells:** quests give spells, and **fusion recipes are discovered** by experimenting or following clues (they then appear in the spellbook).
