@@ -91,6 +91,8 @@ Move WASD, look mouse, jump Space, sprint Shift. Spell slots: LMB, RMB, 1 to 5 (
     - **Mana style is decided per spell**: each spell chooses whether its passive costs mana per activation or keeps mana tied up while on (Veil Step uses per activation, since constant drain would cost too much). **Any kind of passive is allowed**, for example passive healing, trap sense or eagle eye.
     - **Veil Step** is the example: its **active part is unchanged when equipped** (holding it still opens the star gate portal ahead of you, with the afterimage), and its **toggleable passive part turns the dash into a blink** (petals dissolve and re-form at the aimed spot). So it is an ordinary castable spell and a movement modifier at once. **Tapping Veil Step** makes a short blink toward where you aim; holding opens the star gate.
   - The remaining spell designs: **TBD** (spell changes come before M1 content).
+- **Skill-based casting:** a clean cast earns extra power on top of mana output (good timing, steady aim, finishing the chant without being hit), in the spirit of *Frieren*, where skill matters as much as mana. It **must have a clear indicator** the player can read while casting, in the style of the magic system in *Rogue Lineage* (Roblox); the exact indicator design: **TBD**.
+- **Folk spells:** a category of small utility and flavour spells (light a lantern, warm water, grow flowers, calm an animal, mend a small crack) found in ruins, old books and from NPCs. They are not for boss fights and never make the player stronger; they reward exploration, can be part of repair magic, and reputation can react to them. **They are in M1.**
 - **Mastery shortens chants:** the more a spell is used, the shorter its chant and cast time become (inspired by *Mushoku Tensei*'s truncated chanting). **Silent casting** is not a mastery reward but a **secret quest line**.
 - **Chant length scales with cast time:** short for taps and quick holds, long verses for siege spells and fusions.
 - **Learning spells:** from people (teachers, rivals, NPC mages), from books and ruins, and by practice and use.
@@ -249,6 +251,10 @@ Each milestone ends in something complete. Stopping at any of them still leaves 
 (Mobile was removed. The witch redesign and its model can move earlier if the owner wants.)
 
 ### M1 detail (current goal)
+
+**What M1 is (clarified 2026-11-18):** M1 is the **base gameplay, completely complete**. It does **not include the story**, but it **includes every system that supports it** (quests, spells, wands, movement, destruction, crime and repair, camera, HUD, spellbook, world, economy). When M1 is finished, the story is the only thing missing.
+
+**Also in M1 (2026-11-18):** skill-based casting with a clear indicator, per-spell mastery that shortens chants, and folk spells (see section 6.2).
 
 **Added to M1 (2026-11-16):**
 - **Ground movement magic** (blink, magic dash or slide, spell-powered jumps and climbs) and a **rework of ground player movement**: magic-powered movement, a snappier and more responsive feel, and new locomotion animation aimed at the full anime witch.
