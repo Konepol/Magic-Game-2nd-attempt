@@ -2,7 +2,7 @@
 
 Image mockups of the UI for the GDD (`GDD.md`). They are concept images, not the game's UI. All numbers, names (Eclipse Thread, Oakheart Wand, Moonshard Wand, the helpers) and folk spell icons are placeholders.
 
-**Where they are:** branch `claude/gdd-mockup-design-j85dvv`, folder `docs/mockups/`. Its `README.md` lists every decision and file. Read that first. The images are not on this branch.
+**Where they are:** folder `docs/mockups/` on this branch (a copy is also on branch `claude/gdd-mockup-design-j85dvv`). Its `README.md` lists every decision and file. Read that first.
 
 ## Theme: Starlit Grimoire
 Self-lit violet pages in a night sky, gold and lavender ink, cyan for mana, magenta to white-hot for extreme output. Fonts: Almendra, Alegreya Sans, Cinzel, Nunito, Rajdhani. Reference image: `docs/mockups/theme/reference-glowing-book.webp`.

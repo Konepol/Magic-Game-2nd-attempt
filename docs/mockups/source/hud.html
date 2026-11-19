@@ -1,0 +1,244 @@
+<!doctype html><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&family=Alegreya+Sans:wght@400;500;700&family=Noto+Sans+Runic&family=Cinzel:wght@500;700&family=Nunito:wght@500;700;800&family=Rajdhani:wght@500;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1600px;height:1000px;overflow:hidden;background:#0a0716;font-family:'Alegreya Sans',sans-serif;color:#efe6ff}
+header{height:62px;padding:16px 30px 0;display:flex;align-items:baseline;gap:18px}
+header h1{font-family:'Almendra';font-size:30px;color:#e7cbff;text-shadow:0 0 14px #9b6bff}
+header span{color:#a999d6;font-size:15px}
+.cols{display:grid;gap:10px;padding:0 30px}
+.colh{font-family:'Cinzel';font-size:12px;letter-spacing:.16em;color:#a999d6;text-align:center;padding-bottom:2px}
+.row{display:grid;gap:10px;align-items:center}
+.lab{padding-right:6px}.lab b{font-family:'Almendra';font-size:24px;color:#e7cbff;display:block;line-height:1}.lab i{font-family:'Cinzel';font-style:normal;color:#f2c879;font-size:13px;letter-spacing:.1em}.lab p{font-size:13px;color:#a999d6;margin-top:5px;line-height:1.25}
+.tile{background:radial-gradient(ellipse at 50% 50%,#2a2060,#0d0a24);border-radius:10px;overflow:hidden;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.tile svg{display:block;width:100%;height:100%}
+.cap{font-size:13px;color:#cdbff0;padding:5px 2px 0;height:34px}.cap b{color:#f2c879;font-family:'Cinzel';letter-spacing:.08em;margin-right:6px}
+.gl *{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<body><div id="app"></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+ <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="glow2" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="blur3"><feGaussianBlur stdDeviation="4"/></filter><filter id="blur8"><feGaussianBlur stdDeviation="9"/></filter>
+ <radialGradient id="orbG"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#ffd27a"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+ <radialGradient id="orbC"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#6fe3ff"/><stop offset="1" stop-color="#6fe3ff" stop-opacity="0"/></radialGradient>
+ <radialGradient id="orbV"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#d49bff"/><stop offset="1" stop-color="#d49bff" stop-opacity="0"/></radialGradient>
+ <radialGradient id="bgT" cx=".5" cy=".5" r=".8"><stop offset="0" stop-color="#2a2060"/><stop offset="1" stop-color="#0d0a24"/></radialGradient>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1f6b"/><stop offset=".55" stop-color="#9a6fc8"/><stop offset="1" stop-color="#f0b6a0"/></linearGradient>
+ <symbol id="g-weaver" viewBox="0 0 44 44"><path d="M5 36 C13 8,22 42,30 14 S41 22,40 9"/><circle cx="40" cy="9" r="3"/></symbol>
+ <symbol id="g-moon" viewBox="0 0 44 44"><path d="M30 6 A16 16 0 1 0 38 32 A13 13 0 1 1 30 6Z"/><circle cx="22" cy="22" r="19"/></symbol>
+ <symbol id="g-bloom" viewBox="0 0 44 44"><path d="M22 24 C14 14,16 6,22 3 C28 6,30 14,22 24Z"/><path d="M22 24 C30 18,39 20,41 26 C36 33,28 32,22 24Z"/><path d="M22 24 C14 18,5 20,3 26 C8 33,16 32,22 24Z"/><path d="M22 24 C18 32,18 38,22 42 C26 38,26 32,22 24Z"/></symbol>
+ <symbol id="g-step" viewBox="0 0 44 44"><path d="M4 34 L16 22 L10 18 L24 6 L20 18 L30 20 L18 34Z"/><path d="M26 38 L34 30 M30 41 L41 30"/></symbol>
+ <symbol id="g-lantern" viewBox="0 0 44 44"><path d="M16 12 H28 L31 18 V32 L27 39 H17 L13 32 V18Z"/><path d="M22 3 V12 M18 18 H26"/><circle cx="22" cy="26" r="3.5"/></symbol>
+</defs></svg>
+<script>
+const P=Math.PI/180,f=n=>(+n).toFixed(1);
+const pt=(r,a,cx,cy)=>[cx+r*Math.sin(a*P),cy-r*Math.cos(a*P)];
+const arc=(r,a0,a1,cx=120,cy=120)=>{const p0=pt(r,a0,cx,cy),p1=pt(r,a1,cx,cy);return `M${f(p0[0])} ${f(p0[1])}A${r} ${r} 0 ${(a1-a0)>180?1:0} 1 ${f(p1[0])} ${f(p1[1])}`};
+const S=(w,h,inner,bg='')=>`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${bg}${inner}</svg>`;
+const gly=(id,x,y,s,col)=>`<svg class="gl" x="${x-s/2}" y="${y-s/2}" width="${s}" height="${s}" style="color:${col}"><use href="#${id}"/></svg>`;
+const star=(x,y,r,col,op=1)=>`<path d="M${x} ${y-r}L${x+r*.28} ${y-r*.28}L${x+r} ${y}L${x+r*.28} ${y+r*.28}L${x} ${y+r}L${x-r*.28} ${y+r*.28}L${x-r} ${y}L${x-r*.28} ${y-r*.28}Z" fill="${col}" opacity="${op}"/>`;
+const stars=(w,h,n,seed)=>{let s=seed,o='';const R=()=>{s=(s*16807)%2147483647;return s/2147483647};for(let i=0;i<n;i++)o+=`<circle cx="${f(R()*w)}" cy="${f(R()*h)}" r="${f(.4+R()*1.1)}" fill="#fff" opacity="${f(.2+R()*.6)}"/>`;return o};
+const tileBg=(w,h,seed)=>`<rect width="${w}" height="${h}" fill="url(#bgT)"/>`+stars(w,h,50,seed)+`<path d="M0 ${h-40} Q${w*.3} ${h-70} ${w*.5} ${h-45} T${w} ${h-55} V${h}H0Z" fill="#120c30" opacity=".8"/>`;
+const enemy=(x,y,s,c='#1a1030')=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse rx="22" ry="14" fill="${c}"/><path d="M-20 -4L-60 -22L-34 6ZM20 -4L60 -22L34 6Z" fill="${c}"/><circle cx="-6" cy="-3" r="2.5" fill="#ff5a7a"/><circle cx="6" cy="-3" r="2.5" fill="#ff5a7a"/></g>`;
+const fig=(x,y,s,c,op=1)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="${c}" opacity="${op}"><path d="M-14 -52L0 -92L14 -52Z"/><ellipse cx="0" cy="-52" rx="24" ry="6"/><circle cx="0" cy="-42" r="11"/><path d="M-24 0L-12 -30H12L24 0Z"/></g>`;
+const row=(cols,n)=>`display:grid;grid-template-columns:${cols}`;
+
+/* ====== 1. CROSSHAIR + HELD CAST ====== */
+const ST=[{n:'IDLE',p:0,lock:0,perf:0,held:0,fl:2},{n:'CHANTING',p:.55,lock:0,perf:0,held:0,fl:2},{n:'PERFECT + LOCKED ON',p:.78,lock:1,perf:1,held:0,fl:3},{n:'HELD CAST READY',p:.5,lock:0,perf:0,held:1,fl:2}];
+const WA=[259,302];
+const XH={
+A(s){const g='#d9b45a',cy='#6fe3ff';let o='<g filter="url(#glow)">';
+ o+=`<circle cx="120" cy="120" r="46" fill="none" stroke="${g}" stroke-width="1.3"/>`;
+ for(let i=0;i<24;i++){const a=i*15,p0=pt(46,a,120,120),p1=pt(i%6?51:56,a,120,120);o+=`<line x1="${f(p0[0])}" y1="${f(p0[1])}" x2="${f(p1[0])}" y2="${f(p1[1])}" stroke="${g}" stroke-width=".8"/>`}
+ o+=`<path d="${arc(54,WA[0],WA[1])}" stroke="${s.perf?'#fff':g}" stroke-width="${s.perf?9:6}" fill="none" opacity="${s.perf?1:.5}" stroke-linecap="round"/>`;
+ if(s.p)o+=`<path d="${arc(54,0,Math.min(359,s.p*360))}" stroke="#ffe9a8" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+ if(s.lock){[45,135,225,315].forEach(a=>o+=`<path d="${arc(72,a-13,a+13)}" stroke="${cy}" stroke-width="3" fill="none" stroke-linecap="round"/>`);}
+ for(let i=0;i<5;i++){const p=pt(80,212+i*12,120,120);o+=`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="3" fill="${i<s.fl?g:'none'}" stroke="${g}" stroke-width="1"/>`}
+ o+=`<circle cx="120" cy="120" r="2.6" fill="#fff"/></g>`;
+ if(s.held){o+=`<circle cx="120" cy="44" r="22" fill="url(#orbG)"/><polygon points="120,36 127,40 127,48 120,52 113,48 113,40" fill="none" stroke="${g}" stroke-width="1.4"/><circle cx="120" cy="44" r="3" fill="#fff"/>`;o+=`<g stroke="#ffe9a8" stroke-width="2.4"><line x1="${f(pt(54,s.p*360,120,120)[0]-2)}" y1="${f(pt(54,s.p*360,120,120)[1]-5)}" x2="${f(pt(54,s.p*360,120,120)[0]-2)}" y2="${f(pt(54,s.p*360,120,120)[1]+5)}"/><line x1="${f(pt(54,s.p*360,120,120)[0]+3)}" y1="${f(pt(54,s.p*360,120,120)[1]-5)}" x2="${f(pt(54,s.p*360,120,120)[0]+3)}" y2="${f(pt(54,s.p*360,120,120)[1]+5)}"/></g>`}
+ else o+=`<polygon points="120,40 125,44 125,50 120,54 115,50 115,44" fill="none" stroke="${g}" stroke-width="1" opacity=".35"/>`;
+ return o},
+B(s){const nd=[0,60,120,180,240,300].map(a=>pt(50,a,120,120));const lit=Math.floor(s.p*6+.01);let o='<g filter="url(#glow)">';
+ nd.forEach((p,i)=>{const q=nd[(i+1)%6];o+=`<line x1="${f(p[0])}" y1="${f(p[1])}" x2="${f(q[0])}" y2="${f(q[1])}" stroke="#8fd0ff" stroke-width="${i<lit-1?2:.8}" opacity="${i<lit-1?1:.3}"/>`});
+ nd.forEach((p,i)=>{const on=i<lit;o+=on?star(p[0],p[1],i==5&&s.perf?13:5,'#e6f4ff'):`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="2.2" fill="#8fd0ff" opacity=".5"/>`});
+ if(s.perf)o+=star(nd[5][0],nd[5][1],19,'#fff6c8',.9);
+ else o+=`<circle cx="${f(nd[5][0])}" cy="${f(nd[5][1])}" r="9" fill="none" stroke="#fff6c8" stroke-width="1" stroke-dasharray="2 3"/>`;
+ if(s.lock){o+=`<polygon points="120,40 200,120 120,200 40,120" fill="none" stroke="#9ad9ff" stroke-width="1.2" stroke-dasharray="3 4"/>`+[[120,40],[200,120],[120,200],[40,120]].map(p=>star(p[0],p[1],6,'#fff')).join('')}
+ for(let i=0;i<5;i++)o+=`<circle cx="214" cy="${178-i*16}" r="3" fill="${i<s.fl?'#e6f4ff':'none'}" stroke="#8fd0ff" stroke-width="1"/>`;
+ o+=`<path d="M120 112V128M112 120H128" stroke="#fff" stroke-width="1.3"/></g>`;
+ if(s.held)o+=`<ellipse cx="120" cy="120" rx="64" ry="22" transform="rotate(-25 120 120)" fill="none" stroke="#9ad9ff" stroke-width="1" stroke-dasharray="2 4"/>`+star(166,95,10,'#fff6c8')+`<circle cx="166" cy="95" r="16" fill="url(#orbG)"/>`;
+ return o},
+C(s){let o='<g filter="url(#glow)">';const rn='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃ';
+ o+=`<circle cx="120" cy="120" r="38" fill="none" stroke="#b68cff" stroke-width="1.2"/>`;
+ for(let i=0;i<12;i++){const a=i*30,p=pt(50,a,120,120),on=i/12<s.p;o+=`<text x="${f(p[0])}" y="${f(p[1])}" transform="rotate(${a} ${f(p[0])} ${f(p[1])})" text-anchor="middle" dominant-baseline="central" font-family="Noto Sans Runic" font-size="15" fill="${on?'#ffd27a':'#6f5aa8'}">${rn[i]}</text>`}
+ o+=`<path d="${arc(63,WA[0],WA[1])}" stroke="${s.perf?'#fff':'#ffd27a'}" stroke-width="${s.perf?5:2}" fill="none" opacity="${s.perf?1:.6}" stroke-linecap="round"/>`;
+ if(s.perf)o+=`<circle cx="120" cy="120" r="63" fill="none" stroke="#ffd27a" stroke-width="1.2"/>`;
+ if(s.lock)o+=`<polygon points="120,36 204,120 120,204 36,120" fill="none" stroke="#ff7ad9" stroke-width="1.6"/>`+[[120,36],[204,120],[120,204],[36,120]].map(p=>`<text x="${p[0]}" y="${p[1]}" text-anchor="middle" dominant-baseline="central" font-family="Noto Sans Runic" font-size="13" fill="#ff7ad9">ᛉ</text>`).join('');
+ for(let i=0;i<5;i++)o+=`<path d="${arc(84,150+i*14,160+i*14)}" stroke="#b68cff" stroke-width="3" fill="none" opacity="${i<s.fl?1:.25}" stroke-linecap="round"/>`;
+ if(s.held){o+=`<polygon points="120,100 137,110 137,130 120,140 103,130 103,110" fill="rgba(182,140,255,.25)" stroke="#ffd27a" stroke-width="1.6"/><svg class="gl" x="104" y="104" width="32" height="32" style="color:#fff3c8"><use href="#g-weaver"/></svg>`;for(let i=0;i<6;i++){const a=pt(25,i*60+30,120,120),b=pt(30,i*60+30,120,120);o+=`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="#ffd27a" stroke-width="2"/>`}}
+ else o+=`<circle cx="120" cy="120" r="2.4" fill="#fff"/>`;
+ return o+'</g>'},
+D(s){const d=s.p?30-18*s.p:30,gold=s.perf,col=gold?'#ffd75e':'#fff';let o='<g filter="url(#glow)">';
+ if(s.p)o+=`<rect x="${120-16}" y="${120-16}" width="32" height="32" fill="none" stroke="#fff" stroke-width=".8" stroke-dasharray="2 3" opacity=".5"/>`;
+ [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy])=>{const x=120+sx*d,y=120+sy*d;o+=`<path d="M${x-sx*0} ${y+(-sy)*-12*-1}V${y}H${x-sx*12}" fill="none" stroke="${col}" stroke-width="${gold?3:2}" stroke-linecap="round"/>`.replace(`V${y}H${x-sx*12}`,`V${y}H${x-sx*12}`)});
+ o+=`<circle cx="120" cy="120" r="2" fill="${col}"/>`;
+ if(s.lock){o+=`<polygon points="120,58 182,120 120,182 58,120" fill="none" stroke="#7ff0d0" stroke-width="1.6"/><text x="120" y="52" text-anchor="middle" font-family="Rajdhani" font-weight="700" font-size="13" fill="#7ff0d0">32 m</text>`}
+ for(let i=0;i<4;i++)o+=`<path d="M${196} ${150-i*10}l6 -5 l6 5" fill="none" stroke="#fff" stroke-width="1.8" opacity="${i<s.fl?1:.25}"/>`;
+ for(let i=0;i<3;i++){const x=104+i*16;o+=`<path d="M${x} 172l6 -6 6 6 -6 6z" fill="${i<s.held?'#ffd75e':'none'}" stroke="#fff" stroke-width="1.2" opacity="${i<s.held?1:.4}"/>`}
+ return o+'</g>'}
+};
+const XNAMES={A:['Astrolabe Ring','Gold rings, a sweeping window and a docked orb.'],B:['Constellation','Stars light as you chant. The held spell is a captive star.'],C:['Rune Sigil','A small circle whose runes ignite. The held spell is sealed in the centre.'],D:['Clean Brackets','Minimal. Brackets close on a target square. Pips show held spells.']};
+function board1(){let h='<header><h1>Crosshair + Held Cast</h1><span>4 styles · each shows chant progress, the perfect-cast window, lock-on, flight level and held cast</span></header>';
+ h+=`<div class="cols" style="grid-template-columns:220px repeat(4,1fr)"><div></div>${ST.map(s=>`<div class="colh">${s.n}</div>`).join('')}</div>`;
+ ['A','B','C','D'].forEach((k,ri)=>{h+=`<div class="cols row" style="grid-template-columns:220px repeat(4,1fr);margin-top:8px"><div class="lab"><i>${k}</i><b>${XNAMES[k][0]}</b><p>${XNAMES[k][1]}</p></div>`+ST.map((s,i)=>`<div class="tile" style="height:208px">${S(240,240,(s.lock?enemy(120,120,.9,'#2a1a55'):'')+XH[k](s),tileBg(240,240,ri*10+i+3))}</div>`).join('')+'</div>'});
+ return h}
+
+/* ====== 2. GAMEPLAY HUD ====== */
+const W=770,H=420;
+const scene=()=>`<rect width="770" height="420" fill="url(#sky)"/><circle cx="560" cy="250" r="90" fill="#ffd9b0" opacity=".35"/><path d="M0 330L90 250L170 310L270 220L380 320L470 260L580 330L680 240L770 300V420H0Z" fill="#4b3a86" opacity=".8"/><path d="M0 370L120 320L240 360L360 330L500 370L640 335L770 365V420H0Z" fill="#2a2058"/><ellipse cx="150" cy="120" rx="80" ry="14" fill="#fff" opacity=".22"/><ellipse cx="640" cy="90" rx="100" ry="16" fill="#fff" opacity=".18"/>
+<g transform="translate(385 250)"><path d="M-70 26L70 10" stroke="#241540" stroke-width="5" stroke-linecap="round"/><path d="M-70 26l-26 -6M-70 26l-26 6M-70 26l-24 14" stroke="#c99a5a" stroke-width="2.5"/><path d="M-12 -36L4 -78L18 -36Z" fill="#1c1040"/><ellipse cx="3" cy="-36" rx="26" ry="6" fill="#1c1040"/><circle cx="4" cy="-28" r="10" fill="#e8c8b0"/><path d="M-14 -20L-26 14L20 12L18 -18Z" fill="#241540"/></g>`+enemy(590,140,1);
+const glass=(x,y,w,h,r=10)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="rgba(40,22,90,.6)" stroke="#c79bff" stroke-opacity=".7"/>`;
+const HUD={
+A(){let o='';o+=`<circle cx="385" cy="235" r="90" fill="url(#orbV)" opacity=".45" filter="url(#blur8)"/><circle cx="455" cy="262" r="26" fill="url(#orbC)"/>`;
+ o+=`<line x1="250" y1="26" x2="520" y2="26" stroke="#fff" stroke-opacity=".4"/>`;for(let i=0;i<=27;i++)o+=`<line x1="${250+i*10}" y1="${i%9?23:20}" x2="${250+i*10}" y2="26" stroke="#fff" stroke-opacity=".4"/>`;
+ o+=`<text x="385" y="16" fill="#fff" fill-opacity=".8" font-size="11" text-anchor="middle" font-family="Cinzel">N</text><path d="M430 34l5 -8 5 8z" fill="#ffd27a"/>`;
+ o+=`<circle cx="385" cy="190" r="3" fill="#fff"/><circle cx="385" cy="190" r="15" fill="none" stroke="#fff" stroke-opacity=".6"/>`;
+ ['g-weaver','g-moon','g-bloom','g-step','g-lantern'].forEach((g,i)=>{const p=pt(56,40+i*26,455,262);o+=`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${i?10:13}" fill="rgba(30,15,70,.5)" stroke="#fff" stroke-opacity="${i?.4:.9}"/>`+gly(g,p[0],p[1],i?12:16,'#fff')});
+ o+=`<text x="26" y="388" fill="#fff" fill-opacity=".85" font-size="14" font-style="italic">The Teacher's Task</text><text x="26" y="406" fill="#fff" fill-opacity=".6" font-size="12">Bring three glowcaps · 72%</text><text x="385" y="372" fill="#fff" fill-opacity=".9" text-anchor="middle" font-size="15" font-style="italic" font-family="Almendra">"Stars, hold the thread..."</text>`;return o},
+B(){let o='';o+=glass(235,10,300,34,17)+`<line x1="260" y1="27" x2="510" y2="27" stroke="#c79bff" stroke-opacity=".4"/><text x="385" y="22" fill="#f2c879" font-size="11" text-anchor="middle" font-family="Cinzel">N</text><path d="M425 36l5 -8 5 8z" fill="#ffd27a"/><circle cx="470" cy="28" r="3" fill="#ff6b8a"/>`;
+ o+=glass(16,10,215,74)+`<path d="M38 36l4 9 10 1 -7 6 2 10 -9 -5 -9 5 2 -10 -7 -6 10 -1z" fill="none" stroke="#f2c879" stroke-width="1.4" transform="translate(-6 -10) scale(.9)"/><text x="62" y="32" fill="#fff" font-size="16" font-family="Almendra">The Teacher's Task</text><text x="62" y="49" fill="#cdbff0" font-size="12">Next: bring three glowcaps</text><rect x="62" y="60" width="150" height="7" rx="3.5" fill="#1a1040"/><rect x="62" y="60" width="108" height="7" rx="3.5" fill="#6fe3ff"/><text x="186" y="57" fill="#6fe3ff" font-size="11">72%</text>`;
+ o+=glass(702,10,52,34,17)+`<path d="M714 27q12 -12 24 0q-12 12 -24 0z" fill="none" stroke="#7be8b5" stroke-width="1.5"/><circle cx="726" cy="27" r="3" fill="#7be8b5"/>`;
+ const gs=['g-weaver','g-moon','g-bloom','g-step','g-lantern'],ks=['LMB','RMB','1','2','3','4','5'];
+ for(let i=0;i<7;i++){const x=234+i*44,y=360;o+=`<rect x="${x}" y="${y}" width="38" height="38" rx="9" fill="rgba(40,22,90,.65)" stroke="${i?'#c79bff':'#fff'}" stroke-opacity="${i?.5:1}" ${i?'':'filter="url(#glow)"'}/>`+(gs[i]?gly(gs[i],x+19,y+19,22,i?'#d9c2ff':'#fff'):'')+`<text x="${x+19}" y="${y+50}" fill="#f2c879" font-size="9" text-anchor="middle" font-family="Cinzel">${ks[i]}</text>`}
+ o+=`<rect x="22" y="130" width="10" height="180" rx="5" fill="rgba(40,22,90,.65)" stroke="#c79bff" stroke-opacity=".6"/><rect x="24" y="${130+180*.3}" width="6" height="${180*.7-3}" rx="3" fill="#7be8b5"/><circle cx="27" cy="122" r="6" fill="#7be8b5"/>`;
+ o+=glass(632,372,122,32)+`<text x="648" y="392" fill="#f2c879" font-size="10" font-family="Cinzel">OUTPUT</text><text x="712" y="393" fill="#fff" font-size="16" font-family="Almendra">×1.8</text>`;
+ o+=`<circle cx="385" cy="195" r="3" fill="#fff"/><circle cx="385" cy="195" r="16" fill="none" stroke="#c79bff" stroke-opacity=".7"/>`;return o},
+C(){let o='',c=[385,196];const g=['g-weaver','g-moon','g-bloom','g-step','g-lantern'],k=['LMB','RMB','1','2','3','4','5'];
+ o+=`<circle cx="${c[0]}" cy="${c[1]}" r="3" fill="#fff"/><circle cx="${c[0]}" cy="${c[1]}" r="16" fill="none" stroke="#7fe8d0" stroke-opacity=".8"/>`;
+ for(let i=0;i<7;i++){const p=pt(62,102+i*26,c[0],c[1]);o+=`<circle cx="${f(p[0])}" cy="${f(p[1])}" r="${i?14:17}" fill="rgba(10,40,50,.7)" stroke="${i?'#7fe8d0':'#ffc46b'}" stroke-width="${i?1:2}" ${i?'':'filter="url(#glow)"'}/>`+(g[i]?gly(g[i],p[0],p[1],i?15:19,i?'#bdf5e8':'#ffe3a8'):`<text x="${f(p[0])}" y="${f(p[1]+3)}" fill="#7fe8d0" font-size="9" text-anchor="middle" font-family="Cinzel">${k[i]}</text>`)}
+ for(let i=0;i<8;i++){o+=`<path d="${arc(92,200+i*17,213+i*17,c[0],c[1])}" stroke="${i<6?'#ff8a8a':'#4a2a3a'}" stroke-width="6" fill="none" stroke-linecap="round" ${i<6?'filter="url(#glow)"':''}/>`}
+ for(let i=0;i<8;i++){o+=`<path d="${arc(92,24+i*17,37+i*17,c[0],c[1])}" stroke="${i<5?'#ffc46b':'#4a3a1a'}" stroke-width="6" fill="none" stroke-linecap="round" ${i<5?'filter="url(#glow)"':''}/>`}
+ o+=`<text x="${c[0]-118}" y="${c[1]+4}" fill="#ff8a8a" font-size="10" text-anchor="end" font-family="Cinzel">HEALTH</text><text x="${c[0]+118}" y="${c[1]+4}" fill="#ffc46b" font-size="10" font-family="Cinzel">OUTPUT ×1.8</text>`;
+ o+=`<path d="${arc(70,-50,50,385,86)}" stroke="#7fe8d0" stroke-opacity=".6" stroke-width="1.5" fill="none"/>`;for(let i=-5;i<=5;i++){const a=pt(70,i*9,385,86),b=pt(74,i*9,385,86);o+=`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="#7fe8d0" stroke-opacity=".7"/>`}
+ o+=`<path d="M394 20l5 -8 5 8z" fill="#ffc46b" transform="translate(-6 24)"/><text x="385" y="46" text-anchor="middle" fill="#bdf5e8" font-size="11" font-family="Cinzel">N</text>`;
+ o+=`<text x="385" y="396" fill="#bdf5e8" text-anchor="middle" font-size="12" font-family="Cinzel" letter-spacing=".12em">THE TEACHER'S TASK · 72%</text>`;return o},
+D(){let o='';const ks=['LMB','RMB','1','2','3','4','5'],g=['g-weaver','g-moon','g-bloom','g-step','g-lantern'];
+ o+=`<path d="M24 28l7 -7l7 7l-7 7z" fill="#ff7aa8"/><text x="48" y="31" fill="#fff" font-size="16" font-weight="800" font-family="Nunito">The Teacher's Task</text><text x="48" y="49" fill="#fff" fill-opacity=".85" font-size="13" font-family="Nunito">Bring three glowcaps · 72%</text>`;
+ o+=`<circle cx="724" cy="58" r="38" fill="rgba(255,255,255,.18)" stroke="#fff" stroke-width="2"/><path d="M724 36l6 22h-12z" fill="#fff"/><circle cx="745" cy="44" r="4" fill="#ffd75e"/><circle cx="706" cy="76" r="4" fill="#ff5a7a"/><text x="724" y="30" fill="#fff" font-size="10" text-anchor="middle" font-weight="800" font-family="Nunito">N</text><text x="724" y="112" fill="#fff" font-size="11" text-anchor="middle" font-family="Nunito" font-weight="700">Guards: Calm</text>`;
+ o+=`<circle cx="46" cy="380" r="26" fill="#fff" stroke="#ff7aa8" stroke-width="3"/><circle cx="46" cy="374" r="8" fill="#ffcfa8"/><path d="M30 394q16 -16 32 0z" fill="#7a5ab8"/><text x="84" y="372" fill="#fff" font-size="13" font-weight="800" font-family="Nunito">Mira</text><rect x="84" y="378" width="190" height="10" rx="5" fill="rgba(0,0,0,.35)"/><rect x="84" y="378" width="140" height="10" rx="5" fill="#ff7aa8"/><rect x="84" y="391" width="190" height="4" rx="2" fill="rgba(0,0,0,.3)"/><rect x="84" y="391" width="120" height="4" rx="2" fill="#7fd0ff"/>`;
+ for(let i=0;i<7;i++){const x=544+i*30,y=392,r=i<2?15:12;o+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${i?'rgba(255,255,255,.22)':'#fff'}" stroke="#fff" stroke-width="1.5"/>`+(g[i]?gly(g[i],x,y,r*1.2,i?'#fff':'#7a5ab8'):'')+`<text x="${x}" y="${y+r+12}" fill="#fff" font-size="9" text-anchor="middle" font-weight="800" font-family="Nunito">${ks[i]}</text>`}
+ o+=`<text x="385" y="372" fill="#fff" text-anchor="middle" font-size="15" font-weight="700" font-family="Nunito" style="paint-order:stroke" stroke="#3a2a6a" stroke-width="3">"Stars, hold the thread..."</text><circle cx="385" cy="195" r="3" fill="#fff"/>`;return o}
+};
+const HN={A:['Minimal Diegetic','Almost nothing. Slots orbit the wand hand, state lives on the witch.'],B:['Grimoire Glass','Gold-trim glass cards echo the spellbook. Compass, quest card, slot bar, health vine.'],C:['Radial Wheel','Everything hugs the crosshair. Health left, output right, slots in an arc.'],D:['Anime Clean','Bright and crisp corner layout with key caps, avatar, mini-compass.']};
+function board2(){let h='<header><h1>Gameplay HUD</h1><span>4 layouts · slots, compass, quest next step, health, output, alert level, chant subtitle</span></header><div class="cols" style="grid-template-columns:1fr 1fr;gap:16px 20px">';
+ ['A','B','C','D'].forEach(k=>{h+=`<div><div class="tile" style="height:420px">${S(W,H,scene()+HUD[k]())}</div><div class="cap"><b>${k} · ${HN[k][0]}</b>${HN[k][1]}</div></div>`});return h+'</div>'}
+
+/* ====== 3. MANA SENSING ====== */
+const flame=(x,y,h,w,c1,c2,seed)=>{let o='';for(let i=0;i<9;i++){const t=(i-4)/4,hh=h*(.55+.45*Math.abs(Math.sin(seed+i*1.9)))*(1-.35*Math.abs(t)),bx=x+t*w;o+=`<path d="M${f(bx-w/9)} ${y}C${f(bx-w/6)} ${f(y-hh*.5)} ${f(bx+w/10*Math.sin(i))} ${f(y-hh*.8)} ${f(bx)} ${f(y-hh)}C${f(bx+w/6)} ${f(y-hh*.6)} ${f(bx+w/9)} ${f(y-hh*.3)} ${f(bx+w/9)} ${y}Z" fill="${i%2?c1:c2}" opacity=".7"/>`}return o};
+const gnd=(c)=>`<path d="M0 340Q200 320 385 335T770 330V420H0Z" fill="${c}"/>`;
+const tag=(x,y,t,col,lx,ly)=>`<line x1="${lx}" y1="${ly}" x2="${x}" y2="${y}" stroke="${col}" stroke-opacity=".6"/><rect x="${x-4}" y="${y-14}" width="${t.length*6.4+12}" height="20" rx="10" fill="rgba(0,0,0,.55)" stroke="${col}"/><text x="${x+2}" y="${y}" fill="${col}" font-size="12" font-family="Alegreya Sans" font-weight="700">${t}</text>`;
+const keyhint=`<rect x="300" y="384" width="170" height="26" rx="13" fill="rgba(0,0,0,.5)" stroke="#fff" stroke-opacity=".4"/><text x="318" y="402" fill="#f2c879" font-size="12" font-family="Cinzel" font-weight="700">HOLD Z</text><text x="380" y="402" fill="#fff" font-size="12">Sense magic</text>`;
+const MS={
+A(){let o=`<rect width="770" height="420" fill="#0b1a1f"/><rect width="770" height="420" fill="url(#bgT)" opacity=".4"/>`+stars(770,420,40,5)+gnd('#0a1216');
+ o+=`<g filter="url(#blur3)">${flame(210,330,150,100,'#fff1b0','#ffb347',1)}${flame(530,330,300,200,'#ff4f8a','#7a3cff',3)}${flame(660,250,26,30,'#6a7a9a','#4a5a7a',5)}</g>`;
+ o+=fig(210,330,1.3,'#0a1216')+fig(530,330,1.5,'#0a1216')+fig(660,250,.7,'#0a1216',.7);
+ o+=`<circle cx="660" cy="214" r="22" fill="none" stroke="#7a8aaa" stroke-dasharray="3 4"/>`;
+ o+=tag(250,70,'You · steady','#ffd98a',230,200)+tag(560,48,'Mage · overwhelming','#ff8ab8',545,160)+tag(480,110,'Something hidden · barely there','#9fb0d0',662,205);
+ o+=`<rect x="14" y="14" width="190" height="24" rx="12" fill="rgba(0,0,0,.5)" stroke="#6fe3ff"/><text x="28" y="31" fill="#6fe3ff" font-size="12" font-family="Cinzel" font-weight="700">MANA SENSE ACTIVE</text>`+keyhint;return o},
+B(){let o=`<rect width="770" height="420" fill="#07151a"/>`+stars(770,420,30,8)+gnd('#06110f');
+ [[0,360,200,340,400,375,770,350],[0,395,240,372,500,400,770,380]].forEach(p=>o+=`<path d="M${p[0]} ${p[1]}C${p[2]} ${p[3]} ${p[4]} ${p[5]} ${p[6]} ${p[7]}" stroke="#4ef0b8" stroke-opacity=".6" stroke-width="2" fill="none" filter="url(#glow)" stroke-dasharray="10 8"/>`);
+ const circ=(x,y,c,rx)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx*.22}" fill="none" stroke="${c}" stroke-width="1.5" filter="url(#glow)"/><ellipse cx="${x}" cy="${y}" rx="${rx*.7}" ry="${rx*.15}" fill="none" stroke="${c}" stroke-dasharray="3 4"/>`;
+ o+=circ(210,338,'#8affd8',70)+circ(530,338,'#ffd27a',110)+circ(665,258,'#6a8a9a',24);
+ const stream=(x0,y0,x1,y1,amp,n,c,r)=>{let s='';for(let i=0;i<n;i++){const t=i/n,x=x0+(x1-x0)*t+Math.sin(t*9+i)*amp*t,y=y0+(y1-y0)*t;s+=`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r*(1-t*.6))}" fill="${c}" opacity="${f(1-t*.8)}"/>`}return s};
+ o+=`<g filter="url(#glow)">${stream(210,260,170,60,30,40,'#8affd8',3)}${stream(215,260,260,70,40,40,'#bfffe9',2.4)}${stream(530,240,450,20,70,70,'#ffd27a',4)}${stream(535,240,640,30,60,70,'#ffb347',3.6)}${stream(665,215,650,150,6,14,'#8aa6b8',1.6)}</g>`;
+ o+=fig(210,338,1.3,'#04100e')+fig(530,338,1.5,'#04100e')+fig(665,258,.7,'#04100e',.8);
+ o+=tag(110,60,'You · steady, even flow','#8affd8',170,200)+tag(560,32,'Mage · dense, fast flow','#ffd27a',545,150)+tag(590,118,'Thin trickle · suppressed','#9fb6c8',655,200);
+ o+=`<rect x="14" y="14" width="190" height="24" rx="12" fill="rgba(0,0,0,.5)" stroke="#4ef0b8"/><text x="28" y="31" fill="#4ef0b8" font-size="12" font-family="Cinzel" font-weight="700">LEY SIGHT ACTIVE</text>`+keyhint;return o},
+C(){let o=`<rect width="770" height="420" fill="#120f22"/>`+stars(770,420,30,12)+gnd('#0b0918');
+ o+=`<defs><linearGradient id="heat" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2a4ae8"/><stop offset=".5" stop-color="#b03ad8"/><stop offset="1" stop-color="#ff8a2a"/></linearGradient><clipPath id="lens"><circle cx="500" cy="200" r="170"/></clipPath></defs>`;
+ o+=fig(190,330,1.3,'#2a3a7a')+fig(660,250,.7,'#3a3a6a',.6);
+ o+=`<g clip-path="url(#lens)"><rect x="330" y="30" width="340" height="340" fill="#0a0a1c"/><g filter="url(#blur3)"><ellipse cx="500" cy="200" rx="90" ry="140" fill="#ff8a2a" opacity=".35"/></g>${fig(500,330,1.5,'url(#heat)')}${fig(430,330,1.1,'#5a7aff',.95)}</g>`;
+ o+=`<circle cx="500" cy="200" r="170" fill="none" stroke="#ffb067" stroke-width="2.5" filter="url(#glow)"/><circle cx="500" cy="200" r="158" fill="none" stroke="#ffb067" stroke-dasharray="2 6" stroke-opacity=".7"/>`;for(let i=0;i<36;i++){const a=pt(170,i*10,500,200),b=pt(i%3?176:184,i*10,500,200);o+=`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}" stroke="#ffb067" stroke-opacity=".8"/>`}
+ o+=`<path d="M500 130v-20M500 270v20M430 200h-20M570 200h20" stroke="#ffd9a0" stroke-width="1.5"/>`;
+ o+=`<rect x="26" y="40" width="250" height="150" rx="10" fill="rgba(20,14,40,.85)" stroke="#ffb067" stroke-opacity=".8"/><text x="42" y="64" fill="#ffb067" font-size="13" font-family="Cinzel" font-weight="700" letter-spacing=".1em">MANA SENSE</text><text x="42" y="86" fill="#fff" font-size="16" font-family="Almendra">Mage · Overwhelming</text>`;
+ [['Output',.86,'#ff8a2a'],['Reserve',.6,'#b03ad8'],['Control',.35,'#4a6aff']].forEach(([n,v,c],i)=>o+=`<text x="42" y="${112+i*26}" fill="#cdbff0" font-size="12">${n}</text><rect x="104" y="${103+i*26}" width="150" height="9" rx="4.5" fill="#1a1236"/><rect x="104" y="${103+i*26}" width="${150*v}" height="9" rx="4.5" fill="${c}" filter="url(#glow)"/>`);
+ o+=tag(190,255,'You · steady','#8ab0ff',190,260).replace(/<line.*?\/>/,'')+tag(620,160,'Hidden · ???','#9a9ab8',660,210)+keyhint;return o},
+D(){let o=`<rect width="770" height="420" fill="#050d1c"/>`+stars(770,420,24,3)+gnd('#040a16');
+ for(let i=1;i<=7;i++)o+=`<circle cx="210" cy="310" r="${i*70}" fill="none" stroke="#5ac8ff" stroke-opacity="${f(.55-i*.07)}" stroke-width="${f(2.4-i*.25)}"/>`;
+ const outl=(x,y,s,c,dash='')=>`<g transform="translate(${x} ${y}) scale(${s})" fill="none" stroke="${c}" stroke-width="${1.6/s}" ${dash?`stroke-dasharray="${dash}"`:''} filter="url(#glow)"><path d="M-14 -52L0 -92L14 -52Z"/><ellipse cx="0" cy="-52" rx="24" ry="6"/><circle cx="0" cy="-42" r="11"/><path d="M-24 0L-12 -30H12L24 0Z"/></g>`;
+ const rings=(x,y,n,c,r0,op)=>{let s='';for(let i=0;i<n;i++)s+=`<circle cx="${x}" cy="${y}" r="${r0+i*14}" fill="none" stroke="${c}" stroke-opacity="${f(op-i*op/(n+1))}" stroke-width="1.6" filter="url(#glow)"/>`;return s};
+ o+=rings(210,258,3,'#8fe8ff',34,.9)+rings(530,238,6,'#ff9ad0',44,.9)+rings(660,205,1,'#6a86a8',16,.4);
+ o+=outl(210,330,1.3,'#d8f6ff')+outl(530,330,1.5,'#ffd0e8')+outl(660,250,.7,'#6a86a8','3 4');
+ o+=tag(60,60,'You · steady pulse','#8fe8ff',200,200)+tag(560,40,'Mage · wide, fast pulse','#ff9ad0',545,140)+tag(590,130,'Barely a ripple','#8ca0bc',655,200);
+ o+=`<rect x="14" y="14" width="190" height="24" rx="12" fill="rgba(0,0,0,.5)" stroke="#5ac8ff"/><text x="28" y="31" fill="#5ac8ff" font-size="12" font-family="Cinzel" font-weight="700">PULSE SENSE ACTIVE</text>`+keyhint;return o}
+};
+const MN={A:['Aura Flames','Beings burn with an aura. Size is power, colour is nature. Suppressed mana shrinks to a faint ring.'],B:['Ley Streams','Mana flows as glowing particle streams and rune circles on the ground. Suppression thins the stream.'],C:['Scan Lens','A heat-vision lens with a readout panel: output, reserve and control. Most precise, least diegetic.'],D:['Sonar Pulse','Rings spread from you and outline beings. Strong casters ring wide, suppressed ones barely show.']};
+function board3(){let h='<header><h1>Mana Sense</h1><span>Frieren-style · hold a key to perceive mana on yourself and others · 4 looks</span></header><div class="cols" style="grid-template-columns:1fr 1fr;gap:16px 20px">';
+ ['A','B','C','D'].forEach(k=>{h+=`<div><div class="tile" style="height:420px">${S(W,H,MS[k]())}</div><div class="cap"><b>${k} · ${MN[k][0]}</b>${MN[k][1]}</div></div>`});return h+'</div>'}
+
+/* ====== 4. OUTPUT LEVEL ====== */
+const LV=[{n:'LOW · 20',L:20},{n:'COSTLY · 60',L:60},{n:'OVER THE LIMIT · 85',L:85}];const LIM=70;
+const mult=L=>(1+L/50+Math.max(0,L-35)/25).toFixed(1);
+const OUT={
+A(L){const cx=200,cy=100,a0=-130,span=260,ang=v=>a0+span*v/100;let o='<g filter="url(#glow)">';
+ o+=`<path d="${arc(60,ang(0),ang(35),cx,cy)}" stroke="#6fe3ff" stroke-width="7" fill="none" opacity=".25"/><path d="${arc(60,ang(35),ang(LIM),cx,cy)}" stroke="#ffd27a" stroke-width="7" fill="none" opacity=".25"/><path d="${arc(60,ang(LIM),ang(100),cx,cy)}" stroke="#ff6b8a" stroke-width="7" fill="none" opacity=".35"/>`;
+ const c=L>LIM?'#ff6b8a':L>35?'#ffd27a':'#6fe3ff';o+=`<path d="${arc(60,ang(0),ang(L),cx,cy)}" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+ const m=pt(70,ang(LIM),cx,cy),m2=pt(78,ang(LIM),cx,cy);o+=`<line x1="${f(m[0])}" y1="${f(m[1])}" x2="${f(m2[0])}" y2="${f(m2[1])}" stroke="#fff" stroke-width="2"/>`;
+ const t=pt(52,ang(L),cx,cy);o+=`<circle cx="${f(t[0])}" cy="${f(t[1])}" r="4" fill="#fff"/>`;
+ o+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" fill="${c}" font-size="30" font-family="Almendra">×${mult(L)}</text><text x="${cx}" y="${cy+26}" text-anchor="middle" fill="#cdbff0" font-size="10" font-family="Cinzel" letter-spacing=".15em">OUTPUT</text></g>`;
+ if(L>LIM){o+=`<path d="M${cx-70} ${cy-40}l12 8 -6 8 14 8M${cx+70} ${cy-40}l-12 8 6 8 -14 8" stroke="#ff6b8a" fill="none"/><text x="${cx}" y="${cy+78}" text-anchor="middle" fill="#ff6b8a" font-size="12" font-family="Cinzel" font-weight="700">BACKFIRE</text>`}
+ o+=`<circle cx="${cx}" cy="${cy-58}" r="0"/>`;return o},
+B(L){const x=185,y0=24,h=170,w=34;let o=`<defs><linearGradient id="crys${L}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#6fe3ff"/><stop offset=".45" stop-color="#d49bff"/><stop offset=".7" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff6b8a"/></linearGradient><clipPath id="cc${L}"><rect x="${x}" y="${y0}" width="${w}" height="${h}" rx="17"/></clipPath></defs>`;
+ o+=`<rect x="${x}" y="${y0}" width="${w}" height="${h}" rx="17" fill="rgba(20,14,50,.7)" stroke="#d9c2ff" stroke-width="1.6"/><g clip-path="url(#cc${L})"><rect x="${x}" y="${y0+h*(1-L/100)}" width="${w}" height="${h*L/100}" fill="url(#crys${L})" filter="url(#glow)"/></g>`;
+ for(let i=1;i<10;i++)o+=`<line x1="${x+w}" y1="${y0+h*(1-i/10)}" x2="${x+w+(i%5?4:8)}" y2="${y0+h*(1-i/10)}" stroke="#d9c2ff" stroke-opacity=".6"/>`;
+ const ly=y0+h*(1-LIM/100);o+=`<line x1="${x-8}" y1="${ly}" x2="${x+w+14}" y2="${ly}" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 3"/>`+gly('g-weaver',x+w+30,ly,16,'#fff')+`<text x="${x+w+46}" y="${ly+4}" fill="#fff" font-size="10" font-family="Cinzel">LIMIT</text>`;
+ o+=`<rect x="${x-96}" y="${y0+h/2-16}" width="78" height="32" rx="16" fill="rgba(20,14,50,.8)" stroke="#f2c879"/><text x="${x-57}" y="${y0+h/2+6}" text-anchor="middle" fill="#fff" font-size="17" font-family="Almendra">×${mult(L)}</text>`;
+ if(L>LIM)o+=`<path d="M${x+6} ${y0+30}l8 18 -8 10 10 20 -6 14M${x+28} ${y0+60}l-8 14 8 12" stroke="#fff" stroke-width="1.4" fill="none"/>`+star(x-4,y0+20,6,'#ff6b8a')+star(x+w+6,y0+50,5,'#ffd27a');return o},
+C(L){const n=L<35?1:L<=LIM?3:5,over=L>LIM,col=over?'#ff6b8a':L>35?'#ffd27a':'#6fe3ff';let o=fig(200,185,1.1,'#2a1c5a');
+ o+=`<circle cx="200" cy="112" r="${14+L*.28}" fill="url(#${over?'orbG':'orbV'})" opacity=".5"/>`;
+ for(let i=0;i<n;i++){const rx=26+i*13,ry=7+i*3;o+=`<ellipse cx="200" cy="${118+i*2}" rx="${rx}" ry="${ry}" fill="none" stroke="${col}" stroke-width="${over?1.4:2}" ${over?`stroke-dasharray="${4+i} ${6}"`:''} filter="url(#glow)" transform="rotate(${-8+i*4} 200 118)"/>`}
+ if(over)for(let i=0;i<9;i++){const a=i*40+10,p=pt(60+i%3*6,a,200,115);o+=star(p[0],p[1]*1,3,'#ff9ab0',.9)}
+ o+=`<text x="200" y="26" text-anchor="middle" fill="${col}" font-size="22" font-family="Almendra">×${mult(L)}</text>`;return o},
+D(L){const x0=60,w=280,y=120,pins=[['g-weaver',70],['g-moon',55],['g-bloom',80],['g-step',90],['g-lantern',75]];let o='';
+ o+=`<rect x="${x0}" y="${y}" width="${w}" height="12" rx="6" fill="rgba(20,14,50,.8)" stroke="#d9c2ff" stroke-opacity=".6"/><rect x="${x0}" y="${y}" width="${w*L/100}" height="12" rx="6" fill="${L>LIM?'#ff6b8a':L>35?'#ffd27a':'#6fe3ff'}" filter="url(#glow)"/>`;
+ pins.forEach(([g,l],i)=>{const px=x0+w*l/100,bad=l<L,py=y-26-(i%2)*18;o+=`<line x1="${px}" y1="${y}" x2="${px}" y2="${py+8}" stroke="${bad?'#ff6b8a':'#fff'}" stroke-opacity=".6"/><circle cx="${px}" cy="${py}" r="9" fill="${bad?'rgba(255,107,138,.35)':'rgba(30,18,70,.9)'}" stroke="${bad?'#ff6b8a':'#fff'}"/>`+gly(g,px,py,11,bad?'#ff9ab0':'#fff')});
+ o+=`<path d="M${x0+w*L/100} ${y+22}l-6 8h12z" fill="#fff"/><rect x="${x0+w/2-42}" y="${y+38}" width="84" height="26" rx="13" fill="rgba(20,14,50,.85)" stroke="#f2c879"/><text x="${x0+w/2}" y="${y+56}" text-anchor="middle" fill="#fff" font-size="15" font-family="Almendra">cost ×${mult(L)}</text>`;
+ o+=`<text x="${x0}" y="${y+96}" fill="#cdbff0" font-size="11">${L>LIM?'Red pins will backfire at this output':'Pins mark where each equipped spell backfires'}</text>`;return o}
+};
+const ON={A:['Arc Dial','A gauge wrapped around the crosshair with a limit tick for the held spell.'],B:['Mana Crystal','A tall crystal by the wand side. The fill climbs, then cracks near backfire.'],C:['Halo Rings','On the witch. More rings as output rises, they break at the limit.'],D:['Limit Pins','A bar with one pin per equipped spell. Shows one global level against each spell\'s own limit.']};
+function lvBoard(title,sub,F,N,H3,bgSeed){let h=`<header><h1>${title}</h1><span>${sub}</span></header>`;
+ h+=`<div class="cols" style="grid-template-columns:220px repeat(3,1fr)"><div></div>${H3.map(s=>`<div class="colh">${s.n}</div>`).join('')}</div>`;
+ ['A','B','C','D'].forEach((k,ri)=>{h+=`<div class="cols row" style="grid-template-columns:220px repeat(3,1fr);margin-top:8px"><div class="lab"><i>${k}</i><b>${N[k][0]}</b><p>${N[k][1]}</p></div>`+H3.map((s,i)=>`<div class="tile" style="height:208px">${S(400,215,F[k](s),tileBg(400,215,bgSeed+ri*7+i))}</div>`).join('')+'</div>'});return h}
+const board4=()=>lvBoard('Output Level','Global value set while playing · the cost multiplier shows, the effect is described in the spellbook',Object.fromEntries(Object.keys(OUT).map(k=>[k,s=>OUT[k](s.L)])),ON,LV,40);
+
+/* ====== 5. HEALTH ====== */
+const HS=[{n:'FULL',L:100,B:80},{n:'HURT · 55%',L:55,B:40},{n:'CRITICAL · 15%',L:15,B:0}];
+const HP={
+A(s){const{L,B}=s,low=1-L/100;let o=`<defs><radialGradient id="vg${L}" cx=".5" cy=".5" r=".75"><stop offset=".5" stop-color="#d4204a" stop-opacity="0"/><stop offset="1" stop-color="#d4204a" stop-opacity="${f(low*.8)}"/></radialGradient></defs>`;
+ o+=`<ellipse cx="200" cy="130" rx="60" ry="76" fill="#6fe3ff" opacity="${f(B/100*.25)}" stroke="#6fe3ff" stroke-opacity="${f(B/100)}" stroke-width="1.5"/>`;
+ o+=fig(200,185,1.3,'#2a1c5a');o+=`<circle cx="200" cy="148" r="${6+L*.14}" fill="url(#orbG)" ${L<30?'filter="url(#glow)"':''} opacity="${f(.4+L/160)}"/><circle cx="200" cy="148" r="3" fill="#fff" opacity="${f(.3+L/140)}"/>`;
+ if(L<60)o+=`<path d="M196 138l-5 8 6 5 -4 9M206 142l6 6 -3 6" stroke="#fff" stroke-opacity=".7" fill="none"/>`;
+ o+=`<rect width="400" height="215" fill="url(#vg${L})"/>`;return o},
+B(s){const{L,B}=s,cx=70,cy=150,r=34;let o=`<defs><clipPath id="oc${L}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><g opacity="${L==100?.45:1}">`;
+ o+=`<circle cx="${cx}" cy="${cy}" r="${r+9}" fill="none" stroke="#6fe3ff" stroke-width="4" stroke-dasharray="${f(2*Math.PI*(r+9)*B/100)} 999" transform="rotate(-90 ${cx} ${cy})" opacity=".9" filter="url(#glow)"/>`;
+ o+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(20,10,40,.7)"/><g clip-path="url(#oc${L})"><path d="M${cx-r} ${cy+r-2*r*L/100}q${r/2} -7 ${r} 0t${r} 0V${cy+r}H${cx-r}Z" fill="${L<25?'#ff3a5a':'#e8315f'}" filter="url(#glow)"/><circle cx="${cx-10}" cy="${cy+10}" r="2" fill="#fff" opacity=".6"/></g>`;
+ o+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f2c879" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="${r-3}" fill="none" stroke="#fff" stroke-opacity=".3"/><path d="M${cx-12} ${cy-r-2}h24" stroke="#f2c879" stroke-width="4" stroke-linecap="round"/></g>`;
+ o+=`<text x="124" y="148" fill="#fff" font-size="26" font-family="Almendra">${L}</text><text x="124" y="166" fill="#cdbff0" font-size="11" font-family="Cinzel" letter-spacing=".1em">${L==100?'HIDDEN AT FULL':L<25?'CRITICAL':'HEALTH'}</text>`;if(B)o+=`<text x="124" y="182" fill="#6fe3ff" font-size="11" font-family="Cinzel">BARRIER ${B}</text>`;return o},
+C(s){const{L,B}=s,n=Math.ceil(L/12.5);let o='';
+ for(let i=0;i<8;i++){const a=i*45,on=i<n;o+=`<ellipse cx="200" cy="${108-30}" rx="11" ry="${on?30:30}" transform="rotate(${a} 200 108)" fill="${on?'rgba(255,170,205,.65)':'none'}" stroke="${on?'#ffd0e4':'#8a6a9a'}" stroke-width="${on?1.4:1}" ${on?'':'stroke-dasharray="2 4" opacity=".5"'}/>`}
+ for(let i=n;i<8&&i<n+3;i++)o+=`<ellipse cx="${250+(i-n)*18}" cy="${170+(i-n)*10}" rx="5" ry="9" transform="rotate(${40+i*12} ${250+(i-n)*18} ${170+(i-n)*10})" fill="rgba(255,170,205,.45)"/>`;
+ o+=`<circle cx="200" cy="108" r="9" fill="#ffe08a" filter="url(#glow)"/>`+(B?`<path d="${arc(78,-120,-120+240*B/100,200,108)}" stroke="#6fe3ff" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#glow)"/>`:'')+`<text x="200" y="208" text-anchor="middle" fill="#cdbff0" font-size="11" font-family="Cinzel">${n} / 8 PETALS</text>`;return o},
+D(s){const{L,B}=s,c=L>60?'#7be8b5':L>30?'#ffc46b':'#ff5a7a';let o=`<g opacity="${L==100?.4:1}">`;
+ o+=`<circle cx="60" cy="150" r="24" fill="#fff" stroke="${c}" stroke-width="3"/><circle cx="60" cy="144" r="8" fill="#ffcfa8"/><path d="M44 164q16 -16 32 0z" fill="#7a5ab8"/>`;
+ o+=`<text x="96" y="136" fill="#fff" font-size="13" font-weight="800" font-family="Nunito">Mira</text><rect x="96" y="142" width="240" height="12" rx="6" fill="rgba(255,255,255,.15)" stroke="#fff" stroke-opacity=".4"/><rect x="96" y="142" width="${240*L/100}" height="12" rx="6" fill="${c}"/>`;
+ for(let i=1;i<10;i++)o+=`<line x1="${96+i*24}" y1="142" x2="${96+i*24}" y2="154" stroke="#0d0a24" stroke-opacity=".5"/>`;
+ o+=`<rect x="96" y="158" width="240" height="5" rx="2.5" fill="rgba(255,255,255,.12)"/><rect x="96" y="158" width="${240*B/100}" height="5" rx="2.5" fill="#7fd0ff"/><text x="336" y="136" text-anchor="end" fill="#fff" font-size="12" font-weight="800" font-family="Nunito">${L} / 100</text></g>`;
+ if(L==100)o+=`<text x="96" y="186" fill="#cdbff0" font-size="11" font-family="Nunito">Fades out when full</text>`;if(L<25)o+=`<rect x="96" y="142" width="240" height="12" rx="6" fill="none" stroke="#ff5a7a" stroke-width="2" filter="url(#glow)"/>`;return o}
+};
+const HN2={A:['On the Witch','No bar. A chest ember dims and cracks, the screen edge reddens, the barrier is a shell.'],B:['Glass Vial','A gold-ringed glass orb. The liquid level is health, a cyan ring is the barrier.'],C:['Petals','A flower of eight petals. Each hit drops one. A cyan arc is the barrier.'],D:['Clean Bar','Bright segmented bar with avatar and a thin barrier line. Fades when full.']};
+const board5=()=>lvBoard('Health','Health and barrier are separate · barrier shares the mana pool · shown at full, hurt and critical',HP,HN2,HS,70);
+
+const B=location.hash.slice(1)||'1';document.getElementById('app').innerHTML={1:board1,2:board2,3:board3,4:board4,5:board5}[B]();
+</script>
+</body>
